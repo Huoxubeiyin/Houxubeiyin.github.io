@@ -40,7 +40,7 @@
 
   
   
-  <link href="/Houxubeiyin.github.io/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
 
 
 
@@ -48,21 +48,21 @@
 
 
 
-<link href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
 
-<link href="/Houxubeiyin.github.io/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=5.1.4">
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=5.1.4">
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=5.1.4">
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
 
 
-  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=5.1.4" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
 
 
 
@@ -74,7 +74,7 @@
 
 
 
-  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
@@ -85,27 +85,27 @@
 <meta name="keywords" content="Zygote">
 <meta property="og:type" content="article">
 <meta property="og:title" content="源码分析之Zygote启动流程">
-<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/index.html">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="安卓中的Zygote进程，为万物进程的始祖进程。所有的应用创建都是基于此进程进行开辟的，其本名为受精卵，这里不免称其为进程孵化器。此篇文章就着重介绍Zygote的创建流程，继而分析后续安卓系统中进程的创建原理。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_init.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_liucheng.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/dalvik.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_fenxi.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_ctreate.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_init.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_liucheng.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/dalvik.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_fenxi.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_ctreate.png">
 <meta property="og:updated_time" content="2019-02-21T04:06:27.575Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="源码分析之Zygote启动流程">
 <meta name="twitter:description" content="安卓中的Zygote进程，为万物进程的始祖进程。所有的应用创建都是基于此进程进行开辟的，其本名为受精卵，这里不免称其为进程孵化器。此篇文章就着重介绍Zygote的创建流程，继而分析后续安卓系统中进程的创建原理。">
-<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_init.png">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_init.png">
 
 
 
 <script type="text/javascript" id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/Houxubeiyin.github.io/',
+    root: '/fuckingcode/',
     scheme: 'Pisces',
     version: '5.1.4',
     sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
@@ -128,7 +128,7 @@
 
 
 
-  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/">
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/">
 
 
 
@@ -162,7 +162,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
+      <a href="/fuckingcode/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -190,7 +190,7 @@
       
         
         <li class="menu-item menu-item-home">
-          <a href="/Houxubeiyin.github.io/" rel="section">
+          <a href="/fuckingcode/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
             
@@ -200,7 +200,7 @@
       
         
         <li class="menu-item menu-item-about">
-          <a href="/Houxubeiyin.github.io/about/" rel="section">
+          <a href="/fuckingcode/about/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
             
@@ -210,7 +210,7 @@
       
         
         <li class="menu-item menu-item-tags">
-          <a href="/Houxubeiyin.github.io/tags/" rel="section">
+          <a href="/fuckingcode/tags/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
             
@@ -220,7 +220,7 @@
       
         
         <li class="menu-item menu-item-categories">
-          <a href="/Houxubeiyin.github.io/categories/" rel="section">
+          <a href="/fuckingcode/categories/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
             
@@ -230,7 +230,7 @@
       
         
         <li class="menu-item menu-item-archives">
-          <a href="/Houxubeiyin.github.io/archives/" rel="section">
+          <a href="/fuckingcode/archives/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
             
@@ -303,12 +303,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/06/源码分析之Zygote启动流程/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content>
-      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -355,7 +355,7 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/Houxubeiyin.github.io/categories/源码分析/" itemprop="url" rel="index">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
                     <span itemprop="name">源码分析</span>
                   </a>
                 </span>
@@ -373,8 +373,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count gitment-comments-count" data-xid="/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/" itemprop="commentsCount"></span>
+                <a href="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -444,11 +444,11 @@
     onrestart restart media //zygote重启，则会重启media
     onrestart restart netd  //zygote重启，则会重启netd
 </code></pre><p>脚本文件指明服务名称 zygote，服务路径/system/bin/app_process,启动参数-Xzygote /system/bin –zygote –start-system-server</p>
-<p>关于init.rc脚本分析<a href="https://891904833.gitee.io/fuckingcode/2018/05/22/init-rc%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">请戳这里</a></p>
-<p>关于init进程启动分析<a href="https://891904833.gitee.io/fuckingcode/2018/06/04/init%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/" target="_blank" rel="noopener">请戳这里</a></p>
+<p>关于init.rc脚本分析<a href="https://891904833.gitee.io/fuckingcode/2018/05/22/init-rc%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/">请戳这里</a></p>
+<p>关于init进程启动分析<a href="https://891904833.gitee.io/fuckingcode/2018/06/04/init%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">请戳这里</a></p>
 <h1 id="启动流程分析"><a href="#启动流程分析" class="headerlink" title="启动流程分析"></a>启动流程分析</h1><p>上面rc的脚本可以看出，zygote进程开启的服务进程为app_process，程序路径位于 /system/bin/app_process， 以启动参数 -Xzygote /system/bin –zygote 执行。 –start-system-server</p>
 <h2 id="app-process启动流程"><a href="#app-process启动流程" class="headerlink" title="app_process启动流程"></a>app_process启动流程</h2><p>app_process 进程的启动流程可以用下图来描述。</p>
-<img src="/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_init.png" title="zygote_init.png">
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_init.png" title="zygote_init.png">
 <p>–&gt;frameworks/base/cmds/app_process/app_main.cpp</p>
 <pre><code>// init.cpp解析init.rc文件，fork（）子进程执行到此
 int main(int argc, char* const argv[])
@@ -563,7 +563,7 @@ int main(int argc, char* const argv[])
 <li>启动AppRuntime.start()启动ZygoteInit首次进入Java世界</li>
 </ol>
 <h2 id="AppRuntime-start"><a href="#AppRuntime-start" class="headerlink" title="AppRuntime.start()"></a>AppRuntime.start()</h2><p>AppRuntime.start主要流程如下图所示：</p>
-<img src="/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_liucheng.png" title="zygote_liucheng.png">
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_liucheng.png" title="zygote_liucheng.png">
 <p>AppRuntime继承自AndroidRuntime，其父类实现了start方法，如下</p>
 <p>–&gt; framework/base/core/jni/AndroidRuntime.cpp</p>
 <pre><code>// runtime.start(&quot;com.android.internal.os.ZygoteInit&quot;, args, zygote);
@@ -643,7 +643,7 @@ void AndroidRuntime::start(const char* className, const Vector&lt;String8&gt;&am
 <li>释放内存操作</li>
 </ol>
 <h3 id="startVm-初始化虚拟机"><a href="#startVm-初始化虚拟机" class="headerlink" title="startVm()初始化虚拟机"></a>startVm()初始化虚拟机</h3><p>虚拟机的简要介绍如下：</p>
-<img src="/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/dalvik.png" title="dalvik.png">
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/dalvik.png" title="dalvik.png">
 <pre><code>int AndroidRuntime::startVm(JavaVM** pJavaVM, JNIEnv** pEnv, bool zygote)
 {
     // JNI检测功能，用于native层调用jni函数时进行常规检测，比较弱字符串格式是否符合要求，资源是否正确释放。该功能一般用于早期系统调试或手机Eng版，对于User版往往不会开启，引用该功能比较消耗系统CPU资源，降低系统性能。
@@ -764,7 +764,7 @@ static JNINativeMethod gMethods[] = {
         (void*) com_android_internal_os_RuntimeInit_nativeSetExitWithoutCleanup },
 };
 </code></pre><h2 id="ZygoteInit-main-执行"><a href="#ZygoteInit-main-执行" class="headerlink" title="ZygoteInit.main()执行"></a>ZygoteInit.main()执行</h2><p>AndroidRuntime最终调用CallStaticVoidMethod()，通过jni反射调用到ZygoteInit.java的main方法,首次进入Java世界，如下图：</p>
-<img src="/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_fenxi.png" title="zygote_fenxi.png">
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_fenxi.png" title="zygote_fenxi.png">
 <pre><code>--&gt; framework/base/core/java/com/android/internal/os/ZygoteInit.java
 
     public static void main(String argv[]) {
@@ -967,7 +967,7 @@ private static void registerZygoteSocket(String socketName) {
         }
     }
 }
-</code></pre><p>Zygote采用高效的I/O多路复用机制，保证在没有客户端连接请求或数据处理时休眠，否则响应客户端的请求，此处采用的poll机制，具体原理可以参考以下链接<br><a href="https://891904833.gitee.io/fuckingcode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/#more" target="_blank" rel="noopener">戳我</a></p>
+</code></pre><p>Zygote采用高效的I/O多路复用机制，保证在没有客户端连接请求或数据处理时休眠，否则响应客户端的请求，此处采用的poll机制，具体原理可以参考以下链接<br><a href="https://891904833.gitee.io/fuckingcode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/#more">戳我</a></p>
 <ol>
 <li>客户端通过openZygoteSocketIfNeeded()来跟zygote进程建立连接</li>
 <li>zygote接收到客户端连接请求后执行accept()</li>
@@ -1022,7 +1022,7 @@ private static void registerZygoteSocket(String socketName) {
     }
 }
 </code></pre><p>关于zygote如何fork并启动应用，完成进程间通信，留待后续分析，这里不做过多介绍，可以用如下图来说明其具体流程。</p>
-<img src="/Houxubeiyin.github.io/2018/06/06/源码分析之Zygote启动流程/zygote_ctreate.png" title="zygote_ctreate.png">
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_ctreate.png" title="zygote_ctreate.png">
 <h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>通过上述的介绍，基本将Zygote执行流程过了一遍，大概的框架梳理出来，后续在对其中具体的通信细节进行介绍，这里总结一下其流程：</p>
 <ol>
 <li>init.cpp解析init.zygote.rc中的参数，启动app_process,创建AppRuntime并调用AppRuntime.start()方法</li>
@@ -1087,7 +1087,7 @@ private static void registerZygoteSocket(String socketName) {
       
         <div class="post-tags">
           
-            <a href="/Houxubeiyin.github.io/tags/Zygote/" rel="tag"># Zygote</a>
+            <a href="/fuckingcode/tags/Zygote/" rel="tag"># Zygote</a>
           
         </div>
       
@@ -1100,7 +1100,7 @@ private static void registerZygoteSocket(String socketName) {
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/Houxubeiyin.github.io/2018/06/06/源码分析之SystemServer流程分析1/" rel="next" title="源码分析之SystemServer流程分析1">
+              <a href="/fuckingcode/2018/06/06/源码分析之SystemServer流程分析1/" rel="next" title="源码分析之SystemServer流程分析1">
                 <i class="fa fa-chevron-left"></i> 源码分析之SystemServer流程分析1
               </a>
             
@@ -1110,7 +1110,7 @@ private static void registerZygoteSocket(String socketName) {
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/Houxubeiyin.github.io/2018/06/07/源码分析之SystemServer流程分析2/" rel="prev" title="源码分析之SystemServer流程分析2">
+              <a href="/fuckingcode/2018/06/07/源码分析之SystemServer流程分析2/" rel="prev" title="源码分析之SystemServer流程分析2">
                 源码分析之SystemServer流程分析2 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1185,7 +1185,7 @@ private static void registerZygoteSocket(String socketName) {
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
@@ -1196,7 +1196,7 @@ private static void registerZygoteSocket(String socketName) {
             
               <div class="site-state-item site-state-posts">
               
-                <a href="/Houxubeiyin.github.io/archives/">
+                <a href="/fuckingcode/archives/">
               
                   <span class="site-state-item-count">75</span>
                   <span class="site-state-item-name">日志</span>
@@ -1230,7 +1230,7 @@ private static void registerZygoteSocket(String socketName) {
 
           
             <div class="feed-link motion-element">
-              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1394,64 +1394,64 @@ private static void registerZygoteSocket(String socketName) {
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
   
-
-
-  
-
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/utils.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/motion.js?v=5.1.4"></script>
-
-
-
-  
-  
-
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/affix.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/schemes/pisces.js?v=5.1.4"></script>
-
-
-
-  
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/scrollspy.js?v=5.1.4"></script>
-<script type="text/javascript" src="/Houxubeiyin.github.io/js/src/post-details.js?v=5.1.4"></script>
-
 
 
   
 
 
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/bootstrap.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
 
 
 
@@ -1538,7 +1538,7 @@ private static void registerZygoteSocket(String socketName) {
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/Houxubeiyin.github.io/" + search_path;
+    var path = "/fuckingcode/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

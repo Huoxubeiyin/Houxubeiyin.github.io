@@ -40,7 +40,7 @@
 
   
   
-  <link href="/Houxubeiyin.github.io/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
 
 
 
@@ -48,21 +48,21 @@
 
 
 
-<link href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
 
-<link href="/Houxubeiyin.github.io/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=5.1.4">
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=5.1.4">
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=5.1.4">
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
 
 
-  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=5.1.4" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
 
 
 
@@ -74,7 +74,7 @@
 
 
 
-  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
@@ -85,23 +85,23 @@
 <meta name="keywords" content="Makefile,源码分析">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android源码编译之make流程分析">
-<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/index.html">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="前面分别分析了安卓源码编译过程中 source 和 lunch 命令下的具体操作流程。其中source是向shell环境导入相关变量，lunch命令则是执行build/envsetup.sh文件中定义好的函数，与lunch函数相似，编译系统命令m（make），mm，mmm等命令也是其中定义好的方法，下面我们就来具体分析一下。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/make_jiagou.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/make_jiagou.png">
 <meta property="og:updated_time" content="2018-07-16T01:55:42.756Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android源码编译之make流程分析">
 <meta name="twitter:description" content="前面分别分析了安卓源码编译过程中 source 和 lunch 命令下的具体操作流程。其中source是向shell环境导入相关变量，lunch命令则是执行build/envsetup.sh文件中定义好的函数，与lunch函数相似，编译系统命令m（make），mm，mmm等命令也是其中定义好的方法，下面我们就来具体分析一下。">
-<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/make_jiagou.png">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/make_jiagou.png">
 
 
 
 <script type="text/javascript" id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/Houxubeiyin.github.io/',
+    root: '/fuckingcode/',
     scheme: 'Pisces',
     version: '5.1.4',
     sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
@@ -124,7 +124,7 @@
 
 
 
-  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/">
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/">
 
 
 
@@ -158,7 +158,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
+      <a href="/fuckingcode/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -186,7 +186,7 @@
       
         
         <li class="menu-item menu-item-home">
-          <a href="/Houxubeiyin.github.io/" rel="section">
+          <a href="/fuckingcode/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
             
@@ -196,7 +196,7 @@
       
         
         <li class="menu-item menu-item-about">
-          <a href="/Houxubeiyin.github.io/about/" rel="section">
+          <a href="/fuckingcode/about/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
             
@@ -206,7 +206,7 @@
       
         
         <li class="menu-item menu-item-tags">
-          <a href="/Houxubeiyin.github.io/tags/" rel="section">
+          <a href="/fuckingcode/tags/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
             
@@ -216,7 +216,7 @@
       
         
         <li class="menu-item menu-item-categories">
-          <a href="/Houxubeiyin.github.io/categories/" rel="section">
+          <a href="/fuckingcode/categories/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
             
@@ -226,7 +226,7 @@
       
         
         <li class="menu-item menu-item-archives">
-          <a href="/Houxubeiyin.github.io/archives/" rel="section">
+          <a href="/fuckingcode/archives/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
             
@@ -299,12 +299,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/27/Android源码编译之make流程分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content>
-      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -351,7 +351,7 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/Houxubeiyin.github.io/categories/源码编译/" itemprop="url" rel="index">
+                  <a href="/fuckingcode/categories/源码编译/" itemprop="url" rel="index">
                     <span itemprop="name">源码编译</span>
                   </a>
                 </span>
@@ -369,8 +369,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count gitment-comments-count" data-xid="/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/" itemprop="commentsCount"></span>
+                <a href="/fuckingcode/2018/06/27/Android源码编译之make流程分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/27/Android源码编译之make流程分析/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -629,7 +629,7 @@
 </li>
 </ol>
 <p>这里引用罗老师博客中的图片来说明其编译过程：</p>
-<img src="/Houxubeiyin.github.io/2018/06/27/Android源码编译之make流程分析/make_jiagou.png" class="make编译流程一览">
+<img src="/fuckingcode/2018/06/27/Android源码编译之make流程分析/make_jiagou.png" class="make编译流程一览">
 <h4 id="main-mk文件分析"><a href="#main-mk文件分析" class="headerlink" title="main.mk文件分析"></a>main.mk文件分析</h4><p>main.mk文件存在与build/core文件夹下，其通过Android源码根目录下的Makefile文件引用进来，当在源码跟路径下make时候，便会自动调用到main.mk，其代码如下：</p>
 <pre><code>### DO NOT EDIT THIS FILE ###
 include build/core/main.mk
@@ -928,9 +928,9 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
       
         <div class="post-tags">
           
-            <a href="/Houxubeiyin.github.io/tags/Makefile/" rel="tag"># Makefile</a>
+            <a href="/fuckingcode/tags/Makefile/" rel="tag"># Makefile</a>
           
-            <a href="/Houxubeiyin.github.io/tags/源码分析/" rel="tag"># 源码分析</a>
+            <a href="/fuckingcode/tags/源码分析/" rel="tag"># 源码分析</a>
           
         </div>
       
@@ -943,7 +943,7 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/Houxubeiyin.github.io/2018/06/27/Android源码编译之lunch流程分析/" rel="next" title="Android源码编译之lunch流程分析">
+              <a href="/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/" rel="next" title="Android源码编译之lunch流程分析">
                 <i class="fa fa-chevron-left"></i> Android源码编译之lunch流程分析
               </a>
             
@@ -953,7 +953,7 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/Houxubeiyin.github.io/2018/07/12/Binder系统分析之应用层AIDL的具体实现/" rel="prev" title="Binder系统分析之应用层AIDL的具体实现">
+              <a href="/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/" rel="prev" title="Binder系统分析之应用层AIDL的具体实现">
                 Binder系统分析之应用层AIDL的具体实现 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1028,7 +1028,7 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
@@ -1039,7 +1039,7 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
             
               <div class="site-state-item site-state-posts">
               
-                <a href="/Houxubeiyin.github.io/archives/">
+                <a href="/fuckingcode/archives/">
               
                   <span class="site-state-item-count">75</span>
                   <span class="site-state-item-name">日志</span>
@@ -1073,7 +1073,7 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
 
           
             <div class="feed-link motion-element">
-              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1237,64 +1237,64 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
   
-
-
-  
-
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/utils.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/motion.js?v=5.1.4"></script>
-
-
-
-  
-  
-
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/affix.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/schemes/pisces.js?v=5.1.4"></script>
-
-
-
-  
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/scrollspy.js?v=5.1.4"></script>
-<script type="text/javascript" src="/Houxubeiyin.github.io/js/src/post-details.js?v=5.1.4"></script>
-
 
 
   
 
 
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/bootstrap.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
 
 
 
@@ -1381,7 +1381,7 @@ BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好�
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/Houxubeiyin.github.io/" + search_path;
+    var path = "/fuckingcode/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

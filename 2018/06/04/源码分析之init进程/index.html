@@ -40,7 +40,7 @@
 
   
   
-  <link href="/Houxubeiyin.github.io/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
 
 
 
@@ -48,21 +48,21 @@
 
 
 
-<link href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
 
-<link href="/Houxubeiyin.github.io/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=5.1.4">
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=5.1.4">
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=5.1.4">
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
 
 
-  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=5.1.4" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
 
 
 
@@ -74,7 +74,7 @@
 
 
 
-  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
@@ -85,36 +85,36 @@
 <meta name="keywords" content="init">
 <meta property="og:type" content="article">
 <meta property="og:title" content="源码分析之init进程">
-<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/index.html">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="init为安卓系统开启后，由kernel引导的第一个进程，其通过解析代码中不同的init.rc脚本，不断的将系统服务启动起来，具体的脚本文件已在之前博文中进行了介绍。本章节主要介绍init进程的启动流程。  init流程分析 主要任务  第一个应用程序 创建目录，挂在分区 解析应用脚本 启动服务 守护服务   主要过程  创建目录 klog_init()    将log重定向到/proc/km">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc_on.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc_services.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_prop.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc_parse_config_file.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shijianjiegou.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shijianliebiao.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/zhenglishijianliebiao.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_goujianshijian.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_start.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shouhujincheng1.png">
-<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shouhujincheng2.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc_on.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc_services.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_prop.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc_parse_config_file.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shijianjiegou.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shijianliebiao.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/zhenglishijianliebiao.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_goujianshijian.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_start.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng1.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng2.png">
 <meta property="og:updated_time" content="2019-02-21T07:35:06.790Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="源码分析之init进程">
 <meta name="twitter:description" content="init为安卓系统开启后，由kernel引导的第一个进程，其通过解析代码中不同的init.rc脚本，不断的将系统服务启动起来，具体的脚本文件已在之前博文中进行了介绍。本章节主要介绍init进程的启动流程。  init流程分析 主要任务  第一个应用程序 创建目录，挂在分区 解析应用脚本 启动服务 守护服务   主要过程  创建目录 klog_init()    将log重定向到/proc/km">
-<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.png">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.png">
 
 
 
 <script type="text/javascript" id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/Houxubeiyin.github.io/',
+    root: '/fuckingcode/',
     scheme: 'Pisces',
     version: '5.1.4',
     sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
@@ -137,7 +137,7 @@
 
 
 
-  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/">
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/">
 
 
 
@@ -171,7 +171,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
+      <a href="/fuckingcode/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -199,7 +199,7 @@
       
         
         <li class="menu-item menu-item-home">
-          <a href="/Houxubeiyin.github.io/" rel="section">
+          <a href="/fuckingcode/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
             
@@ -209,7 +209,7 @@
       
         
         <li class="menu-item menu-item-about">
-          <a href="/Houxubeiyin.github.io/about/" rel="section">
+          <a href="/fuckingcode/about/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
             
@@ -219,7 +219,7 @@
       
         
         <li class="menu-item menu-item-tags">
-          <a href="/Houxubeiyin.github.io/tags/" rel="section">
+          <a href="/fuckingcode/tags/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
             
@@ -229,7 +229,7 @@
       
         
         <li class="menu-item menu-item-categories">
-          <a href="/Houxubeiyin.github.io/categories/" rel="section">
+          <a href="/fuckingcode/categories/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
             
@@ -239,7 +239,7 @@
       
         
         <li class="menu-item menu-item-archives">
-          <a href="/Houxubeiyin.github.io/archives/" rel="section">
+          <a href="/fuckingcode/archives/" rel="section">
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
             
@@ -312,12 +312,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/04/源码分析之init进程/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content>
-      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -364,7 +364,7 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/Houxubeiyin.github.io/categories/源码分析/" itemprop="url" rel="index">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
                     <span itemprop="name">源码分析</span>
                   </a>
                 </span>
@@ -382,8 +382,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count gitment-comments-count" data-xid="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/" itemprop="commentsCount"></span>
+                <a href="/fuckingcode/2018/06/04/源码分析之init进程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/04/源码分析之init进程/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -477,25 +477,25 @@
 <h2 id="rc脚本文件可以用以下几张图片概括"><a href="#rc脚本文件可以用以下几张图片概括" class="headerlink" title="rc脚本文件可以用以下几张图片概括"></a>rc脚本文件可以用以下几张图片概括</h2><ul>
 <li>文件结构</li>
 </ul>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.png" title="init.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.png" title="init.png">
 <pre><code>init.rc文件路径在/system/core/rootdir/init.rc下存在，根据不同的平台又有自己的rc脚本，通过import导入
 </code></pre><ul>
 <li>导包内容</li>
 </ul>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc.png" title="init.rc.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc.png" title="init.rc.png">
 <pre><code>其中 ${ ro.hardware } 的值可以通过 getprop ro.harware 命令获取，其对应于特定平台的rc文件，例如 getprop ro.hardware = mooney , 那么导包对应的rc脚本文件为init.mooney.rc
 </code></pre><ul>
 <li>触发器</li>
 </ul>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc_on.png" title="init.rc_on.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc_on.png" title="init.rc_on.png">
 <pre><code>脚本中声明多个 on ... 触发器，可以通过代码action_for_each_trigger(...)触发实现
 </code></pre><ul>
 <li>service服务</li>
 </ul>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc_services.png" title="init.rc_services.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc_services.png" title="init.rc_services.png">
 <pre><code>service服务脚本声明：指定脚本文件名称，路径，启动参数，类属以及其他属性值
 </code></pre><h3 id="init进程具体流程分析"><a href="#init进程具体流程分析" class="headerlink" title="init进程具体流程分析"></a>init进程具体流程分析</h3><p>init 主要的执行流程如下图所示</p>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.png" title="init.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.png" title="init.png">
 <h4 id="初始化-kernel-log-，位于设备节点-dev-kmsg"><a href="#初始化-kernel-log-，位于设备节点-dev-kmsg" class="headerlink" title="初始化 kernel log ，位于设备节点/dev/kmsg"></a>初始化 kernel log ，位于设备节点/dev/kmsg</h4><p>–&gt; klog.c</p>
 <pre><code>void klog_init(void) {
     if (klog_fd &gt;= 0) return; /* Already initialized */
@@ -743,8 +743,8 @@ void start_property_service() {
     register_epoll_handler(property_set_fd, handle_property_set_fd);
 }
 </code></pre><p>用户可以通过串口开启、结束指定服务，通过命令setprop更改系统属性值，三方app也可以通过指定的api更改系统属性（权限限制），其到底层都是通过socket机制，通过init中的handle_property_***()方法实现。其流程模型如下：</p>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_prop.png" title="init_prop.png">
-<h4 id="解析-rc-脚本文件"><a href="#解析-rc-脚本文件" class="headerlink" title="解析 *.rc 脚本文件"></a>解析 *.rc 脚本文件</h4><img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init.rc_parse_config_file.png" title="init.rc_parse_config_file.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_prop.png" title="init_prop.png">
+<h4 id="解析-rc-脚本文件"><a href="#解析-rc-脚本文件" class="headerlink" title="解析 *.rc 脚本文件"></a>解析 *.rc 脚本文件</h4><img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc_parse_config_file.png" title="init.rc_parse_config_file.png">
 <p>–&gt; init_parser.cpp</p>
 <pre><code>// 解析指定路径下文件
 int init_parse_config_file(const char* path) {
@@ -1044,7 +1044,7 @@ static int lookup_keyword(const char *s)
     }
     return K_UNKNOWN;
 }
-</code></pre><h4 id="根据脚本文件不同的标签分类解析"><a href="#根据脚本文件不同的标签分类解析" class="headerlink" title="根据脚本文件不同的标签分类解析"></a>根据脚本文件不同的标签分类解析</h4><img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shijianjiegou.png" title="init_shijianjiegou.png">
+</code></pre><h4 id="根据脚本文件不同的标签分类解析"><a href="#根据脚本文件不同的标签分类解析" class="headerlink" title="根据脚本文件不同的标签分类解析"></a>根据脚本文件不同的标签分类解析</h4><img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shijianjiegou.png" title="init_shijianjiegou.png">
 <pre><code>static void parse_new_section(struct parse_state *state, int kw,
                        int nargs, char **args)
 {
@@ -1074,7 +1074,7 @@ static int lookup_keyword(const char *s)
     }
     state-&gt;parse_line = parse_line_no_op;
 }
-</code></pre><h4 id="通过不同标签分类解析并加入对应的链表"><a href="#通过不同标签分类解析并加入对应的链表" class="headerlink" title="通过不同标签分类解析并加入对应的链表"></a>通过不同标签分类解析并加入对应的链表</h4><img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shijianliebiao.png" title="init_shijianliebiao.png">
+</code></pre><h4 id="通过不同标签分类解析并加入对应的链表"><a href="#通过不同标签分类解析并加入对应的链表" class="headerlink" title="通过不同标签分类解析并加入对应的链表"></a>通过不同标签分类解析并加入对应的链表</h4><img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shijianliebiao.png" title="init_shijianliebiao.png">
 <pre><code>    // 解析脚本中的service节点加入链表
     static void *parse_service(struct parse_state *state, int nargs, char **args)
     {
@@ -1419,7 +1419,7 @@ void action_for_each_trigger(const char *trigger,
     }
 }
 </code></pre><p>通过指定的触发器，遍历解析的rc脚本文件相应command，执行具体的操作，流程图如下：</p>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/zhenglishijianliebiao.png" title="zhenglishijianliebiao.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/zhenglishijianliebiao.png" title="zhenglishijianliebiao.png">
 <h4 id="构建事件，并加入队列中"><a href="#构建事件，并加入队列中" class="headerlink" title="构建事件，并加入队列中"></a>构建事件，并加入队列中</h4><p>–&gt; init.cpp</p>
 <pre><code>// 构建事件，并加入队列中
 void queue_builtin_action(int (*func)(int nargs, char **args), const char *name)
@@ -1442,7 +1442,7 @@ void queue_builtin_action(int (*func)(int nargs, char **args), const char *name)
     action_add_queue_tail(act);
 }
 </code></pre><p>根据构建自定事件，并加入对列中，通指定触发器来触发操作，增加灵活性，如下图所示流程：</p>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_goujianshijian.png" title="init_goujianshijian.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_goujianshijian.png" title="init_goujianshijian.png">
 <h4 id="开启服务（死循环）"><a href="#开启服务（死循环）" class="headerlink" title="开启服务（死循环）"></a>开启服务（死循环）</h4><p>–&gt; init.cpp</p>
 <pre><code>// 执行命令
 void execute_one_command() {
@@ -1515,7 +1515,7 @@ struct action *action_remove_queue_head(void)
 <li>例如service，遍历解析的services列表，找到指定的service</li>
 <li>启动指定的service服务</li>
 </ol>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_start.png" title="init_start.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_start.png" title="init_start.png">
 <h4 id="守护进程，重启服务"><a href="#守护进程，重启服务" class="headerlink" title="守护进程，重启服务"></a>守护进程，重启服务</h4><p>–&gt; init.cpp</p>
 <pre><code>// 重启服务
 static void restart_processes()
@@ -1542,7 +1542,7 @@ void service_for_each_class(const char *classname,
         }
     }
 }
-</code></pre><img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shouhujincheng1.png" title="init_shouhujincheng1.png">
+</code></pre><img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng1.png" title="init_shouhujincheng1.png">
 <ol>
 <li>内核通过fork产生父子两个进程，之间通过socket产生通信</li>
 <li>init进程死循环等待socket内的消息</li>
@@ -1550,7 +1550,7 @@ void service_for_each_class(const char *classname,
 <li>启动找到的service服务（是否起启动取决service中具体的约束内容）</li>
 </ol>
 <p>具体的消息传递流程如下：</p>
-<img src="/Houxubeiyin.github.io/2018/06/04/源码分析之init进程/init_shouhujincheng2.png" title="init_shouhujincheng2.png">
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng2.png" title="init_shouhujincheng2.png">
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ol>
 <li>init 脚本中将服务统一归纳起来，由 init.cpp 统一解析，开启服务并守护，实现了两者之间的解耦</li>
 <li>通过import导入相关脚本文件，初始化属性服务，开启socket通信处理，解析脚本文件，开启守护进程服务，死循环等待socket通信</li>
@@ -1603,7 +1603,7 @@ void service_for_each_class(const char *classname,
       
         <div class="post-tags">
           
-            <a href="/Houxubeiyin.github.io/tags/init/" rel="tag"># init</a>
+            <a href="/fuckingcode/tags/init/" rel="tag"># init</a>
           
         </div>
       
@@ -1616,7 +1616,7 @@ void service_for_each_class(const char *classname,
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/Houxubeiyin.github.io/2018/05/31/源码修改之55寸双屏镜像修改单屏/" rel="next" title="屏参修改">
+              <a href="/fuckingcode/2018/05/31/源码修改之55寸双屏镜像修改单屏/" rel="next" title="屏参修改">
                 <i class="fa fa-chevron-left"></i> 屏参修改
               </a>
             
@@ -1626,7 +1626,7 @@ void service_for_each_class(const char *classname,
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/Houxubeiyin.github.io/2018/06/06/源码分析之SystemServer流程分析1/" rel="prev" title="源码分析之SystemServer流程分析1">
+              <a href="/fuckingcode/2018/06/06/源码分析之SystemServer流程分析1/" rel="prev" title="源码分析之SystemServer流程分析1">
                 源码分析之SystemServer流程分析1 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1701,7 +1701,7 @@ void service_for_each_class(const char *classname,
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
@@ -1712,7 +1712,7 @@ void service_for_each_class(const char *classname,
             
               <div class="site-state-item site-state-posts">
               
-                <a href="/Houxubeiyin.github.io/archives/">
+                <a href="/fuckingcode/archives/">
               
                   <span class="site-state-item-count">75</span>
                   <span class="site-state-item-name">日志</span>
@@ -1746,7 +1746,7 @@ void service_for_each_class(const char *classname,
 
           
             <div class="feed-link motion-element">
-              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1910,64 +1910,64 @@ void service_for_each_class(const char *classname,
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
   
 
   
   
-    <script type="text/javascript" src="/Houxubeiyin.github.io/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
   
-
-
-  
-
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/utils.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/motion.js?v=5.1.4"></script>
-
-
-
-  
-  
-
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/affix.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/schemes/pisces.js?v=5.1.4"></script>
-
-
-
-  
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/scrollspy.js?v=5.1.4"></script>
-<script type="text/javascript" src="/Houxubeiyin.github.io/js/src/post-details.js?v=5.1.4"></script>
-
 
 
   
 
 
-  <script type="text/javascript" src="/Houxubeiyin.github.io/js/src/bootstrap.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
 
 
 
@@ -2054,7 +2054,7 @@ void service_for_each_class(const char *classname,
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/Houxubeiyin.github.io/" + search_path;
+    var path = "/fuckingcode/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {
