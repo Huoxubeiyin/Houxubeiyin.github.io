@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Socket TCP UDP">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="本章节主要介绍Linux下如何通过系统提供的API接口实现Socket编程。通过结合之前几篇博文中的内容，包括网络基础，TCP/IP模型以及其之间建议通信的链接细节，从理论到代码完整的贯通，毕竟Socket编程的重要性，对于程序员来说不言而喻了。">
+<meta name="keywords" content="Socket TCP UDP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程之Socket编程">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="本章节主要介绍Linux下如何通过系统提供的API接口实现Socket编程。通过结合之前几篇博文中的内容，包括网络基础，TCP/IP模型以及其之间建议通信的链接细节，从理论到代码完整的贯通，毕竟Socket编程的重要性，对于程序员来说不言而喻了。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/TCP协议通讯流程.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/UDP协议通讯流程.png">
+<meta property="og:updated_time" content="2019-01-19T07:00:37.985Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux系统编程之Socket编程">
+<meta name="twitter:description" content="本章节主要介绍Linux下如何通过系统提供的API接口实现Socket编程。通过结合之前几篇博文中的内容，包括网络基础，TCP/IP模型以及其之间建议通信的链接细节，从理论到代码完整的贯通，毕竟Socket编程的重要性，对于程序员来说不言而喻了。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/">
+
+
+
+
+
+  <title>Linux系统编程之Socket编程 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/18/Linux系统编程之Socket编程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux系统编程之Socket编程</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-18T11:45:20+08:00">
+                2019-01-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2019/01/18/Linux系统编程之Socket编程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2019/01/18/Linux系统编程之Socket编程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>本章节主要介绍Linux下如何通过系统提供的API接口实现Socket编程。通过结合之前几篇博文中的内容，包括网络基础，TCP/IP模型以及其之间建议通信的链接细节，从理论到代码完整的贯通，毕竟Socket编程的重要性，对于程序员来说不言而喻了。</strong><br><a id="more"></a></p>
+<h1 id="Socket编程"><a href="#Socket编程" class="headerlink" title="Socket编程"></a>Socket编程</h1><h2 id="开胃菜"><a href="#开胃菜" class="headerlink" title="开胃菜"></a>开胃菜</h2><p>在TCP/IP协议中，“IP地址+TCP或UDP端口号”就唯一标识网络通讯中的一个进程，因此，“IP 地址+端口号”就称为socket。</p>
+<p>在TCP协议中，建立连接的两个进程各自有一个socket来标识，那么这两个socket组成 的socket pair就唯一标识一个连接。socket本身有“插座”的意思，因此用来描述网络连接的一对一关系。</p>
+<p>TCP/IP协议最早在BSD UNIX上实现，为TCP/IP协议设计的应用层编程接口称为socket API。</p>
+<p>再介绍具体的编程之前，我们还需要了解一下几个重要概念。</p>
+<h3 id="网络字节序"><a href="#网络字节序" class="headerlink" title="网络字节序"></a>网络字节序</h3><p>我们已经知道，内存中的多字节数据相对于内存地址有大端和小端之分，磁盘文件中的多字节数据相对于文件中的偏移地址也有大端小端之分。网络数据流同样有大端小端之分，那么如何定义网络数据流的地址呢?</p>
+<p>发送主机通常将发送缓冲区中的数据按内存地址从低到高的顺序发出，接收主机把从网络上接到的字节依次保存在接收缓冲区中，也是按内存地址从低到高的顺序保存，因此，网络数据流的地址应这样规定:先发出的数据是低地址，后发出的数据是高地址。</p>
+<p>TCP/IP协议规定，网络数据流应采用大端字节序，即低地址高字节。例如上一节的UDP段格式，地址0-1是16位的源端口号，如果这个端口号是1000(0x3e8)，则地址0是0x03，地址1是0xe8，也就是先发0x03，再发0xe8，这16位在发送主机的缓冲区中也应该是低地址存0x03，高地址存0xe8。但是，如果发送主机是小端字节序的，这16位被解释成0xe803，而不是1000。因此，发送主机把1000填到发送缓冲区之前需要做字节序的转换。同样地，接收主机如果是小端字节序的，接到16位的源端口号也要做字节序的转换。如果主机是大端字节序的，发送和接收都不需要做转换。同理，32位的IP地址也要考虑网络字节序和主机字节序的问题。</p>
+<p>为使网络程序具有可移植性，使同样的C代码在大端和小端计算机上编译后都能正常运行，可以调用以下库函数做网络字节序和主机字节序的转换。</p>
+<pre><code>#include &lt;arpa/inet.h&gt;
+uint32_t htonl(uint32_t hostlong);
+uint16_t htons(uint16_t hostshort);
+uint32_t ntohl(uint32_t netlong);
+uint16_t ntohs(uint16_t netshort);
+
+h表示host，n表示network，l表示32位长整数，s表示16位短整数
+如果主机是小端字节序，这些函数将参数做相应的大小端转换后返回，如果主机是大端字节序，这些函数不作转换，将参数原封不动的返回。
+</code></pre><h3 id="IP地址相关函数"><a href="#IP地址相关函数" class="headerlink" title="IP地址相关函数"></a>IP地址相关函数</h3><p>IP转换函数再早期只支持IPv4，也不支持可重入，具体如下：</p>
+<pre><code>#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+
+int inet_aton(const *cp, struct in_addr *inp);
+in_addr_t inet_addr(const char *cp);
+char *inet_ntoa(struct in_addr in);
+</code></pre><p>在后续编程中，使用下面新的API接口实现方式：</p>
+<pre><code>#include &lt;arpa/inet.h&gt;
+
+int inet_pton(int af, const char *src, void *dst);
+const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
+
+支持IPv4和IPv6
+可重入函数
+</code></pre><p>其中inet_pton和inet_ntop不仅可以转换IPv4的in_addr，还可以转换IPv6的in6_addr，因此函数接口是void *addrptr。</p>
+<p>这里就不先贴代码了，总体先有个印象，后续代码中会有详细注释。</p>
+<h3 id="结构体sockaddr"><a href="#结构体sockaddr" class="headerlink" title="结构体sockaddr"></a>结构体sockaddr</h3><p>strcut sockaddr 很多网络编程函数诞生早于IPv4协议，那时候都使用的是sockaddr结构体,为了向前兼容，现在sockaddr退化成了(void *)的作用，传递一个地址给函数，至于这个函数是sockaddr_in还是sockaddr_in6，由地址族确定，然后函数内部再强制类型转化为所需的地址类型。</p>
+<img src="/fuckingcode/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png" class="sockaddr数据结构">
+<pre><code>struct sockaddr {
+sa_family_t sa_family;
+char  sa_data[14];
+};
+
+struct sockaddr_in {
+__kernel_sa_family_t  sin_family;
+__be16 sin_port;
+struct in_addr sin_addr;
+
+unsigned char __pad[__SOCK_SIZE__ - sizeof(short int) -
+    sizeof(unsigned short int) - sizeof(struct in_addr)];
+};
+
+/* Internet address. */
+struct in_addr {
+__be32  s_addr;
+};
+
+struct sockaddr_in6 {
+unsigned short int  sin6_family;
+__be16 sin6_port;
+__be32 sin6_flowinfo;
+struct in6_addr sin6_addr;
+__u32 sin6_scope_id;
+};
+
+struct in6_addr {
+union {
+    __u8
+    u6_addr8[16];
+    __be16 u6_addr16[8];
+    __be32 u6_addr32[4];
+} in6_u;
+
+#define s6_addr in6_u.u6_addr8
+#define s6_addr16 in6_u.u6_addr16
+#define s6_addr32 in6_u.u6_addr32
+};
+
+#define UNIX_PATH_MAX 108
+
+struct sockaddr_un {
+__kernel_sa_family_t sun_family;
+char sun_path[UNIX_PATH_MAX];
+};
+</code></pre><p>IPv4和IPv6的地址格式定义在 netinet/in.h 中，IPv4地址用 sockaddr_in 结构体表示，包括16位端口号和32位IP地址，IPv6地址用 sockaddr_in6 结构体表示，包括16位端口号、128位IP地址和一些控制字段。</p>
+<p>UNIX Domain Socket的地址格式定义在 sys/un.h 中，用 sock_addr_un 结构体表示。各种socket地址结构体的开头都是相同的，前16位表示整个结构体的长度(并不是所有UNIX的实现都有长度字段，如Linux就没有)，后16位表示地址类型。</p>
+<p>IPv4、IPv6和Unix Domain Socket的地址类型分别定义为常数AF_INET、AF_INET6、AF_UNIX。 这样，只要取得某种sockaddr结构体的首地址，不需要知道具体是哪种类型的sockaddr结构体，就可以根据地址类型字段确定结构体中的内容。</p>
+<p>因此，socket API可以接受各种类型的sockaddr结构体指针做参数，例如bind、accept、connect等函数，这些函数的参数应该设计成void <em>类型以便接受各种类型的指针，但是sock API的实现早于ANSI C标准化，那时还没有void </em>类型，因此这些函数的参数都用struct sockaddr *类型表示，在传递参数之前要强制类型转换一下，例如:</p>
+<pre><code>bind(sockfd, (struct sockaddr *)&amp;serveraddr, sizeof(serveraddr));
+</code></pre><p>更多关于sockaddr的信息参考以下链接</p>
+<p><a href="https://blog.csdn.net/albertsh/article/details/80991684" target="_blank" rel="noopener">关于sockaddr的相关解释</a></p>
+<h2 id="食材"><a href="#食材" class="headerlink" title="食材"></a>食材</h2><p>在介绍具体的编程模型之前，我们先来了解一下其中涉及到的重要函数，只有了解了这些函数的相关概念，在后续的实战编程中，我们结合模型，才能更好的理解其流程。</p>
+<h3 id="socket"><a href="#socket" class="headerlink" title="socket"></a>socket</h3><p>创建一个socket网络通讯端口。</p>
+<p>函数原型</p>
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+
+int socket(int domain, int type, int protocol);
+
+domain:
+    AF_INET 这是大多数用来产生socket的协议,使用TCP或UDP来传输,用IPv4的地址
+    AF_INET6 与上面类似,不过是来用IPv6的地址
+    AF_UNIX 本地协议,使用在Unix和Linux系统上,一般都是当客户端和服务器在同一台及其上的时候使用
+type:
+    SOCK_STREAM 这个协议是按照顺序的、可靠的、数据完整的基于字节流的连接。这是一个使用最多的socket类型,这个socket是使用TCP来进行传输。
+    SOCK_DGRAM 这个协议是无连接的、固定长度的传输调用。该协议是不可靠的,使用UDP来进行它的连接。
+    SOCK_SEQPACKET 这个协议是双线路的、可靠的连接,发送固定长度的数据包进行传输。必须把这个包完整的接受才能进行读取。
+    SOCK_RAW 这个socket类型提供单一的网络访问,这个socket类型使用ICMP公共协议。(ping、traceroute使用该协议)
+    SOCK_RDM 这个类型是很少使用的,在大部分的操作系统上没有实现,它是提供给数据链路层使用,不保证数据包的顺序
+protocol:
+    0 默认协议
+返回值:
+    成功返回一个新的文件描述符,失败返回-1,设置errno
+</code></pre><p>socket()打开一个网络通讯端口,如果成功的话,就像 open() 一样返回一个文件描用出错则返回 -1。对于 IPv4,domain 参数指定为 AF_INET。对于TCP协议,type 参数指定为 SOCK_STREAM,表示面向流的传输协议。如果是 UDP 协议,则 type 参数指定为 SOCK_DGRAM,表示面向数据报的传输协议。protocol 参数的介绍从略,指定为 0 即可。</p>
+<h3 id="bind"><a href="#bind" class="headerlink" title="bind"></a>bind</h3><p>执行socket端口与设备端口号和ip地址绑定。</p>
+<p>函数原型</p>
+<pre><code>  #include &lt;sys/types.h&gt;
+  #include &lt;sys/socket.h&gt;
+
+  int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+  sockfd:
+      socket文件描述符
+  addr:
+      构造出IP地址加端口号
+  addrlen:
+      sizeof(addr)长度
+  返回值:
+成功返回0,失败返回-1, 设置errno
+</code></pre><p>服务器程序所监听的网络地址和端口号通常是固定不变的,客户端程序得知服务器程序的地址和端口号后就可以向服务器发起连接,因此服务器需要调用 bind 绑定一个固定的网络地址和端口号。</p>
+<p>bind()的作用是将参数 sockfd 和 结构体 sockaddr addr绑定在一起,使 sockfd 这个用于网络通讯的文件描述符监听 addr 所描述的地址和端口号。struct sockaddr *是一个通用指针类型,addr 参数实际上可以接受多种协议的 sockaddr 结构体,而它们的长度各不相同,所以需要第三个参数 addrlen 指定结构体的长度。函数接口会根据其长度自动分析出其地址是 IPV4 还是 IPV6，例如:</p>
+<pre><code>struct sockaddr_in servaddr;
+// 清零
+bzero(&amp;servaddr, sizeof(servaddr));
+// 指定 IP地址为 IPV4
+servaddr.sin_family = AF_INET;
+// 任意本地 IP地址
+servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+servaddr.sin_port = htons(8000);
+</code></pre><p>首先将整个结构体清零,然后设置地址类型为 AF_INET,网络地址为 INADDR_ANY,这个宏表示本地的任意IP地址,因为服务器可能有多个网卡,每个网卡也可能绑定多个IP地址,这样设置可以在所有的IP地址上监听,直到与某个客户端建立了连接时才确定下来到底用哪个IP地址,端口号为8000。</p>
+<h3 id="listen"><a href="#listen" class="headerlink" title="listen"></a>listen</h3><p>接受客户端连接，就绪等待处理。</p>
+<p>函数原型</p>
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+
+int listen(int sockfd, int backlog);
+
+sockfd:
+    socket文件描述符
+backlog:
+    排队建立3次握手队列和刚刚建立3次握手队列的链接数和
+</code></pre><p>查看系统默认backlog</p>
+<pre><code>cat /proc/sys/net/ipv4/tcp_max_syn_backlog
+</code></pre><p>典型的服务器程序可以同时服务于多个客户端,当有客户端发起连接时,服务器调用的 accept() 返回并接受这个连接,如果有大量的客户端发起连接而服务器来不及处理,尚未 accept 的客户端就处于连接等待状态, listen() 声明 sockfd 处于监听状态,并且最多允许有 backlog 个客户端处于连接待状态,如果接收到更多的连接请求就忽略。listen() 成功返回0,失败返回 -1。</p>
+<h3 id="accept"><a href="#accept" class="headerlink" title="accept"></a>accept</h3><p>接受客户端的连接请求，得到一个用于读写数据的通道标识符。</p>
+<p>函数原型</p>
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+sockdf:
+    socket文件描述符
+addr:
+    传出参数,返回链接客户端地址信息,含IP地址和端口号
+addrlen:
+    传入传出参数(值-结果),传入sizeof(addr)大小,函数返回时返回真正接收到地址结构体的大小
+返回值:
+    成功返回一个新的socket文件描述符,用于和客户端通信,失败返回-1,设置errno
+</code></pre><p>三方握手完成后,服务器调用 accept() 接受连接,如果服务器调用 accept() 时还没有客户端的连接请求,就阻塞等待直到有客户端连接上来。addr 是一个传出参数,accept() 返回时传出客户端的地址和端口号。addrlen 参数是一个传入传出参数(value-resultargument),传入的是调用者提供的缓冲区 addr 的长度以避免缓冲区溢出问题,传出的是客户端地址结构体的实际长度(有可能没有占满调用者提供的缓冲区)。如果给 addr 参数传 NULL,表示不关心客户端的地址。</p>
+<p>我们的服务器程序结构是这样的:</p>
+<pre><code>while (1) {
+    cliaddr_len = sizeof(cliaddr);
+    connfd = accept(listenfd, (struct sockaddr *)&amp;cliaddr, &amp;cliaddr_len);
+    n = read(connfd, buf, MAXLINE);
+    ......
+    close(connfd);
+}
+</code></pre><p>整个是一个 while 死循环,每次循环处理一个客户端连接。由于 cliaddr_len 是传入传出参数,每次调用 accept() 之前应该重新赋初值。 accept() 的参数 listenfd 是先前的监听文件描述符，而 accept() 的返回值是另外一个文件描述符 connfd,之后与客户端之间就通过这个 connfd 通讯,最后关闭 connfd 断开连接,而不关闭 listenfd,再次回到循环开头 listenfd 仍然用作 accept 的参数。accept() 成功返回一个文件描述符,出错返回 -1。</p>
+<h3 id="connect"><a href="#connect" class="headerlink" title="connect"></a>connect</h3><p>通过 accept 返回的新文件描述符，建立数据交互的连接通道。</p>
+<p>函数原型</p>
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+sockdf:
+    socket文件描述符
+addr:
+    传入参数,指定服务器端地址信息,含IP地址和端口号
+addrlen:
+    传入参数,传入sizeof(addr)大小
+返回值:
+    成功返回 0,失败返回 -1,设置 errno
+</code></pre><p>客户端需要调用 connect() 连接服务器,connect 和 bind 的参数形式一致,区别在于 bind 的参数是自己的地址,而 connect 的参数是对方的地址。服务器可以通过 connect 中的具体参数获取到当前已连接的客户端的 ip 地址和端口号。connect() 成功返回 0,出错返回 -1。</p>
+<h2 id="美食1-TCP"><a href="#美食1-TCP" class="headerlink" title="美食1-TCP"></a>美食1-TCP</h2><p>上面具体介绍了Socket编程中用的几个重要函数，下面就来实战Socket编程中TCP的代码实现。</p>
+<p>TCP协议的通信流程在之前TCP、UDP章节中具体分析过了，包括其三次握手建立连接，四次握手断开链接，连接中状态装换以及滑动窗口等概念和原理。下图具体展示了TCP协议的通信模型，包括客户端和服务器连接过程中具体函数接口的调用时机，两端设备端口的状态，数据导向等，再此基础上加深理解具体代码的实现过程。</p>
+<img src="/fuckingcode/2019/01/18/Linux系统编程之Socket编程/TCP协议通讯流程.png" class="TCP协议通讯流程">
+<h3 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h3><p>服务器的工作任务很简单，根据连接上的客户端传来的数据，进行转大写回传。</p>
+<pre><code>#include &quot;wrap.h&quot;
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+
+#include &lt;sys/socket.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+
+#include &lt;ctype.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+
+// 服务端端口定义 8000
+#define SERVER_PORT 8000
+// 缓冲区 4096
+#define BUF_SIZE 4096
+
+int main(int argc, char *argv[]){
+
+    int sockfd, confd, readlen;
+    struct sockaddr_in serveraddr,clientaddr;
+    socklen_t clientaddr_len;
+    char clientIP[128];
+    char buf[BUF_SIZE];
+    // 新建Socket通道，指定TCP协议
+    sockfd = Socket(AF_INET, SOCK_STREAM, 0);
+    // 填充结构体 sockaddr_in
+    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serveraddr.sin_port = htons(SERVER_PORT);
+    // 绑定指定socket
+    Bind(sockfd, (struct sockaddr *)&amp;serveraddr, sizeof(serveraddr));
+    // 开始监听
+    Listen(sockfd,30);
+    printf(&quot; Accepting connections ...\n&quot;);
+
+    // 死循环等待客户链接
+    while(1){
+        clientaddr_len = sizeof(clientaddr);
+        // 连接上客户端
+        confd = Accept(sockfd, (struct sockaddr*)&amp;clientaddr, &amp;clientaddr_len);
+        // 打印已链接的客户端数据
+        printf(&quot;client IP: %s, Port: %d \n&quot;,
+            inet_ntop(AF_INET, &amp;clientaddr.sin_addr.s_addr,clientIP, sizeof(clientIP)),
+            ntohs(clientaddr.sin_port)
+            );
+        // 获取客户端传来数据
+        readlen = Read(confd,buf,sizeof(buf));
+
+        int i = 0;
+        while(i&lt;readlen){
+            // 小写转大写
+            buf[i] = toupper(buf[i]);
+            i++;
+        }
+        // 回传客户端
+        Write(confd,buf,readlen);
+        Close(confd);
+    }
+}
+</code></pre><h3 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h3><p>client.c的作用是从命令行参数中获得一个字符串发给服务器,然后接收服务器返回的字符串并打印。</p>
+<pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+#include &quot;wrap.h&quot;
+
+// 与服务端的一致
+#define SERVER_PORT 8000
+#define BUF_SIZE 4096
+
+int main(int argc, char * argv[]){
+
+    int serverfd, readlen;
+    struct sockaddr_in serveraddr;
+    // ServerIP，可以自己指定自己的IP，也可以默认本地IP
+    char serverIP[] = &quot;127.0.0.1&quot;;
+    char buf[BUF_SIZE];
+
+    if(argc &lt; 2){
+        printf(&quot;./client agc...\n&quot;);
+        exit(1);
+    }
+
+    serverfd = Socket(AF_INET, SOCK_STREAM, 0);
+    // 清空结构体serveraddr
+    bzero(&amp;serveraddr,sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    // IP地址转换
+    inet_pton(AF_INET, serverIP, &amp;serveraddr.sin_addr.s_addr);
+    serveraddr.sin_port = htons(SERVER_PORT);
+  　// 连接服务器
+    Connect(serverfd, (struct sockaddr *)&amp;serveraddr, sizeof(serveraddr));
+
+    Write(serverfd, argv[1],sizeof(argv[1]));
+    readlen = Read(serverfd,buf,sizeof(buf));
+    Write(STDOUT_FILENO, buf,readlen);
+
+    Close(serverfd);
+}
+</code></pre><p>由于客户端不需要固定的端口号,因此不必调用 bind(),客户端的端口号由内核自动分配。注意,客户端不是不允许调用 bind(),只是没有必要调用 bind() 固定一个端口号,服务器也不是必须调用 bind(),但如果服务器不调用 bind(),内核会自动给服务器分配监听端口,每次启动服务器时端口号都不一样,客户端要连接服务器就会遇到麻烦。</p>
+<p>客户端和服务器启动后可以查看链接情况:</p>
+<pre><code>netstat -apn|grep 8000
+</code></pre><p>调试相关说明：</p>
+<ol>
+<li>启动shell窗口，运行服务  ./server</li>
+<li>新建shell窗口，再运行Client客户端，记得添加需要转换的额外数据，例如： ./client abcdefg</li>
+<li>连接成功后，服务器窗口返回已连接客户端的ip地址和端口号，客户端则会打印命令中额外参数对应的大写数据，对应上面的则是：ABCDEFG</li>
+</ol>
+<h2 id="美食2-UDP"><a href="#美食2-UDP" class="headerlink" title="美食2-UDP"></a>美食2-UDP</h2><p>这里我们来看一下 UDP 的实战编程。由于 UDP 不需要维护连接,程序逻辑简单了很多,但是 UDP 协议是不可靠的,实际上有很多保证通讯可靠性的机制需要在应用层实现。</p>
+<p>UDP 通信模型如下图：</p>
+<img src="/fuckingcode/2019/01/18/Linux系统编程之Socket编程/UDP协议通讯流程.png" class="TDP协议通讯流程">
+<p>UDP 的通信模型和 TCP 在建立链接之前的配置基本相似，但是对于后面建立连接后的数据通信过程就简单多了。sendto 负责发送数据，recvfrom 负责接受数据，其每次数据传输过程中（不论是发送还是接受数据），都需要传入地址参数，而这一切在 TCP 模型中，都被 connect 取代了。</p>
+<h3 id="Server-1"><a href="#Server-1" class="headerlink" title="Server"></a>Server</h3><pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;ctype.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+
+#define SERVER_PORT 8001
+#define BUF_SIZE 1024
+
+int main(int argc, char const *argv[])
+{
+    int sockfd, readlen;
+
+    char buf[BUF_SIZE];
+    char clientIP[INET_ADDRSTRLEN];
+    socklen_t clientlen;
+    struct sockaddr_in serveraddr, clientaddr;
+// 创建网络通信端口，指定SOCK_DGRAM为ＵＤＰ
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+// 设置服务器端口信息
+    bzero(&amp;serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family =  AF_INET;
+    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serveraddr.sin_port = htons(SERVER_PORT);
+// 执行绑定
+    bind(sockfd,(struct sockaddr *)&amp;serveraddr,sizeof(serveraddr));
+    printf(&quot;Accepting connections ...\n&quot;);
+
+    while(1){
+        bzero(&amp;clientaddr,sizeof(clientaddr));
+        clientlen = sizeof(clientlen);
+    // 从已连接的客户端读数据，传出参数clientaddr包含客户端信息
+        readlen = recvfrom(sockfd, buf, BUF_SIZE, 0,
+            (struct sockaddr *)&amp;clientaddr,&amp;clientlen);
+
+        printf(&quot;client IP: %s, Port: %d \n&quot;,
+            inet_ntop(AF_INET, &amp;clientaddr.sin_addr,clientIP, sizeof(clientIP)),
+            ntohs(clientaddr.sin_port)
+            );
+
+        int i = 0;
+        while(i&lt;readlen){
+            buf[i] = toupper(buf[i]);
+            i++;
+        }
+    // 回传数据到客户端，传出参数客户端clientaddr结构体信息
+        sendto(sockfd,buf,readlen,0,
+            (struct sockaddr *)&amp;clientaddr,sizeof(clientaddr));
+
+    }
+    close(sockfd);
+    return 0;
+}
+</code></pre><h3 id="Client-1"><a href="#Client-1" class="headerlink" title="Client"></a>Client</h3><pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+
+#define SERVER_PORT 8001
+#define BUF_SIZE 1024
+
+int main(int argc, char * argv[]){
+
+    int serverfd, readlen;
+    struct sockaddr_in serveraddr;
+    char serverIP[] = &quot;127.0.0.1&quot;;
+    char buf[BUF_SIZE];
+    socklen_t serverlen;
+
+    if(argc &lt; 2){
+        printf(&quot;./client agc...\n&quot;);
+        exit(1);
+    }
+
+    serverfd = socket(AF_INET, SOCK_DGRAM, 0);
+    bzero(&amp;serveraddr,sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    inet_pton(AF_INET, serverIP, &amp;serveraddr.sin_addr);
+    serveraddr.sin_port = htons(SERVER_PORT);
+
+    sendto(serverfd,argv[1],sizeof(argv[1]),0,
+        (struct sockaddr *)&amp;serveraddr, sizeof(serveraddr));
+
+    bzero(&amp;serverlen,sizeof(serverlen));
+    readlen = recvfrom(serverfd,buf,BUF_SIZE,0,
+        NULL, 0);
+
+    write(STDOUT_FILENO, buf,readlen);
+
+    close(serverfd);
+    return 0;
+}
+</code></pre><p>UDP 模型下的实例代码，运行流程和 TCP 相似，首先启动 Server，然后开启 Client，发送数据到服务器进行大写转换，客户端读取收到的数据打印出来。</p>
+<p>相信有读者已经发现了其两者之间通信模型的差距，其实理解起来也很容易，TCP 相当于打电话，开始接通之前喂喂喂确认是对方后，知道挂断前都不用再确认对方身份，也就是在数据交互过程中不需要夹杂地址信息了；然而 UDP 则必须每次数据交互中都需要填入对方地址信息，就犹如寄信，每次张信都需要地址和邮票一样。</p>
+<p>总的话来说，还是其通信的本质有区别，TCP 是基于数据流方式，UDP 是基于消息方式。</p>
+<h2 id="饭后甜点"><a href="#饭后甜点" class="headerlink" title="饭后甜点"></a>饭后甜点</h2><p>上面的两个实例不仅功能简单，而且简单到几乎没有什么错误处理。然而在系统调用不能保证每次都成功，必须进行出错处理，这样一方面可以保证程序逻辑正常，另一方面可以迅速得到故障信息。</p>
+<p>为使错误处理的代码不影响主程序的可读性，我们把与 socket 相关的一些系统函数加上错误处理代码包装成新的函数，做成一个模块 wrap.c，提供一个头文件 wrap.h 依赖，具体的wrap.c 如下：</p>
+<h3 id="头文件"><a href="#头文件" class="headerlink" title="头文件"></a>头文件</h3><pre><code>#ifndef WRAP_H
+#define WRAP_H
+
+#include &lt;stdlib.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;errno.h&gt;
+
+void perr_exit(const char *s);
+int Accept(int fd, struct sockaddr *sa, socklen_t *salenptr);
+void Bind(int fd, const struct sockaddr *sa, socklen_t salen);
+void Connect(int fd, const struct sockaddr *sa, socklen_t salen);
+void Listen(int fd, int backlog);
+int Socket(int family, int type, int protocol);
+ssize_t Read(int fd, void *ptr, size_t nbytes);
+ssize_t Write(int fd, const void *ptr, size_t nbytes);
+void Close(int fd);
+ssize_t Readn(int fd, void *vptr, size_t n);
+ssize_t Writen(int fd, const void *vptr, size_t n);
+static ssize_t my_read(int fd, char *ptr);
+ssize_t Readline(int fd, void *vptr, size_t maxlen);
+
+#endif // WRAP_H
+</code></pre><p>###　实现文件</p>
+<pre><code>#include &quot;wrap.h&quot;
+
+void perr_exit(const char *s)
+{
+    perror(s);
+    exit(1);
+}
+
+int Accept(int fd, struct sockaddr *sa, socklen_t *salenptr)
+{
+    int n;
+again:
+    if((n = accept(fd,sa,salenptr)) &lt; 0){
+        if((errno == ECONNABORTED) || (errno == EINTR)){
+            goto again;
+        }else {
+            perr_exit(&quot;accept&quot;);
+        }
+        return n;
+    }
+}
+
+void Bind(int fd, const struct sockaddr *sa, socklen_t salen)
+{
+    if(bind(fd,sa,salen)&lt;0)
+        perr_exit(&quot;bind&quot;);
+}
+
+void Connect(int fd, const struct sockaddr *sa, socklen_t salen)
+{
+    if (connect(fd, sa, salen) &lt; 0)
+        perr_exit(&quot;connect error&quot;);
+}
+
+void Listen(int fd, int backlog)
+{
+    if (listen(fd, backlog) &lt; 0)
+        perr_exit(&quot;listen error&quot;);
+}
+
+int Socket(int family, int type, int protocol)
+{
+    int n;
+    if((n = socket(family,type,protocol))&lt;0)
+        perr_exit(&quot;socket&quot;);
+
+    return n;
+}
+
+ssize_t Read(int fd, void *ptr, size_t nbytes)
+{
+    ssize_t n;
+
+again:
+    if((n = read(fd,ptr,nbytes))==-1){
+        if(errno == EINTR)
+            goto again;
+        else
+            return -1;
+    }
+    return n;
+}
+
+ssize_t Write(int fd, const void *ptr, size_t nbytes)
+{
+    ssize_t n;
+again:
+    if ( (n = write(fd, ptr, nbytes)) == -1) {
+        if (errno == EINTR)
+            goto again;
+        else
+            return -1;
+    }
+    return n;
+}
+
+void Close(int fd)
+{
+    if (close(fd) == -1)
+        perr_exit(&quot;close error&quot;);
+}
+
+ssize_t Readn(int fd, void *vptr, size_t n)
+{
+    size_t nleft;
+    ssize_t nread;
+    char
+            *ptr;
+    ptr = vptr;
+    nleft = n;
+    while (nleft &gt; 0) {
+        if ( (nread = read(fd, ptr, nleft)) &lt; 0) {
+            if (errno == EINTR)
+                nread = 0;
+            else
+                return -1;
+        } else if (nread == 0)
+            break;
+        nleft -= nread;
+        ptr += nread;
+    }
+    return n - nleft;
+}
+
+ssize_t Writen(int fd, const void *vptr, size_t n)
+{
+    size_t nleft;
+    ssize_t nwritten;
+    const char *ptr;
+    ptr = vptr;
+    nleft = n;
+    while (nleft &gt; 0) {
+        if ( (nwritten = write(fd, ptr, nleft)) &lt;= 0) {
+            if (nwritten &lt; 0 &amp;&amp; errno == EINTR)
+                nwritten = 0;
+            else
+                return -1;
+        }
+        nleft -= nwritten;
+        ptr += nwritten;
+    }
+    return n;
+}
+
+ssize_t my_read(int fd, char *ptr)
+{
+    static int read_cnt;
+    static char *read_ptr;
+    static char read_buf[100];
+    if (read_cnt &lt;= 0) {
+again:
+        if ( (read_cnt = read(fd, read_buf, sizeof(read_buf))) &lt; 0) {
+            if (errno == EINTR)
+                goto again;
+            return -1;
+        } else if (read_cnt == 0)
+            return 0;
+        read_ptr = read_buf;
+    }
+    read_cnt--;
+    *ptr = *read_ptr++;
+    return 1;
+}
+
+ssize_t Readline(int fd, void *vptr, size_t maxlen)
+{
+    ssize_t n, rc;
+    char
+            c, *ptr;
+    ptr = vptr;
+    for (n = 1; n &lt; maxlen; n++) {
+        if ( (rc = my_read(fd, &amp;c)) == 1) {
+            *ptr++ = c;
+            if (c
+                    == &apos;\n&apos;)
+                break;
+        } else if (rc == 0) {
+            *ptr = 0;
+            return n - 1;
+        } else
+            return -1;
+    }
+    *ptr = 0;
+    return n;
+}
+</code></pre><p>对于上述模块，可以采用以下几种调用方式</p>
+<ol>
+<li>源代码直接包含，简单直接，在 Makefile 中直接声明 -I 方式将头文件包含进去，记得 wrap.c 文件需要和源文件 server.c client.c 同级目录。</li>
+<li>直接包含头文件，源文件以动态库形式存在，隐藏源码，需要事先将模块编译成 so 动态链接库，具体方法，请参考之前静态、动态链接库实战章节。</li>
+</ol>
+<h2 id="真香"><a href="#真香" class="headerlink" title="真香"></a>真香</h2><p>本章节介绍了Socket编程下，TCP,UDP模型的实例代码。由于其通信模型的不同，其代码实现上也有不同，但是大同小异。相同的是建立连接服务过程中，服务端必须指定ip地址和端口号，绑定后，客户端连接时也要和服务器的一致；不同的是在数据交互过程中，TCP基于流，一旦建立链接(connect)后就可以直接数据传输，无需地址信息的参与，而UDP则需要在数据交互中，有一个传入传出参数负责地址的接受和发送，每次发送数据都需要将接收数据的地址信息包含进去，谁发来，回传给谁。</p>
+<p>总而言之，对于上述代码实现以及章节中的模型图，相信对这两种通信协议能有很好的理解。</p>
+<blockquote>
+<p>邢文鹏Linux教学资料</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/Socket/" rel="tag"># Socket</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/" rel="next" title="Linux系统编程之TCP/UDP协议">
+                <i class="fa fa-chevron-left"></i> Linux系统编程之TCP/UDP协议
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/" rel="prev" title="Linux系统编程之多进程、多线程并发服务器">
+                Linux系统编程之多进程、多线程并发服务器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Socket编程"><span class="nav-number">1.</span> <span class="nav-text">Socket编程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#开胃菜"><span class="nav-number">1.1.</span> <span class="nav-text">开胃菜</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#网络字节序"><span class="nav-number">1.1.1.</span> <span class="nav-text">网络字节序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IP地址相关函数"><span class="nav-number">1.1.2.</span> <span class="nav-text">IP地址相关函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结构体sockaddr"><span class="nav-number">1.1.3.</span> <span class="nav-text">结构体sockaddr</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#食材"><span class="nav-number">1.2.</span> <span class="nav-text">食材</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#socket"><span class="nav-number">1.2.1.</span> <span class="nav-text">socket</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bind"><span class="nav-number">1.2.2.</span> <span class="nav-text">bind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#listen"><span class="nav-number">1.2.3.</span> <span class="nav-text">listen</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#accept"><span class="nav-number">1.2.4.</span> <span class="nav-text">accept</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#connect"><span class="nav-number">1.2.5.</span> <span class="nav-text">connect</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#美食1-TCP"><span class="nav-number">1.3.</span> <span class="nav-text">美食1-TCP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Server"><span class="nav-number">1.3.1.</span> <span class="nav-text">Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Client"><span class="nav-number">1.3.2.</span> <span class="nav-text">Client</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#美食2-UDP"><span class="nav-number">1.4.</span> <span class="nav-text">美食2-UDP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Server-1"><span class="nav-number">1.4.1.</span> <span class="nav-text">Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Client-1"><span class="nav-number">1.4.2.</span> <span class="nav-text">Client</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#饭后甜点"><span class="nav-number">1.5.</span> <span class="nav-text">饭后甜点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#头文件"><span class="nav-number">1.5.1.</span> <span class="nav-text">头文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#真香"><span class="nav-number">1.6.</span> <span class="nav-text">真香</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

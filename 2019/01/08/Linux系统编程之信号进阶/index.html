@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="kill sigqueue sigprocmask sigaction SIGCHLD">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="本章节继续介绍关于Linux系统下信号相关的知识点，介于之前介绍了信号的基础，了解了信号的产生、缘由以及工作流程，这里就对信号的相关函数进行统一的分析，之后在用实例进行说明。">
+<meta name="keywords" content="kill sigqueue sigprocmask sigaction SIGCHLD">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程之信号进阶">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/08/Linux系统编程之信号进阶/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="本章节继续介绍关于Linux系统下信号相关的知识点，介于之前介绍了信号的基础，了解了信号的产生、缘由以及工作流程，这里就对信号的相关函数进行统一的分析，之后在用实例进行说明。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/08/Linux系统编程之信号进阶/pcb信号集模型.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/08/Linux系统编程之信号进阶/信号捕捉.png">
+<meta property="og:updated_time" content="2019-01-10T02:39:37.753Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux系统编程之信号进阶">
+<meta name="twitter:description" content="本章节继续介绍关于Linux系统下信号相关的知识点，介于之前介绍了信号的基础，了解了信号的产生、缘由以及工作流程，这里就对信号的相关函数进行统一的分析，之后在用实例进行说明。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2019/01/08/Linux系统编程之信号进阶/pcb信号集模型.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/08/Linux系统编程之信号进阶/">
+
+
+
+
+
+  <title>Linux系统编程之信号进阶 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/08/Linux系统编程之信号进阶/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux系统编程之信号进阶</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-08T16:26:37+08:00">
+                2019-01-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2019/01/08/Linux系统编程之信号进阶/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2019/01/08/Linux系统编程之信号进阶/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>本章节继续介绍关于Linux系统下信号相关的知识点，介于之前介绍了信号的基础，了解了信号的产生、缘由以及工作流程，这里就对信号的相关函数进行统一的分析，之后在用实例进行说明。</strong></p>
+<a id="more"></a>
+<h3 id="信号产生函数"><a href="#信号产生函数" class="headerlink" title="信号产生函数"></a>信号产生函数</h3><h4 id="kill"><a href="#kill" class="headerlink" title="kill"></a>kill</h4><p>kill 函数可以给一个特定的进程发送指定的信号</p>
+<pre><code>#include &lt;signal.h&gt;
+
+int kill(pid_t pid, int sig) 
+
+pid &gt; 0     sig发送给ID为pid的进程 
+pid == 0    sig发送给与发送进程同组的所有进程 
+pid &lt; 0     sig发送给组ID为|-pid|的进程，并且发送进程具有向其发送信号的权限 
+pid == -1   sig发送给发送进程有权限向他们发送信号的系统上的所有进程 
+
+sig为发送的信号值，当sig为0时，用于检测特定为pid进程是否存在，如不存在，返回-1。
+</code></pre><h4 id="raise"><a href="#raise" class="headerlink" title="raise"></a>raise</h4><p>raise函数可以给当前进程发送指定的信号（自己也可以给自己发送信号）</p>
+<pre><code>#include &lt;signal.h&gt;
+
+int raise(int sig);
+</code></pre><h4 id="abort"><a href="#abort" class="headerlink" title="abort"></a>abort</h4><p>abort函数通过向当前进程发送信号值 SIGABRT，使当前进程接收到信号而异常终止，但是abort会认为进程不安全。</p>
+<pre><code>#include &lt;stdlib.h&gt; 
+
+void abort(void);
+</code></pre><p>类似于exit函数一样，abort函数总是成功的，因此没有返回值。</p>
+<h4 id="alarm"><a href="#alarm" class="headerlink" title="alarm"></a>alarm</h4><p>由软件条件产生信号，进程可以通过调用alarm向它自己发送SIGALRM信号</p>
+<pre><code>#include &lt;unistd.h&gt;
+
+unsigned int alarm(unsigned int seconds);
+
+参数seconds：alarm函数安排内核在seconds秒内发送一个SIGALRM信号给调用进程，如果soconds等于0，那么不会调度新的闹钟（alarm）
+
+返回值：前一次闹钟剩余的秒数，若以前没有设定闹钟，则为0
+</code></pre><p>在使用时，alarm只设定为发送一次信号，如果要多次发送，就要多次使用alarm调用。</p>
+<h4 id="setitimer"><a href="#setitimer" class="headerlink" title="setitimer"></a>setitimer</h4><p>现在的系统中很多程序不再使用alarm调用，而是使用setitimer调用来设置定时器，用getitimer来得到定时器的状态，这两个调用的声明格式如下：</p>
+<pre><code>#include &lt;sys/time.h&gt;
+
+int getitimer(int which, struct itimerval *value);
+int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue);
+</code></pre><p>该系统调用给进程提供了三个定时器，它们各自有其独有的计时域，当其中任何一个到达，就发送一个相应的信号给进程，并使得计时器重新开始。三个计时器由参数which指定，如下所示：</p>
+<pre><code>ITIMER_REAL：按实际时间计时，计时到达将给进程发送SIGALRM信号。
+
+ITIMER_VIRTUAL：仅当进程执行时才进行计时。计时到达将发送SIGVTALRM信号给进程。
+
+ITIMER_PROF：当进程执行时和系统为该进程执行动作时都计时。与ITIMER_VIRTUAL是一对，该定时器经常用来统计进程在用户态和内核态花费的时间。计时到达将发送SIGPROF信号给进程。
+</code></pre><p>定时器中的参数value用来指明定时器的时间，其结构如下：</p>
+<pre><code>struct itimerval {
+        struct timeval it_interval; /* 下一次的取值 */
+        struct timeval it_value; /* 本次的设定值 */
+};
+</code></pre><p>该结构中timeval结构定义如下：</p>
+<pre><code>struct timeval {
+        long tv_sec; /* 秒 */
+        long tv_usec; /* 微秒，1秒 = 1000000 微秒*/
+};
+</code></pre><p>在setitimer 调用中，参数ovalue如果不为空，则其中保留的是上次调用设定的值。定时器将it_value递减到0时，产生一个信号，并将it_value的值设定为it_interval的值，然后重新开始计时，如此往复。当it_value设定为0时，计时器停止，或者当它计时到期，而it_interval 为0时停止。调用成功时，返回0；错误时，返回-1，并设置相应的错误代码errno：</p>
+<pre><code>EFAULT：参数value或ovalue是无效的指针。
+EINVAL：参数which不是ITIMER_REAL、ITIMER_VIRT或ITIMER_PROF中的一个。
+</code></pre><p>下面是关于setitimer调用的一个简单示范，在该例子中，每隔一秒发出一个SIGALRM，每隔0.5秒发出一个SIGVTALRM信号：</p>
+<pre><code>#include &lt;signal.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sys/time.h&gt;
+
+int sec;
+void sigroutine(int signo) {
+
+    switch (signo) {
+        case SIGALRM:
+            printf(&quot;Catch a signal -- SIGALRM\n&quot;);
+            break;
+        case SIGVTALRM:
+            printf(&quot;Catch a signal -- SIGVTALRM\n&quot;);
+            break;
+    }
+    return;
+
+}
+
+int main()
+{
+    struct itimerval value,ovalue,value2;
+    sec = 5;
+    printf(&quot;process id is %d\n&quot;,getpid());
+
+    signal(SIGALRM, sigroutine);
+    signal(SIGVTALRM, sigroutine);
+
+    value.it_value.tv_sec = 1;
+    value.it_value.tv_usec = 0;
+    value.it_interval.tv_sec = 1;
+    value.it_interval.tv_usec = 0;
+    setitimer(ITIMER_REAL, &amp;value, &amp;ovalue);
+
+    value2.it_value.tv_sec = 0;
+    value2.it_value.tv_usec = 500000;
+    value2.it_interval.tv_sec = 0;
+    value2.it_interval.tv_usec = 500000;
+    setitimer(ITIMER_VIRTUAL, &amp;value2, &amp;ovalue);
+
+    for (;;) ;
+}
+</code></pre><p>程序运行结果如下：</p>
+<pre><code>$ ./app 
+process id is 104501 
+Catch a signal -- SIGVTALRM
+Catch a signal -- SIGALRM
+Catch a signal -- SIGVTALRM
+Catch a signal -- SIGVTALRM
+Catch a signal -- SIGALRM
+Catch a signal -- SIGVTALRM
+Catch a signal -- SIGVTALRM
+...
+</code></pre><h4 id="sigqueue"><a href="#sigqueue" class="headerlink" title="sigqueue"></a>sigqueue</h4><p>sigqueue是比较新的发送信号系统调用，主要是针对实时信号提出的（当然也支持前32种），支持信号带有参数，与函数sigaction配合使用，后续详细介绍。</p>
+<h3 id="信号集"><a href="#信号集" class="headerlink" title="信号集"></a>信号集</h3><p>信号集被定义为一种数据类型：</p>
+<pre><code>typedef struct {
+
+    unsigned long sig[_NSIG_WORDS]；
+
+} sigset_t
+</code></pre><p>信号集用来描述信号的集合，每个信号占用一位。Linux所支持的所有信号可以全部或部分的出现在信号集中，主要与信号阻塞相关函数配合使用。</p>
+<h4 id="sigset-t-信号集"><a href="#sigset-t-信号集" class="headerlink" title="sigset_t 信号集"></a>sigset_t 信号集</h4><p>下面是为信号集 sigset_t 操作定义的相关函数：</p>
+<pre><code>int sigemptyset(sigset_t *set)  初始化由set指定的信号集，信号集里面的所有信号被清空；
+int sigfillset(sigset_t *set)   调用该函数后，set指向的信号集中将包含linux支持的64种信号；
+int sigaddset(sigset_t *set, int signo) 在set指向的信号集中加入signum信号；
+int sigdelset(sigset_t *set, int signo) 在set指向的信号集中删除signum信号；
+int sigismember(const sigset_t *set, int signo) 判定信号signum是否在set指向的信号集中。 
+</code></pre><h4 id="信号集模型"><a href="#信号集模型" class="headerlink" title="信号集模型"></a>信号集模型</h4><p>如果在进程解除对某信号的阻塞之前这种信号产生过多次，将如何处理?POSIX.1允许系统递送该信号一次或多次。Linux是这样实现的:常规信号在递达之前产生多次只计一次，而实时信号在递达之前产生多次可以依次放在一个队列里。本章不讨论实时信号。每个信号只有一个bit的未决标志，非0即1，不记录该信号产生了多少次，阻塞标志也是这样表示的。因此，未决和阻塞标志可以用相同的数据类型 sigset_t 来存储，sigset_t 称为信号集，这个类型可以表示每个信号的“有效”或“无效”状态， 在阻塞信号集中“有效”和“无效”的含义是该信号是否被阻塞，而在未决信号集中“有效”和“无效”的含义是该信号是否处于未决状态。</p>
+<p>阻塞信号集也叫做当前进程的信号屏蔽字(Signal Mask)，这里的“屏蔽”应该理解 为阻塞而不是忽略。下图展示了PCB中信号集模型：</p>
+<img src="/fuckingcode/2019/01/08/Linux系统编程之信号进阶/pcb信号集模型.png" class="pcb信号集模型">
+<ol>
+<li>PCB进程控制块中有信号屏蔽状态字(block)，信号未决状态字(pending)还有是否忽略标识</li>
+<li>信号屏蔽状态字(block)：1代表阻塞，0代表不阻塞；信号未决状态字(pending)：1代表未决，0代表信号递达</li>
+<li>向进程发送SIGINT，内核首先判断信号屏蔽状态字是否阻塞，如果信号屏蔽状态字阻塞，信号未决状态字(pengding)相应位置1；<br>若阻塞解除，信号未决状态字(pending)相应位置0，表示信号可以递达了。</li>
+<li>block状态字，pending状态都是64bit，分别代表Linux系统中的64个信号。例如SIGINT是2号信号，对应block状态字中的第二位</li>
+<li>block状态字用户可以读写，pending状态字用户只能读，这是新号的设计机制。</li>
+</ol>
+<p>内核将信号传递到PEND集合中，置位相应的未决态1，之后，经过用户设置过的阻塞信号集屏蔽字处理，如果信号被阻塞，那么未决集内对应位还是1，如果没有阻塞，信号成为递达，经过handler处理，默认、忽略以及捕捉，此时未决集中对应的标志位转为0.</p>
+<h3 id="信号集操作函数"><a href="#信号集操作函数" class="headerlink" title="信号集操作函数"></a>信号集操作函数</h3><p>在信号集中，用户可通过sigprocmask设置阻塞信号集，通过sigpending获取未决态信号集</p>
+<h4 id="sigprocmask"><a href="#sigprocmask" class="headerlink" title="sigprocmask"></a>sigprocmask</h4><p>调用函数sigprocmask可以读取或更改进程的信号屏蔽字。</p>
+<pre><code>#include &lt;signal.h&gt;
+
+int sigprocmask(int how,const sigset_t *set,sigset * oset);
+
+成功返回0，出错返回-1
+</code></pre><p>如果oset是非空指针，则读取进程的当前信号屏蔽状态字通过oset参数传出，如果set是非空指针，则更改进程的信号屏蔽状态字，参数how控制如何更改。</p>
+<p>如果oset和set都是非空指针，则先将原来的信号屏蔽字备份到oset里，然后根据set和how参数更改信号屏蔽字。</p>
+<p>参数 how 的含义</p>
+<pre><code>--SIG_BLOCK    set包含了我们希望添加到当前信号屏蔽字的信号，相当于mask=mask|set(位或运算)
+--SIG_UNBLOCK    set包含了我们希望从当前信号屏蔽字中解除阻塞的信号，相当于mask=mask^set(位异或运算)
+--SIG_SETMASK    设置当前信号屏蔽字为set所指向的值，相当于mask=set
+</code></pre><p>如果调用sigprocmask解除了对当前若干个未决信号的阻塞，则在sigprocmask返回前， 至少将其中一个信号递达。</p>
+<h4 id="sigpending"><a href="#sigpending" class="headerlink" title="sigpending"></a>sigpending</h4><p>sigpending函数用来读取当前进程的信号未决集，通过set参数传出。</p>
+<pre><code>#include &lt;signal.h&gt;
+
+int sigpending(sigset_t *set);
+
+成功返回0，出错返回-1。
+</code></pre><p>sigpending读取当前进程的未决信号集，通过set参数传出，调用成功返回0，失败返回-1。</p>
+<h4 id="信号集代码示例"><a href="#信号集代码示例" class="headerlink" title="信号集代码示例"></a>信号集代码示例</h4><pre><code>#include &lt;signal.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+void printsigset(const sigset_t *set){
+    int i;
+    for(i =1; i&lt;32;i++)
+    {
+        if(sigismember(set, i)==1)
+            putchar(&apos;1&apos;);
+        else
+            putchar(&apos;0&apos;);
+    }
+    puts(&quot;&quot;);
+}
+
+int main(void){
+
+    sigset_t s,p;
+    int i = 0;
+    //  清空信号集
+    sigemptyset(&amp;s);
+    // 捕捉信号屏蔽字
+    sigaddset(&amp;s, SIGINT); // ctrl + c
+    sigaddset(&amp;s, SIGQUIT); // ctrl + z
+    sigaddset(&amp;s, SIGTSTP); // ctrl + \
+    // 补充设置部分信号屏蔽字
+    sigprocmask(SIG_BLOCK, &amp;s, NULL);
+    while(1)
+    {
+        // 获取未决信号集
+        sigpending(&amp;p);
+        printsigset(&amp;p);
+        if (i==10)
+        {
+            // 解除信号屏蔽字 SIGQUIT
+            sigdelset(&amp;s, SIGQUIT);
+            sigprocmask(SIG_UNBLOCK, &amp;s, NULL);
+        }
+        sleep(1);
+        i++;
+    }
+    return 0;
+}
+</code></pre><p>注意，SIGKUILL 和 SIGSTOP 两个信号屏蔽字 无法捕捉、阻塞以及忽略。<br><br>程序执行结果：</p>
+<pre><code>Allies:signal rememberme$ ./sigprocmask
+  0000000000000000000000000000000
+^Z0000000000000000010000000000000
+  0000000000000000010000000000000
+^C0100000000000000010000000000000
+^\0110000000000000010000000000000
+  0110000000000000010000000000000
+  ...
+</code></pre><h3 id="信号捕捉"><a href="#信号捕捉" class="headerlink" title="信号捕捉"></a>信号捕捉</h3><h4 id="sigaction"><a href="#sigaction" class="headerlink" title="sigaction"></a>sigaction</h4><p>注册信号捕捉函数sigaction，POSIX标准定义了sigaction函数，它允许像Linux和Solaris这样与POSIX兼容的系统上的用户，明确地指出它们想要的信号处理语义。</p>
+<p>sigaction函数可以读取或者指定信号相关联的处理动作，signal与其功能类似，但signal是标准C的信号接口，对不同的操作系统有不同的行为，所以一般尽量不使用signal，取而代之的是sigaction函数。函数原型如下：</p>
+<pre><code>#include &lt;signal.h&gt;
+
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+
+signum： 指定信号的编号（利用kill -l命令可以查看）；
+*act： 若act指针非空，则根据act修改该信号的处理动作；
+*oldact： 若oldact指针非空，则通过oldact传出该信号原来的处理动作；
+
+返回值：成功返回0，失败返回-1；
+</code></pre><p>对于其中的结构体 struct sigaction 的定义如下: </p>
+<pre><code>struct sigaction {
+    void void sigset_t int
+    void
+    (*sa_handler)(int);
+    (*sa_sigaction)(int, siginfo_t *, void *);
+    sa_mask;
+    sa_flags; (*sa_restorer)(void);
+};
+
+sa_handler : 早期的捕捉函数，SIG_DEF（默认）,SIG_IGN（忽略）,自定义函数指针
+sa_sigaction : 新添加的捕捉函数，可以传参 , 和sa_handler互斥，两者通过sa_flags选择采用哪种捕捉函数 
+sa_mask : 在执行捕捉函数时，设置阻塞其它信号，sa_mask | 进程阻塞信号集，退出捕捉函数后，还原回原有的 阻塞信号集
+sa_flags : SA_SIGINFO 或者 0
+sa_restorer : 保留，已过时
+</code></pre><h4 id="捕捉代码示例"><a href="#捕捉代码示例" class="headerlink" title="捕捉代码示例"></a>捕捉代码示例</h4><pre><code>#include &lt;signal.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+// 捕捉函数处理，接受捕捉的信号值
+void sigHandler(int signum){
+    printf(&quot;\nsigHandler: %d\n&quot;,signum);
+}
+
+int main(void){
+
+    // 声明结构体 sigaction
+    struct  sigaction sa;
+    // 使用 sa_handler 函数指针捕捉处理，参数 0
+    sa.sa_flags = 0;
+    // 设置函数指针指向函数体
+    sa.sa_handler = sigHandler;
+    // sa.sa_handler = SIG_DFL;
+    // sa.sa_handler = SIG_IGN;
+    // 清空函数捕捉时的 mask 值
+    sigemptyset(&amp;sa.sa_mask);
+    // 注册捕捉函数
+    sigaction(SIGINT, &amp;sa, NULL);
+
+    while(1){
+        printf(&quot;......\n&quot;);
+        sleep(1);
+    }
+    return 0;
+}
+</code></pre><p>程序运行结果：</p>
+<pre><code>Allies:signal rememberme$ ./sigaction
+......
+......
+......
+^C
+sigHandler: 2
+......
+......
+^C
+sigHandler: 2
+......
+......
+</code></pre><p> 注意:子进程继承了父进程的信号屏蔽字和信号处理动作。</p>
+<p>库函数 signal 原型如下：</p>
+<pre><code>typedef void (*sighandler_t)(int)
+
+sighandler_t signal(int signum, sighandler_t handler)
+
+int system(const char *command) 
+集合fork，exec，wait一体
+</code></pre><h4 id="信号捕捉传参"><a href="#信号捕捉传参" class="headerlink" title="信号捕捉传参"></a>信号捕捉传参</h4><p>通常的sigaction结构体中 sa.sa_flags 设置为 时，信号捕捉只能够得到捕捉的信号值，然而向进程本身发送信号，并传递指针参数则需要修改标志位 sa.sa_flags 为 SA_SIGINFO。发送信号时候就用之前提到的函数 sigqueue 添加而外信息。先来回顾一下信号捕捉流程</p>
+<img src="/fuckingcode/2019/01/08/Linux系统编程之信号进阶/信号捕捉.png" class="信号捕捉流程">
+<h5 id="sigqueue-函数原型"><a href="#sigqueue-函数原型" class="headerlink" title="sigqueue 函数原型"></a>sigqueue 函数原型</h5><p>sigqueue 功能和 kill 相同，都可以向制定进程发送信号，其次还可以额外夹杂数据。</p>
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;signal.h&gt;
+
+int sigqueue(pid_t pid, int sig, const union sigval val)
+
+调用成功返回 0；否则，返回 -1。
+</code></pre><p>sigqueue 是比较新的发送信号系统调用，主要是针对实时信号提出的（当然也支持前32种），支持信号带有参数，与函数sigaction()配合使用。</p>
+<p>sigqueue的第一个参数是指定接收信号的进程ID，第二个参数确定即将发送的信号，第三个参数是一个联合数据结构union sigval，指定了信号传递的参数，即通常所说的4字节值。</p>
+<pre><code>typedef union sigval {
+    int  sival_int;
+    void *sival_ptr;
+}sigval_t;
+</code></pre><p>sigqueue 比kill 传递了更多的附加信息，但 sigqueue 只能向一个进程发送信号，而不能发送信号给一个进程组。如果signo=0，将会执行错误检查，但实际上不发送任何信号，0值信号可用于检查pid的有效性以及当前进程是否有权限向目标进程发送信号。</p>
+<p>在调用 sigqueue 时，sigval_t 指定的信息会拷贝到对应 sig 注册的3参数信号处理函数的 siginfo_t 结构中，这样信号处理函数就可以处理这些信息了。由于 sigqueue 系统调用支持发送带参数信号，所以比 kill 系统调用的功能要灵活和强大得多。</p>
+<pre><code>#include &lt;signal.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+
+void new_op(int,siginfo_t*,void*);
+
+int main(int argc,char**argv)
+{
+    struct sigaction act;  
+    union sigval mysigval;
+    int i;
+    int sig;
+    pid_t pid;         
+    char data[10];
+    memset(data,0,sizeof(data));
+
+    for(i=0;i &lt; 5;i++)
+            data[i]=&apos;2&apos;;
+
+    mysigval.sival_ptr=data;
+    sig=atoi(argv[1]);
+
+    pid=getpid();
+
+    sigemptyset(&amp;act.sa_mask);
+    act.sa_sigaction=new_op;//三参数信号处理函数
+    act.sa_flags=SA_SIGINFO;//信息传递开关，允许传说参数信息给new_op
+
+    if(sigaction(sig,&amp;act,NULL) &lt; 0)
+    {
+            printf(&quot;install sigal error\n&quot;);
+    }
+
+    while(1)
+    {
+            sleep(2);
+            printf(&quot;wait for the signal\n&quot;);
+            sigqueue(pid,sig,mysigval);//向本进程发送信号，并传递附加信息
+    }
+}
+
+void new_op(int signum,siginfo_t *info,void *myact)//三参数信号处理函数的实现
+{
+    int i;
+    for(i=0;i&lt;10;i++)
+    {
+            printf(&quot;%c\n &quot;,(*( (char*)((*info).si_ptr)+i)));
+    }
+    printf(&quot;handle signal %d over;&quot;,signum);
+}
+</code></pre><p>程序运行结果</p>
+<pre><code>$ ./sigqueue 7
+wait for the signal
+S
+S
+S
+S
+S
+handle signal 7 over;wait for the signal
+S
+S
+S
+S
+S
+handle signal 7 over;wait for the signal
+S
+S
+...
+</code></pre><p>sigqueue 也可以夸进程通信，但是其传递的数据一半以整型等具体的基本数据。不同进程间收发信号，不在同一地址空间,不适合传地址。</p>
+<h3 id="SIGCHLD-信号处理"><a href="#SIGCHLD-信号处理" class="headerlink" title="SIGCHLD 信号处理"></a>SIGCHLD 信号处理</h3><h4 id="产生条件"><a href="#产生条件" class="headerlink" title="产生条件"></a>产生条件</h4><p>SIGCHLD的产生条件有一下三点：</p>
+<ol>
+<li>子进程终止时 </li>
+<li>子进程接收到SIGSTOP信号停止时 </li>
+<li>子进程处在停止态，接受到SIGCONT后唤醒时</li>
+</ol>
+<h4 id="处理方式"><a href="#处理方式" class="headerlink" title="处理方式"></a>处理方式</h4><p>父进程回收子进程时，对status的处理方式</p>
+<pre><code>pid_t waitpid(pid_t pid, int *status, int options) 
+
+options
+    1. WNOHANG 没有子进程结束，立即返回
+    2. WUNTRACED   如果子进程由于被停止产生的SIGCHLD， waitpid则立即返回
+    3. WCONTINUED  如果子进程由于被SIGCONT唤醒而产生的SIGCHLD， waitpid则立即返回
+
+获取status 
+    1. WIFEXITED(status) 子进程正常exit终止，返回真 WEXITSTATUS(status)返回子进程正常退出值
+    2. WIFSIGNALED(status) 子进程被信号终止，返回真
+    3. WTERMSIG(status)    返回终止子进程的信号值 
+    4. WIFSTOPPED(status)  子进程被停止，返回真 WSTOPSIG(status)返回停止子进程的信号值
+    5. WIFCONTINUED(status)    子进程由停止态转为就绪态，返回真
+</code></pre><h4 id="SIGCHLD-代码示例"><a href="#SIGCHLD-代码示例" class="headerlink" title="SIGCHLD 代码示例"></a>SIGCHLD 代码示例</h4><pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+
+void do_sig(int n){
+    int status;
+    pid_t pid;
+    // 收到子进程发送的 SIGCHILD 信号，捕捉函数至此
+    while((pid = waitpid(0,&amp;status,WNOHANG)) &gt; 0){
+        // 子进程正常退出
+        if(WIFEXITED(status))
+            // 打印出正常退出值
+            printf(&quot;child %d exit %d\n&quot;,pid,WEXITSTATUS(status));
+        // 子进程被信号终止退出
+        else if(WIFSIGNALED(status))
+            // 打印终止子进程的信号值
+            printf(&quot;child %d received signal %d\n&quot;,pid,WTERMSIG(status));
+
+    }
+}
+
+int main(void){
+
+    pid_t pid;
+    int i;
+    // 父子进程均设置 SIGCHLD 信号屏蔽字，方便捕捉
+    sigset_t newmask,oldmask;
+    sigemptyset(&amp;newmask);
+    sigaddset(&amp;newmask,SIGCHLD);
+    // 修改信号屏蔽字
+    sigprocmask(SIG_BLOCK,&amp;newmask,&amp;oldmask);
+    // fork子进程5个，全部捕捉 SIGCHLD 信号值
+    for (i = 0; i &lt; 5; i++)
+    {
+        if((pid = fork() )== 0){
+            break;
+        }
+        else if(pid &lt; 0){
+            perror(&quot;fork error!&quot;);
+            exit(1);
+        }
+    }
+    // 子进程 10 次循环打印， 10s 后结束
+    if(pid == 0){
+        int n = 10;
+        while(n--){
+            printf(&quot;child ID %d\n&quot;, getpid());
+            sleep(1);
+        }
+        return i;
+    } else if(pid &gt; 0){
+        // 父进程添加捕追函数
+        struct sigaction act;
+        act.sa_handler = do_sig;
+        act.sa_flags = 0;
+        sigemptyset(&amp;act.sa_mask);
+        // 注册信号捕捉函数
+        sigaction(SIGCHLD,&amp;act, NULL);
+        // 恢复初始信号屏蔽字的状态
+        sigprocmask(SIG_SETMASK,&amp;oldmask,NULL);
+        while(1){
+            printf(&quot;Parent ID %d\n&quot;,getpid());
+            sleep(5);
+        }
+    }
+    return 0;
+}
+</code></pre><p>程序运行结果：</p>
+<pre><code>...
+child ID 1421
+child ID 1422
+child ID 1423
+child ID 1420
+Parent ID 1418
+child ID 1421
+child ID 1422
+child ID 1419
+child 1423 exit 4
+child 1422 exit 3
+child 1421 exit 2
+child 1420 exit 1
+child 1419 exit 0
+Parent ID 1418
+...
+</code></pre><p>此时通过 kill -9 ？ 向指定的子进程（？）发信号杀死子进程，那么打印log便会将指定的子进程退出信号值打印出来（9）。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本章节继前面章节，系统从函数方面阐述了信号的发送，拦截以及捕捉。对于父子进程而言，信号屏蔽字，信号集等在父子进程中都会的到继承，因此再处理父子进程间信号时，需要优先设置相应的信号屏蔽字后，再fork子进程，然后在父进程中进行监听。</p>
+<p><a href="https://blog.csdn.net/ypt523/article/details/80365108" target="_blank" rel="noopener">参考链接1</a><br><a href="https://www.cnblogs.com/subo_peng/p/5325326.html" target="_blank" rel="noopener">参考链接2</a></p>
+<blockquote>
+<p>邢文鹏Linux系统教学资料</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/信号/" rel="tag"># 信号</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/08/Linux系统编程之信号基础/" rel="next" title="Linux系统编程之信号基础">
+                <i class="fa fa-chevron-left"></i> Linux系统编程之信号基础
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/10/Linux系统编程之信号后记/" rel="prev" title="Linux系统编程之信号后记">
+                Linux系统编程之信号后记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#信号产生函数"><span class="nav-number">1.</span> <span class="nav-text">信号产生函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#kill"><span class="nav-number">1.1.</span> <span class="nav-text">kill</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#raise"><span class="nav-number">1.2.</span> <span class="nav-text">raise</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#abort"><span class="nav-number">1.3.</span> <span class="nav-text">abort</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#alarm"><span class="nav-number">1.4.</span> <span class="nav-text">alarm</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#setitimer"><span class="nav-number">1.5.</span> <span class="nav-text">setitimer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sigqueue"><span class="nav-number">1.6.</span> <span class="nav-text">sigqueue</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#信号集"><span class="nav-number">2.</span> <span class="nav-text">信号集</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sigset-t-信号集"><span class="nav-number">2.1.</span> <span class="nav-text">sigset_t 信号集</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#信号集模型"><span class="nav-number">2.2.</span> <span class="nav-text">信号集模型</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#信号集操作函数"><span class="nav-number">3.</span> <span class="nav-text">信号集操作函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sigprocmask"><span class="nav-number">3.1.</span> <span class="nav-text">sigprocmask</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sigpending"><span class="nav-number">3.2.</span> <span class="nav-text">sigpending</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#信号集代码示例"><span class="nav-number">3.3.</span> <span class="nav-text">信号集代码示例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#信号捕捉"><span class="nav-number">4.</span> <span class="nav-text">信号捕捉</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sigaction"><span class="nav-number">4.1.</span> <span class="nav-text">sigaction</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#捕捉代码示例"><span class="nav-number">4.2.</span> <span class="nav-text">捕捉代码示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#信号捕捉传参"><span class="nav-number">4.3.</span> <span class="nav-text">信号捕捉传参</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#sigqueue-函数原型"><span class="nav-number">4.3.1.</span> <span class="nav-text">sigqueue 函数原型</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SIGCHLD-信号处理"><span class="nav-number">5.</span> <span class="nav-text">SIGCHLD 信号处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#产生条件"><span class="nav-number">5.1.</span> <span class="nav-text">产生条件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#处理方式"><span class="nav-number">5.2.</span> <span class="nav-text">处理方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SIGCHLD-代码示例"><span class="nav-number">5.3.</span> <span class="nav-text">SIGCHLD 代码示例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

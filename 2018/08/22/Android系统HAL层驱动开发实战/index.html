@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hal,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="基于Android HAL层驱动框架，开发者很容易将自己的驱动实现在用户空间，实现驱动细节的隐藏，而不必在内核中进行修改，避免因修改内核，公开源码进而损害自己的商业利益。本章节，我们就对HAL层驱动框架进行实现，由底层驱动到中间层framework，继而进入上层应用端，彻底完成上层应用到底层驱动的一一实现。">
+<meta name="keywords" content="Hal">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统HAL层驱动开发实战">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="基于Android HAL层驱动框架，开发者很容易将自己的驱动实现在用户空间，实现驱动细节的隐藏，而不必在内核中进行修改，避免因修改内核，公开源码进而损害自己的商业利益。本章节，我们就对HAL层驱动框架进行实现，由底层驱动到中间层framework，继而进入上层应用端，彻底完成上层应用到底层驱动的一一实现。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-28T09:24:30.478Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android系统HAL层驱动开发实战">
+<meta name="twitter:description" content="基于Android HAL层驱动框架，开发者很容易将自己的驱动实现在用户空间，实现驱动细节的隐藏，而不必在内核中进行修改，避免因修改内核，公开源码进而损害自己的商业利益。本章节，我们就对HAL层驱动框架进行实现，由底层驱动到中间层framework，继而进入上层应用端，彻底完成上层应用到底层驱动的一一实现。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/">
+
+
+
+
+
+  <title>Android系统HAL层驱动开发实战 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android系统HAL层驱动开发实战</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-22T09:09:21+08:00">
+                2018-08-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/驱动/" itemprop="url" rel="index">
+                    <span itemprop="name">驱动</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>基于Android HAL层驱动框架，开发者很容易将自己的驱动实现在用户空间，实现驱动细节的隐藏，而不必在内核中进行修改，避免因修改内核，公开源码进而损害自己的商业利益。本章节，我们就对HAL层驱动框架进行实现，由底层驱动到中间层framework，继而进入上层应用端，彻底完成上层应用到底层驱动的一一实现。</strong></p>
+<a id="more"></a>
+<h3 id="HAL层驱动实现"><a href="#HAL层驱动实现" class="headerlink" title="HAL层驱动实现"></a>HAL层驱动实现</h3><p>HAL层驱动框架的介绍在上篇章中已经详细的说明了。本节就在上节篇章中进行补充和说明，在框架基础上，代码实现自定义的驱动程序。本篇章中实现的驱动原型为led灯，包括设备初始化，打开，关闭以及设备移除等。</p>
+<h4 id="HAL头文件"><a href="#HAL头文件" class="headerlink" title="HAL头文件"></a>HAL头文件</h4><p>HAL驱动的头文件声明，可供实体文件导入，在JNI实现代码中同样需要导入，具体代码如下：</p>
+<pre><code>路径：hardware/libhardware/include/hardware/led.h
+
+#ifndef ANDROID_LED_INTERFACE_H
+#define ANDROID_LED_INTERFACE_H
+
+#include &lt;hardware/hardware.h&gt;
+
+__BEGIN_DECLS
+
+#define LED_HARDWARE_MODULE_ID &quot;led&quot;
+
+#define LED_HARDWARE_DEVICE_ID &quot;led&quot;
+
+typedef struct led_module_t {
+    struct hw_module_t common;
+} led_module_t;
+
+typedef struct led_device_t {
+    struct hw_device_t common;
+    int (*set_on)(struct led_device_t* dev);
+    int (*set_off)(struct led_device_t* dev);
+    int (*getCount)(struct led_device_t* dev);
+} led_device_t;
+
+static inline int led_device_open(const struct hw_module_t* module,
+    led_device_t** dev){
+    return module-&gt;methods-&gt;open(module,LED_HARDWARE_DEVICE_ID,
+        (struct hw_device_t**) dev);
+}
+
+static inline int led_device_close(led_device_t* dev){
+    return dev-&gt;common.close(&amp;dev-&gt;common);
+}
+
+__END_DECLS
+
+#endif
+</code></pre><p>代码相关说明：</p>
+<ol>
+<li>声明模块ID，设备ID均为“led”</li>
+<li>定义结构体 led_module_t 及 led_device_t 时便进行全局 typedef ，方便导包直接使用</li>
+<li>设备声明三个函数指针，set_on开灯，set_off关灯，getCount灯数目</li>
+<li>两个静态内联函数 led_device_open打开模块设备，led_device_close关闭模块设备</li>
+</ol>
+<p><strong><em>注意：文件路径的include同级目录下，应该有hardware.h 文件，此文件源码框架本身已经提供，不必自己实现</em></strong></p>
+<h4 id="HAL实体文件"><a href="#HAL实体文件" class="headerlink" title="HAL实体文件"></a>HAL实体文件</h4><p>本体文件代码如下：</p>
+<pre><code>代码路径：hardware/libhardware/modules/led/led.c
+
+#define LOG_TAG &quot;LedHALStub&quot;
+
+#include &lt;hardware/hardware.h&gt;
+#include &lt;hardware/led.h&gt;
+#include &lt;cutils/log.h&gt;
+#include &lt;malloc.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;math.h&gt;
+#include &lt;memory.h&gt;
+
+#define MODULE_NAME &quot;Led&quot;
+#define MODULE_AUTHOR &quot;891904833@qq.com&quot;
+
+static int led_set_on(led_device_t* dev) {
+    if(!dev) {
+        ALOGI(&quot;Null dev pointer.&quot;);
+        return -EFAULT;
+    }
+    ALOGI(&quot;led_set_on function call!&quot;);
+    return 0;
+}
+
+static int led_set_off(led_device_t* dev) {
+    if(!dev) {
+        ALOGI(&quot;Null dev pointer.&quot;);
+        return -EFAULT;
+    }
+    ALOGI(&quot;led_set_off function call!&quot;);
+    return 0;
+}
+
+static int led_getCount(led_device_t* device) {
+    ALOGI(&quot;led_getCount function call,return led_getCount is 4!&quot;);
+    return 4;
+}
+
+static int led_close(hw_device_t* device) {
+    if(device){
+        free(device);
+    }
+    ALOGI(&quot;led_device close successfully!&quot;);
+    return 0;
+}
+
+static int led_open(const hw_module_t* module, const char* id,
+    hw_device_t** device) {
+
+        // dev = (struct led_device_t*)malloc(sizeof(struct led_device_t));
+        led_device_t *dev = (led_device_t *)calloc(1, sizeof(led_device_t));
+
+        if(!dev) {
+            ALOGE(&quot;Failed to alloc space for led_device_t.&quot;);
+            return -EFAULT;
+        }
+
+        memset(dev, 0, sizeof(struct led_device_t));
+
+        dev-&gt;common.tag = HARDWARE_DEVICE_TAG;
+        dev-&gt;common.version = 0;
+        dev-&gt;common.module = (struct hw_module_t*)module;
+        dev-&gt;common.close = led_close;
+
+        dev-&gt;set_on = led_set_on;
+        dev-&gt;set_off = led_set_off;
+        dev-&gt;getCount = led_getCount;
+
+        *device = &amp;dev-&gt;common;
+
+        ALOGI(&quot;Open led_device successfully!&quot;);
+
+        return 0;
+}
+
+static struct hw_module_methods_t my_methods = {
+    .open = led_open,
+};
+
+struct led_module_t HAL_MODULE_INFO_SYM = {
+    .common = {
+        .tag = HARDWARE_MODULE_TAG,
+        .version_major = 1,
+        .version_minor = 0,
+        .id = LED_HARDWARE_MODULE_ID,
+        .name = MODULE_NAME,
+        .author = MODULE_AUTHOR,
+        .methods = &amp;my_methods,
+    },
+};
+</code></pre><p>代码相关说明：</p>
+<ol>
+<li>前面几个静态函数是函数指针方法的具体实现，下面在open设备时实现方法的一一映射</li>
+<li>led_open 方法实现设备的初始化，包括内核分配内存，led_device_t 内相关指针函数方法的映射等</li>
+<li>my_methods 方法为框架中结构体 hw_module_t 内 open 方法的具体映射</li>
+<li>HAL_MODULE_INFO_SYM 为HAL框架的必要说明，方便加载动态库时识别为驱动模块，并依据ID找到对应的模块驱动。同时完成 hw_module_t 必要方法 methods 的映射</li>
+<li>为了方便调试，HAL驱动的具体实现中仅进行Log打印，没有协助内核进行相关操作，之后在上层调用中如果查看到 “LedHALStub” 日志，即代表驱动调用ok</li>
+</ol>
+<h4 id="编译脚本"><a href="#编译脚本" class="headerlink" title="编译脚本"></a>编译脚本</h4><p>编译文件 Android.mk 将源代码编译成动态链接库，存放在设备的 /system/lib/hw/led.default.so 和 /system/lib64/hw/led.default.so，代码如下：</p>
+<pre><code>LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
+LOCAL_MODULE_TAGS := optional
+LOCAL_PRELINK_MODULE := false
+LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_SHARED_LIBRARIES := \
+    liblog \
+    libutils
+LOCAL_SRC_FILES := led.cpp
+LOCAL_MODULE := led.default
+include $(BUILD_SHARED_LIBRARY)
+</code></pre><h3 id="framework层实现"><a href="#framework层实现" class="headerlink" title="framework层实现"></a>framework层实现</h3><p>HAL层驱动框架实现完成，下面就进行framework层的实现。大概调用流程如下：首先系统提供一个全局的LedService服务，系统设备启动中将其注册到ServiceManager中，其后上层应用通过跨进程aidl方式，远程调用服务内方法，最后在服务内通过jni方式再调用到底层驱动程序，实现上层到中间层继而底层驱动的全程跨度。</p>
+<h4 id="AIDL声明"><a href="#AIDL声明" class="headerlink" title="AIDL声明"></a>AIDL声明</h4><p>AIDL的详细说明在之前的篇章中已经详细介绍过了，下面直接看服务的接口声明：</p>
+<pre><code>代码路径：frameworks/base/core/java/android/os/ILedService.aidl
+
+package android.os;
+
+/** {@hide} */
+interface ILedService
+{
+    int LedInit();
+    void LedSetOn();
+    void LedSetOff();
+    void LedClose();
+    int LedGetCount();
+}
+</code></pre><p>代码说明：<br>声明五个接口，对应设备的初始化，打开，关闭，灯数目以及设备移除。</p>
+<h5 id="编译AIDL文件"><a href="#编译AIDL文件" class="headerlink" title="编译AIDL文件"></a>编译AIDL文件</h5><p>声明完成AIDL文件，修改framework/base下的Android.mk文件，将ILedService.aidl加入到编译脚本aidl文件中去。</p>
+<pre><code>LOCAL_SRC_FILES += \
+    core/java/android/accessibilityservice/IAccessibilityServiceConnection.aidl \
+    ...
+    core/java/android/os/ILedService.aidl \
+
+  ...
+</code></pre><p>之后执行 mmm framework/base 局部编译，生成aidl对应的java文件，文件位于 out/target/common/obj/JAVA_LIBRARIES/framework_intermediates/src/core/java/android/os/ILedService.java</p>
+<h4 id="自定义服务实现"><a href="#自定义服务实现" class="headerlink" title="自定义服务实现"></a>自定义服务实现</h4><p>有了AIDL文件的接口方法，下面就进行自定义服务的实现。首先找到同级文件夹 frameworks/base/services/core/java/com/android/server/ 下，自定义 LedService 继承AIDL文件中间类 ILedService.Stub ，具体代码如下：</p>
+<pre><code>package com.android.server;
+
+import android.os.ILedService;
+import android.util.Slog;
+
+public class LedService extends ILedService.Stub {
+    private static final String TAG = &quot;LedService&quot;;
+
+    public int LedInit() throws android.os.RemoteException
+    {
+        return native_LedInit();
+    }
+
+    public void LedSetOn() throws android.os.RemoteException
+    {
+        Slog.d(TAG,&quot;LedService native_LedSetOn&quot;);
+        native_LedSetOn();
+    }
+
+    public void LedSetOff() throws android.os.RemoteException
+    {
+        Slog.d(TAG,&quot;LedService native_LedSetOff&quot;);
+        native_LedSetOff();
+    }
+
+    public int LedGetCount() throws android.os.RemoteException
+    {
+        Slog.d(TAG,&quot;LedService native_LedGetCount&quot;);
+        return native_LedGetCount();
+    }
+
+    public void LedClose() throws android.os.RemoteException{
+        Slog.d(TAG,&quot;LedService native_LedClose&quot;);
+        native_LedClose();
+    }
+
+    public LedService()
+    {
+        Slog.d(TAG,&quot;LedService started!&quot;);
+    }
+
+    native int native_LedInit();
+    native void native_LedSetOn();
+    native void native_LedSetOff();
+    native int native_LedGetCount();
+    native void native_LedClose();
+}
+</code></pre><p>代码相关说明：</p>
+<ol>
+<li>ILedService.Stub 类为aidl文件经过系统编译后生成的本地Binder类，实现跨进层通信的基础是基于安卓Binder框架，这里通过继承 ILedService.Stub 类，可以直接调用框架中实现好的Binder体系中重要的两个方法 transact(…) 和 onTransact(…)</li>
+<li>对于接口中的每个方法，最终都归结实现在native层jni方法中</li>
+</ol>
+<h4 id="加入系统服务SM"><a href="#加入系统服务SM" class="headerlink" title="加入系统服务SM"></a>加入系统服务SM</h4><p>完成自定义服务的编写，下面就需要将其加入到SM中，方便后续上层应用进行调用。由于系统开机会在SystemServer中进行相关服务的初始化登记动作，这里将LedService加入到SystemServer中去即可，具体代码如下：</p>
+<pre><code>代码路径：frameworks/base/services/core/java/com/android/server/SystemServer.java
+
+...
+
+Slog.i(TAG, &quot;Vibrator Service&quot;);
+vibrator = new VibratorService(context);
+ServiceManager.addService(&quot;vibrator&quot;, vibrator);
+
+// new code by allies
+LedService led = null;
+Slog.i(TAG, &quot;Led Service&quot;);
+led = new LedService();
+ServiceManager.addService(&quot;led&quot;, led);
+
+...
+</code></pre><p>这里找到 VibratorService 震动服务，将 LedService 加入到此段代码下面即可，其他代码这里省略。</p>
+<h4 id="JNI方法实现"><a href="#JNI方法实现" class="headerlink" title="JNI方法实现"></a>JNI方法实现</h4><p>LedService中的native方法声明完成，下面就要对此jni方法进行实现。这里依据其他服务jni方法声明文件方式，同级目录下新建文档 com_android_server_LedService.cpp ,具体代码如下：</p>
+<pre><code>代码路径：frameworks/base/services/core/jni/com_android_server_LedService.cpp
+
+#define LOG_TAG &quot;LedServiceJNI&quot;
+#include &quot;jni.h&quot;
+#include &quot;JNIHelp.h&quot;
+#include &quot;android_runtime/AndroidRuntime.h&quot;
+#include &lt;utils/misc.h&gt;
+#include &lt;utils/Log.h&gt;
+#include &lt;hardware/hardware.h&gt;
+#include &lt;hardware/led.h&gt;
+#include &lt;stdio.h&gt;
+
+namespace android{
+
+    static led_device_t* mLedDevice = 0;
+
+    static jint led_init(JNIEnv *env, jobject instance){
+        led_module_t* module;
+        ALOGI(&quot;led_init start ...&quot;);
+        if (hw_get_module(LED_HARDWARE_MODULE_ID, (hw_module_t const**)&amp;module) == 0) {  
+            ALOGI(&quot;Device led found...&quot;);
+            if (led_device_open(&amp;(module-&gt;common), &amp;mLedDevice ) == 0) {
+                ALOGI(&quot;led_init success!!!&quot;);
+                return 0;
+            }
+            ALOGE(&quot;led_init error!!!&quot;);
+        }
+        ALOGI(&quot;hw_get_module function call error!!!&quot;);
+        return -1;
+    }
+
+    static jint led_getCount(JNIEnv *env, jobject thiz) {
+        ALOGI(&quot;led_getCount 4&quot;);
+        return mLedDevice-&gt;getCount(mLedDevice);;
+    }
+
+    static void led_setOn(JNIEnv *env, jobject thiz) {
+        ALOGI(&quot;led_set_on&quot;);
+        mLedDevice-&gt;set_on(mLedDevice);
+    }
+
+    static void led_setOff(JNIEnv *env, jobject thiz) {
+        ALOGI(&quot;led_set_off&quot;);
+        mLedDevice-&gt;set_off(mLedDevice);
+    }
+
+    static void led_close(JNIEnv *env, jobject thiz) {
+        ALOGI(&quot;led_close&quot;);
+        led_device_close(mLedDevice);
+    }
+
+    static const JNINativeMethod method_table[] = {
+        {&quot;native_LedInit&quot;, &quot;()I&quot;, (void*)led_init},
+        {&quot;native_LedSetOn&quot;, &quot;()V&quot;, (void*)led_setOn},
+        {&quot;native_LedSetOff&quot;, &quot;()V&quot;, (void*)led_setOff},
+        {&quot;native_LedGetCount&quot;, &quot;()I&quot;, (void*)led_getCount},
+        {&quot;native_LedClose&quot;, &quot;()V&quot;, (void*)led_close},
+    };
+
+    int register_android_server_LedService(JNIEnv *env) {
+            return jniRegisterNativeMethods(env, &quot;com/android/server/LedService&quot;, method_table, NELEM(method_table));
+    }
+};
+</code></pre><p>代码相关说明：</p>
+<ol>
+<li>led_init 为设备的初始化，主要有两个重要操作：其一，调用HAL框架公用方法 hw_get_module 依据传入的模块ID，加载对应的驱动模块文件，并完成框架结构体 hw_module_t 内 methods方法的映射；其二，调用 led.h 头文件内联函数 led_device_open 打开模块设备，完成 led_device_t 结构体内相关指针函数的映射，之后，将设备引用存放于 mLedDevice 中，方便后续具体方法的调用</li>
+<li>几个静态方法的具体实现，实质上是调用 mLedDevice 变量设备的方法，及驱动中对应的方法</li>
+<li>method_table 静态常数组，其内存放了上层native方法声明和本c层实体方法的一一映射</li>
+<li>register_android_server_LedService jni方法的注册具体实现，此方法需要在系统启动时，在onload.cpp中指定</li>
+</ol>
+<h4 id="自定义方法JNI注册实现"><a href="#自定义方法JNI注册实现" class="headerlink" title="自定义方法JNI注册实现"></a>自定义方法JNI注册实现</h4><p>修改同级目录下 frameworks/base/services/core/jni/onload.cpp 文件，将 com_android_server_LedService.cpp 文件注册到系统中去。</p>
+<pre><code>代码路径：frameworks/base/services/core/jni/onload.cpp
+
+#include &quot;JNIHelp.h&quot;
+#include &quot;jni.h&quot;
+#include &quot;utils/Log.h&quot;
+#include &quot;utils/misc.h&quot;
+
+namespace android {
+int register_android_server_AlarmManagerService(JNIEnv* env);
+int register_android_server_AssetAtlasService(JNIEnv* env);
+...
+int register_android_server_LedService(JNIEnv* env);
+};
+
+using namespace android;
+
+extern &quot;C&quot; jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
+{
+    JNIEnv* env = NULL;
+    jint result = -1;
+
+    if (vm-&gt;GetEnv((void**) &amp;env, JNI_VERSION_1_4) != JNI_OK) {
+        ALOGE(&quot;GetEnv failed!&quot;);
+        return result;
+    }
+    ALOG_ASSERT(env, &quot;Could not retrieve the env!&quot;);
+
+    register_android_server_PowerManagerService(env);
+    register_android_server_SerialService(env);
+    ...
+    register_android_server_LedService(env);
+
+    return JNI_VERSION_1_4;
+}
+</code></pre><p>在对应的地方，依照其他代码方式，添加自己声明的jni方法注册实现即可。</p>
+<h4 id="编译脚本修改"><a href="#编译脚本修改" class="headerlink" title="编译脚本修改"></a>编译脚本修改</h4><p>到这里已经修改完成了framework层相关文件的编写，之后我们就需要修改此层文件中的编译脚本，将添加的文件加入编译系统中去。</p>
+<pre><code>代码路径：frameworks/base/services/core/jni/Android.mk
+
+LOCAL_REL_DIR := core/jni
+
+LOCAL_CFLAGS += -Wall -Werror -Wno-unused-parameter
+
+LOCAL_SRC_FILES += \
+    $(LOCAL_REL_DIR)/com_android_server_AlarmManagerService.cpp \
+    $(LOCAL_REL_DIR)/com_android_server_am_BatteryStatsService.cpp \
+    ...
+    $(LOCAL_REL_DIR)/com_android_server_LedService.cpp \
+    $(LOCAL_REL_DIR)/onload.cpp \
+
+    ...
+</code></pre><p>源码跟路径下，执行 mmm frameworks/base/services/ 命令，编译生成相关文件之后，make snod 将编译变动文件打包到system.img镜像中，升级系统。</p>
+<h3 id="应用层实现"><a href="#应用层实现" class="headerlink" title="应用层实现"></a>应用层实现</h3><p>到这里，HAL层驱动，framework层框架都以搭建完成，系统刷写新的rom后，下面我们就要对此进行上层应用的调用。</p>
+<h4 id="导入AIDL文件"><a href="#导入AIDL文件" class="headerlink" title="导入AIDL文件"></a>导入AIDL文件</h4><p>由于需要跨进程进行系统服务的调用，这里需要将之前声明的AIDL文件拷贝到Android Studio中，锤子一下，生成相应的Stub文件，方便后续服务的获取。注意AIDL文件的包名要和系统中的相一致。</p>
+<h4 id="项目源码示例"><a href="#项目源码示例" class="headerlink" title="项目源码示例"></a>项目源码示例</h4><p>对于Android Studio项目的全程源码，在这里就不贴了。主要的逻辑还是要看一下。如下：</p>
+<p>package allies.showame.com.jni_hal_demo;</p>
+<p>import android.os.Bundle;<br>import android.os.ILedService;<br>import android.os.RemoteException;<br>import android.os.ServiceManager;<br>import android.support.v7.app.AppCompatActivity;<br>import android.util.Log;<br>import android.view.View;</p>
+<p>public class MainActivity extends AppCompatActivity implements View.OnClickListener {</p>
+<pre><code>private static final String TAG = &quot;Led_MainActivity&quot;;
+private View btn_setOff;
+private View btn_setOn;
+private View btn_init;
+private View btn_getCount;
+private View btn_close;
+static boolean ifInited = false;
+private ILedService ledProxy = null;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    initViews();
+    setOnClick();
+    enableBtn();
+}
+
+@Override
+protected void onResume() {
+    ledProxy = ILedService.Stub.asInterface(ServiceManager.getService(&quot;led&quot;));
+    if (ledProxy == null)
+        Log.e(TAG, &quot;led service is null!!!&quot;);
+    else
+        Log.e(TAG, &quot;led service stub get success!!!&quot;);
+    super.onResume();
+}
+
+private void enableBtn() {
+    if (ifInited) {
+        btn_setOff.setEnabled(true);
+        btn_setOn.setEnabled(true);
+        btn_getCount.setEnabled(true);
+        btn_close.setEnabled(true);
+    } else {
+        btn_setOff.setEnabled(false);
+        btn_setOn.setEnabled(false);
+        btn_getCount.setEnabled(false);
+        btn_close.setEnabled(false);
+    }
+}
+
+private void initViews() {
+    btn_init = findViewById(R.id.btn_init);
+    btn_setOn = findViewById(R.id.btn_setOn);
+    btn_setOff = findViewById(R.id.btn_setOff);
+    btn_getCount = findViewById(R.id.btn_getCount);
+    btn_close = findViewById(R.id.btn_close);
+}
+
+private void setOnClick() {
+
+    btn_init.setOnClickListener(this);
+    btn_setOn.setOnClickListener(this);
+    btn_setOff.setOnClickListener(this);
+    btn_getCount.setOnClickListener(this);
+    btn_close.setOnClickListener(this);
+
+}
+
+@Override
+public void onClick(View v) {
+
+    int id = v.getId();
+    int i = -1;
+    switch (id) {
+        case R.id.btn_init:
+            try {
+                i = ledProxy.LedInit();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, &quot;led init...&quot; + String.valueOf(i));
+            if (!ifInited) {
+                ifInited = true;
+                enableBtn();
+            }
+            break;
+
+        case R.id.btn_setOn:
+            try {
+                ledProxy.LedSetOn();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, &quot;led setOn...&quot;);
+
+            break;
+        case R.id.btn_setOff:
+            try {
+                ledProxy.LedSetOff();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, &quot;led setOff...&quot;);
+
+            break;
+
+        case R.id.btn_getCount:
+            try {
+                i = ledProxy.LedGetCount();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, &quot;led getCount...&quot; + String.valueOf(i));
+            break;
+        case R.id.btn_close:
+            try {
+                ledProxy.LedClose();
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, &quot;led close...&quot;);
+            if (ifInited) {
+                ifInited = false;
+                enableBtn();
+            }
+        default:
+            break;
+    }
+}
+</code></pre><p>}</p>
+<p>代码相关说明：</p>
+<ol>
+<li>onCreate实现控件的获取绑定、点击监听以及状态切换</li>
+<li>onResume实现获取LedService的远程Proxy代理对象，方便跨进程方法调用</li>
+<li>onClick实现相关控件的点击实现，即调用Proxy代理类相关方法，其中还有控件状态使能控制</li>
+</ol>
+<h4 id="SM获取系统服务的说明"><a href="#SM获取系统服务的说明" class="headerlink" title="SM获取系统服务的说明"></a>SM获取系统服务的说明</h4><p>对于方法 ServiceManager.getService(“led”)，此方法为系统api，直接调用在Android Studio无法实现，这里提供两个方法实现。</p>
+<ul>
+<li>方法一：本项目实现方法，导入系统编译中间framework.jar实现系统api无缝调用</li>
+<li><p>方法二：使用反射方式进行调用，具体方式如下：</p>
+<pre><code>public ILedService getILedServiceProxy() {
+    ILedService LedService = null;
+    try {
+        // 根据指定文件，反射获取类 ServiceManager
+        Class&lt;?&gt; aClass = Class.forName(&quot;android.os.ServiceManager&quot;);
+        // 获取类中定义的具体方法 getService
+        Method getService = aClass.getDeclaredMethod(&quot;getService&quot;, String.class);
+        // 反射方法到类，即 method + invoke + 类
+        Object ledIBinder = getService.invoke(aClass, &quot;led&quot;);
+        // 将 IBinder 对象转成远程代理 Proxy
+        LedService = ILedService.Stub.asInterface((IBinder) ledIBinder);
+    } catch (IllegalAccessException e) {
+        e.printStackTrace();
+    } catch (InvocationTargetException e) {
+        e.printStackTrace();
+    } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+    } catch (NoSuchMethodException e) {
+        e.printStackTrace();
+    }
+    return LedService;
+}
+</code></pre></li>
+</ul>
+<h3 id="安装调试"><a href="#安装调试" class="headerlink" title="安装调试"></a>安装调试</h3><p>将之前打包好的rom刷写到设备中，重启开机后，Android Studio中终端adb连接到设备中去，开启软件进行调试。</p>
+<h4 id="Log日志"><a href="#Log日志" class="headerlink" title="Log日志"></a>Log日志</h4><p>终端输入 logcat | grep “Led”,查看最终的log日志如下：</p>
+<ol>
+<li><p>led_init</p>
+<p> 3673 I LedServiceJNI: led_init start …<br> 3673 I LedServiceJNI: Device led found…<br> 3673 I LedHALStub: Open led_device successfully!<br> 3673 I LedServiceJNI: led_init success!!!<br> 3659 D Led_MainActivity: led init…0</p>
+</li>
+<li><p>led_setOn</p>
+<p> 2340 D LedService: LedService native_LedSetOn<br> 2340 I LedServiceJNI: led_set_on<br> 2340 I LedHALStub: led_set_on function call!<br> 3659 D Led_MainActivity: led setOn…</p>
+</li>
+<li><p>led_setOff</p>
+<p> 2384 D LedService: LedService native_LedSetOff<br> 2384 I LedServiceJNI: led_set_off<br> 2384 I LedHALStub: led_set_off function call!<br> 3659 D Led_MainActivity: led setOff…</p>
+</li>
+<li><p>led_getCount</p>
+<p> 3673 D LedService: LedService native_LedGetCount<br> 3673 I LedServiceJNI: led_getCount 4<br> 3673 I LedHALStub: led_getCount function call,return led_getCount is 4!<br> 3659 D Led_MainActivity: led getCount…4</p>
+</li>
+<li><p>led_close</p>
+<p> 2391 D LedService: LedService native_LedClose<br> 2391 I LedServiceJNI: led_close<br> 2391 I LedHALStub: led_device close successfully!<br> 3659 D Led_MainActivity: led close…</p>
+</li>
+</ol>
+<p>从log日志可以看出，从上层应用的调用到驱动，经过的流程 Led_MainActivity -&gt; LedServic -&gt; nativce_jni&gt;HAL -&gt; Led_MainActivity ,一次调用过程，完整的透过了安卓的整个框架。至此从安卓HAL层驱动到上层应用的实现就完整结束了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>经过上面的代码实战，透过安卓的硬件抽象层框架，完整的实现了从上层应用到中间层framework，再到驱动的全程调用。这里总结一下整个流程。</p>
+<ol>
+<li>基于安卓HAL框架，实现自定义的驱动，生成相关 *.so 动态库</li>
+<li>对应驱动具体方法，定义framework层AIDL文件，添加到编译文件，并生成相应的Stub类文件</li>
+<li>新建 <em>Service.java 自定义服务，继承于AIDL的中间编译文件 </em>Service.Stub</li>
+<li>将自定义服务添加到SysterServer中，便于登记注册到SM中</li>
+<li>新建 com_android_server_*Service.cpp，完成对应native层代码实现，主要包括方法注册，模块的初始化和设备的打开</li>
+<li>将新建c层jni文件添加到onload.cpp中，实现方法的注册和映射</li>
+<li>修改对应的 Android.mk，将新建文件添加到编译系统中去</li>
+<li>生成最新系统包进行刷写</li>
+<li>提取AIDL文件到应用中，新建应用App通过SM获取LedService服务的远程代理对象Proxy，测试调用其方法，方法经过层层调用，最终指向驱动层实现代码</li>
+</ol>
+<h4 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h4><p>相关参考</p>
+<blockquote>
+<p>高焕堂安卓架构师系列视频</p>
+</blockquote>
+<blockquote>
+<p>Android系统源代码情景分析</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/Hal/" rel="tag"># Hal</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/08/18/Android系统HAL层驱动分析/" rel="next" title="Android系统HAL层驱动基础总结">
+                <i class="fa fa-chevron-left"></i> Android系统HAL层驱动基础总结
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/" rel="prev" title="源码分析之存储系统启动流程Vold">
+                源码分析之存储系统启动流程Vold <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HAL层驱动实现"><span class="nav-number">1.</span> <span class="nav-text">HAL层驱动实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HAL头文件"><span class="nav-number">1.1.</span> <span class="nav-text">HAL头文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HAL实体文件"><span class="nav-number">1.2.</span> <span class="nav-text">HAL实体文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#编译脚本"><span class="nav-number">1.3.</span> <span class="nav-text">编译脚本</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#framework层实现"><span class="nav-number">2.</span> <span class="nav-text">framework层实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#AIDL声明"><span class="nav-number">2.1.</span> <span class="nav-text">AIDL声明</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#编译AIDL文件"><span class="nav-number">2.1.1.</span> <span class="nav-text">编译AIDL文件</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自定义服务实现"><span class="nav-number">2.2.</span> <span class="nav-text">自定义服务实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#加入系统服务SM"><span class="nav-number">2.3.</span> <span class="nav-text">加入系统服务SM</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JNI方法实现"><span class="nav-number">2.4.</span> <span class="nav-text">JNI方法实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自定义方法JNI注册实现"><span class="nav-number">2.5.</span> <span class="nav-text">自定义方法JNI注册实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#编译脚本修改"><span class="nav-number">2.6.</span> <span class="nav-text">编译脚本修改</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用层实现"><span class="nav-number">3.</span> <span class="nav-text">应用层实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#导入AIDL文件"><span class="nav-number">3.1.</span> <span class="nav-text">导入AIDL文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#项目源码示例"><span class="nav-number">3.2.</span> <span class="nav-text">项目源码示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SM获取系统服务的说明"><span class="nav-number">3.3.</span> <span class="nav-text">SM获取系统服务的说明</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装调试"><span class="nav-number">4.</span> <span class="nav-text">安装调试</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Log日志"><span class="nav-number">4.1.</span> <span class="nav-text">Log日志</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#其他"><span class="nav-number">5.1.</span> <span class="nav-text">其他</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

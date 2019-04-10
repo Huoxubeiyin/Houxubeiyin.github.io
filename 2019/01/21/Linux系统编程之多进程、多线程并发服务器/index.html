@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="多线程　多进程 线程池">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="本章节就服务器的开章，仅介绍多进程，多线程下高并发服务器模型的实现。这两种模型实现简单，逻辑清晰，但同时局限性也很大，受限于系统资源以及文件描述符上限等，后续会就多路IO转接服务器进行进一步分析。">
+<meta name="keywords" content="多线程　多进程 线程池">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程之多进程、多线程并发服务器">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="本章节就服务器的开章，仅介绍多进程，多线程下高并发服务器模型的实现。这两种模型实现简单，逻辑清晰，但同时局限性也很大，受限于系统资源以及文件描述符上限等，后续会就多路IO转接服务器进行进一步分析。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-01-23T02:26:40.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux系统编程之多进程、多线程并发服务器">
+<meta name="twitter:description" content="本章节就服务器的开章，仅介绍多进程，多线程下高并发服务器模型的实现。这两种模型实现简单，逻辑清晰，但同时局限性也很大，受限于系统资源以及文件描述符上限等，后续会就多路IO转接服务器进行进一步分析。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/">
+
+
+
+
+
+  <title>Linux系统编程之多进程、多线程并发服务器 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux系统编程之多进程、多线程并发服务器</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-21T09:41:10+08:00">
+                2019-01-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>本章节就服务器的开章，仅介绍多进程，多线程下高并发服务器模型的实现。这两种模型实现简单，逻辑清晰，但同时局限性也很大，受限于系统资源以及文件描述符上限等，后续会就多路IO转接服务器进行进一步分析。</strong><br><a id="more"></a></p>
+<h1 id="高并发服务器"><a href="#高并发服务器" class="headerlink" title="高并发服务器"></a>高并发服务器</h1><h2 id="多进程并发服务器"><a href="#多进程并发服务器" class="headerlink" title="多进程并发服务器"></a>多进程并发服务器</h2><p>多进程并发服务器，顾名思义，采用Linux下多进程机制，对于多个客户端链接请求，服务器端对应多个进程与其进行数据通信交互。可模型理解简单，代码实现也容易，但其缺点也显而易见，主要几种以下几个方面：</p>
+<ol>
+<li>父进程能够创建的最大文件描述个数(父进程中需要close关闭accept返回的新文件描述符)</li>
+<li>系统内创建进程个数(内存大小相关)</li>
+<li>进程创建过多是否降低整体服务性能(进程调度)</li>
+</ol>
+<h3 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h3><pre><code>#include &quot;wrap.h&quot;
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;ctype.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/wait.h&gt;
+
+#define SERVER_PORT 8000
+#define BUF_SIZE 1024
+
+// 信号捕捉函数，处理子进程退出，回收系统资源
+void do_sigchild(void* arg){
+    // 0 -&gt; 回收和当前调用waitpid一组的所有子进程
+    // 即当前进程内的所有子进程
+    waitpid(0,NULL,WNOHANG);
+}
+
+int main(int argc, char *argv[]){
+
+    int sockfd,confd, readlen;
+    struct sockaddr_in serveraddr,clientaddr;
+    socklen_t clientaddr_len;
+    char clientIP[128];
+    char buf[BUF_SIZE];
+
+    pid_t pid;
+
+    // 设置信号捕追函数，捕追子进程退出，节约资源
+    struct sigaction newact;
+    newact.sa_flags = 0;
+    newact.sa_handler = do_sigchild;
+    sigemptyset(&amp;newact);
+    sigaction(SIGCHLD,&amp;newact,NULL);
+
+    sockfd = Socket(AF_INET, SOCK_STREAM, 0);
+
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serveraddr.sin_port = htons(SERVER_PORT);
+
+    Bind(sockfd, (struct sockaddr *)&amp;serveraddr, sizeof(serveraddr));
+
+    Listen(sockfd,30);
+    printf(&quot; Accepting connections ...\n&quot;);
+
+    while(1){
+
+        clientaddr_len = sizeof(clientaddr);
+        // 监听客户端链接，成功链接返回描述符，否则阻塞
+        confd = Accept(sockfd, (struct sockaddr*)&amp;clientaddr, &amp;clientaddr_len);
+
+        // 此时有客户端链接上服务器，创建子进程与其进行通信，父进程继续监听新的链接请求
+        pid = fork();
+        if(pid == 0){
+            // 子进程内，关闭父子进程继承的文件描述符，节约系统资源
+            Close(sockfd);
+            // 数据交互
+            while (1) {
+                readlen = Read(confd, buf, BUF_SIZE);
+                if (readlen == 0) {
+                    printf(&quot;the other side has been closed.\n&quot;);
+                    break;
+                }
+                printf(&quot;received from %s at PORT %d received: %s\n&quot;,
+                       inet_ntop(AF_INET, &amp;clientaddr.sin_addr, clientIP, sizeof(clientIP)),
+                       ntohs(clientaddr.sin_port),
+                       buf);
+                for (int i = 0; i &lt; readlen; i++)
+                    buf[i] = toupper(buf[i]);
+                Write(confd, buf, readlen);
+            }
+            // 数据交互结束，关闭socket链接，等待信号捕捉函数回收进程资源
+            Close(confd);
+            return 0;
+        }else if (pid &gt; 0) {
+            // 父进程内关闭链接客户端的描述符，父进程只关心链接情况，而不参与数据请求（子进程参与数据请求）
+            Close(confd);
+        }else {
+            // fork失败，退出
+            perr_exit(&quot;fork&quot;);
+        }
+    }
+}
+</code></pre><p>以上代码需要注意几点：</p>
+<ol>
+<li>子进程的回收处理需要在fork之前进程，因为信号捕捉函数会fork继承到子进程内，因为子进程的退出（发送SIGCHLD）可以得到处理，回收系统资源</li>
+<li>进程的创建在链接请求操作完成之后进行，如果没有客户端链接，那么就没有子进程创建</li>
+<li>父进程只负责监听客户端链接，分配描述符进行子进程的创建，继承下来的通信confd描述符需要关闭</li>
+<li>子进程也需要关闭继承下来的sockfd，子进程只关心数据通信通信（confd），进一步节省系统资源</li>
+</ol>
+<p>从模型中可以看出，多进程下高并发服务器下，对于进程的创建开销极其大，非常考验系统内存容量，并且受限于文件描述符的大小。为了进一步节省资源，需要对进程内不需要使用的文件描述的进行适当的关闭。同时，新的链接请求产生，就意味着新进程的创建，因此高并发下多个客户端同时链接，会造成服务器某一时刻负载极其大，容易出现未知的问题。</p>
+<h3 id="Clinet"><a href="#Clinet" class="headerlink" title="Clinet"></a>Clinet</h3><pre><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &quot;wrap.h&quot;
+#define MAXLINE 80
+#define SERV_PORT 8000
+
+int main(int argc, char *argv[])
+{
+    struct sockaddr_in servaddr;
+    char buf[MAXLINE];
+    int sockfd, n;
+    char ServerIP[] =&quot;127.0.0.1&quot;;
+
+    sockfd = Socket(AF_INET, SOCK_STREAM, 0);
+    bzero(&amp;servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+
+    inet_pton(AF_INET, ServerIP, &amp;servaddr.sin_addr);
+    servaddr.sin_port = htons(SERV_PORT);
+    Connect(sockfd, (struct sockaddr *)&amp;servaddr, sizeof(servaddr));
+
+    while (fgets(buf, MAXLINE, stdin) != NULL) {
+        Write(sockfd, buf, strlen(buf));
+        n = Read(sockfd, buf, MAXLINE);
+        if (n == 0)
+            printf(&quot;the other side has been closed.\n&quot;);
+        else
+            Write(STDOUT_FILENO, buf, n);
+    }
+    Close(sockfd);
+    return 0;
+}
+</code></pre><p>客户端代码就容易许多了，主要进行连接服务器，等待用户输入字符传入服务器处理，再将服务器回传数据显示打印到输出窗口中。</p>
+<h2 id="多线程并发服务器"><a href="#多线程并发服务器" class="headerlink" title="多线程并发服务器"></a>多线程并发服务器</h2><p>从上面介绍的多进程服务模型可以推出，多线程服务模型也就是将进程概念转换为线程而已，但是考虑创建线程的开销肯定比进程来的小，所以多线程高并发服务器还是有一定的优势的。</p>
+<p>多线程下高并发服务器的编程中需要注意以下几点：</p>
+<ol>
+<li>调整进程内最大文件描述符上限</li>
+<li>线程如有共享数据,考虑线程同步</li>
+<li>服务于客户端线程退出时,退出处理。(退出值,分离态)</li>
+<li>系统负载,随着链接客户端增加,导致其它线程不能及时得到CPU</li>
+</ol>
+<h3 id="Server-1"><a href="#Server-1" class="headerlink" title="Server"></a>Server</h3><pre><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;pthread.h&gt;
+#include &quot;wrap.h&quot;
+
+#define MAXLINE 80
+#define SERV_PORT 8000
+#define MAX_PTHREAD_SIZE 256
+
+// 自定义结构体，存储客户端地址以及对应的服务器connfd
+struct s_info {
+    struct sockaddr_in cliaddr;
+    int connfd;
+};
+
+// 线程工作载入实体
+void *do_work(void *arg)
+{
+    int n,i;
+    // 强转数据，得到s_info
+    struct s_info *ts = (struct s_info*)arg;
+    char buf[MAXLINE];
+    char str[INET_ADDRSTRLEN];
+    /* 可以在创建线程前设置线程创建属性,设为分离态,哪种效率高内? */
+    pthread_detach(pthread_self());
+    while (1) {
+        n = Read(ts-&gt;connfd, buf, MAXLINE);
+        if (n == 0) {
+            // 客户端关闭，跳出循环
+            printf(&quot;the other side has been closed.\n&quot;);
+            break;
+        }
+        printf(&quot;received from %s at PORT %d\n&quot;,
+               inet_ntop(AF_INET, &amp;(*ts).cliaddr.sin_addr, str, sizeof(str)),
+               ntohs((*ts).cliaddr.sin_port));
+        for (i = 0; i &lt; n; i++)
+            buf[i] = toupper(buf[i]);
+        Write(ts-&gt;connfd, buf, n);
+    }
+    // 客户端关闭，服务端线程关闭文件描述符
+    // 由于线程已置位分离态，系统自动回收线程资源
+    Close(ts-&gt;connfd);
+}
+
+int main(void)
+{
+    struct sockaddr_in servaddr, cliaddr;
+    socklen_t cliaddr_len;
+    int listenfd, connfd;
+    int i = 0;
+    pthread_t tid;
+    // 配置同一时刻线程峰值数
+    struct s_info ts[MAX_PTHREAD_SIZE];
+
+    listenfd = Socket(AF_INET, SOCK_STREAM, 0);
+    bzero(&amp;servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(SERV_PORT);
+    Bind(listenfd, (struct sockaddr *)&amp;servaddr, sizeof(servaddr));
+    Listen(listenfd, 20);
+    printf(&quot;Accepting connections ...\n&quot;);
+    // 主函数内主负责监听客户端链接，创建子线程
+    while (1) {
+        cliaddr_len = sizeof(cliaddr);
+        connfd = Accept(listenfd, (struct sockaddr *)&amp;cliaddr, &amp;cliaddr_len);
+        // 将必要的信息封装到结构体传入子线程中
+        ts[i].cliaddr = cliaddr;
+        ts[i].connfd = connfd;
+        /* 达到线程最大数时,pthread_create出错处理, 增加服务器稳定性 */
+        pthread_create(&amp;tid, NULL, do_work, (void*)&amp;ts[i]);
+        i++;
+        // 子线程数量过载，退出
+        if(i&gt;=MAX_PTHREAD_SIZE)
+            break;
+    }
+    Close(listenfd);
+    return 0;
+}
+</code></pre><p>以上代码仅仅是个模型，许多细节有待优化，集中以下几点：</p>
+<ol>
+<li>线程峰值数量问题：上述采用的数组容器，其峰值预先定好，对于先前创建的线程因为客户端关闭而退出，后被系统回收了情况下，此时数组容器应当记录并将给予新创建的子线程使用</li>
+<li>子线程创建时分离态的问题：子线程创建之前就通过 pthread_attr_setdetachstate 设置，相比创建时通过 pthread_detach 来说，更有效率</li>
+<li>和多进程模型相似，新链接的产生，对应子线程的创建，同一时刻下过多客户端链接下多线程的创建造成服务器负载过高的问题</li>
+<li>进程pcb大小问题，适当提高进程下线程数量，也可以提高多线程高并发下的优势</li>
+</ol>
+<h3 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h3><p>客户端不涉及多进程和多线程概念，同上多进程下 Client 代码一致，此处不再贴源码了。</p>
+<h2 id="线程池并发服务器"><a href="#线程池并发服务器" class="headerlink" title="线程池并发服务器"></a>线程池并发服务器</h2><p>通过以上两个高并发服务器，都有一个共同特点，那就是一对一的数据交互服务连接。一个客户端，服务器分配一个进程或者线程与其对接完成数据交互。然而应用到现实中去，如果同一时间多个客户端同时访问链接服务器，那么对于服务器端的负载过大是显而易见的，因此在此基础上，有一种更加高效的模型就诞生了，线程池高并发服务器。</p>
+<p>同样采用线程来处理客户端的数据请求，事先分配一定数额的工作线程，然后由一个线程池管理。线程池内约束一定量的线程数量，优先保障这些线程的工作效率。先到来的客户端链接请求会优先得到线程的处理，如果同一时刻客户端访问过多，那么后面需要链接请求的，就需要等待工作线程处理结束，才能得到响应。</p>
+<h3 id="Server-2"><a href="#Server-2" class="headerlink" title="Server"></a>Server</h3><pre><code>#include &lt;stdio.h&gt;
+#include &lt;assert.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;semaphore.h&gt;
+
+#define MAX 10
+int fds[MAX]={0};
+sem_t sem;
+
+// 静态初始化锁
+pthread_mutex_t luck = PTHREAD_MUTEX_INITIALIZER;
+
+void fds_init()
+{
+    pthread_mutex_lock(&amp;luck);
+    int i=0;
+    for(;i&lt;MAX;i++)
+    {
+        fds[i]=-1;
+    }
+    pthread_mutex_unlock(&amp;luck);
+}
+
+int fds_add(int c)
+{
+    pthread_mutex_lock(&amp;luck);
+    int i=0;
+    for(;i&lt;MAX;i++)
+    {
+        if(fds[i]==-1)
+        {
+            fds[i]=c;
+            return 1;
+        }
+    }
+    pthread_mutex_unlock(&amp;luck);
+    return 0;
+}
+
+void fds_sub(int c)
+{
+    pthread_mutex_lock(&amp;luck);
+    int i=0;
+    for(;i&lt;MAX-1;i++)
+    {
+        fds[i]=fds[i+1];
+        if(fds[i+1]==-1)
+            break;
+    }
+    pthread_mutex_unlock(&amp;luck);
+    fds[MAX-1]=-1;
+}
+
+int fds_get()
+{
+    pthread_mutex_lock(&amp;luck);
+    int i=0;
+    for(;i&lt;MAX;i++)
+    {
+        if(fds[i]!=-1)
+        {
+            int c=fds[i];
+            fds_sub(c);
+            return c;
+        }
+    }
+    pthread_mutex_unlock(&amp;luck);
+    return -1;
+}
+
+// 线程函数载入实体
+void *pthread_fun(void *arg)
+{
+    while(1)
+    {
+        // 获取信号量，有剩余空余线程即进入，否则等待信号号产生
+        sem_wait(&amp;sem);
+        // 通过锁机制获取待处理的客户端链接请求
+        int c=fds_get();
+        while(1)
+        {
+            char buff[128]={0};
+            int n = Read(c,buff,127);
+            if(n&lt;=0)
+            {
+                Close(c);
+                break;
+            }
+            Write(c,&quot;I accept&quot;,sizeof(&quot;I accept&quot;));
+        }
+    }
+}
+
+int main()
+{
+    // 初始化信号量
+    sem_init(&amp;sem,0,0);
+    // 初始化
+    fds_init();
+    // 线程池工作队列 3 个
+    for(int i=0;i&lt;3;i++)
+    {
+        pthread_t id;
+        int rt=pthread_create(&amp;id,NULL,(void *)pthread_fun,NULL);
+        assert(rt==0);
+    }
+
+    int sockfd=Socket(AF_INET,SOCK_STREAM,0);
+    assert(sockfd!=-1);
+
+    struct sockaddr_in ser,cli;
+    memset(&amp;ser,0,sizeof(ser));
+    ser.sin_family=AF_INET;
+    ser.sin_addr.s_addr=inet_addr(&quot;127.0.0.1&quot;);
+    ser.sin_port=htons(8000);
+
+    int res=Bind(sockfd,(struct sockaddr *)&amp;ser,sizeof(ser));
+    assert(res!=-1);
+
+    Listen(sockfd,5);
+
+    printf(&quot;Accepting connections ...\n&quot;);
+
+    while(1)
+    {
+        int len=sizeof(cli);
+        int c=Accept(sockfd,(struct sockaddr *)&amp;cli,&amp;len);
+        if(c&gt;=0)
+        {
+            if(!fds_add(c))
+            {
+                printf(&quot;Please wait a memmet&quot;);
+                Close(c);
+                continue;
+            }
+            // 产生一个信号量，其中一个工作线程开始处理
+            sem_post(&amp;sem);
+        }
+        else
+        {
+            printf(&quot;error\n&quot;);
+            continue;
+        }
+    }
+}
+</code></pre><p>上述代码中：</p>
+<ol>
+<li>线程池维护三个固定线程，其主要负责处理客户端的请求</li>
+<li>客户端同时链接请求峰值为 10，同时得到响应的是工作线程峰值 3，其他的记录在数组中，工作线程处理完成后通过取得信号量，继续处理</li>
+<li>工作线程处理请求时，使用锁机制保证各个线程处理请求时数据唯一</li>
+<li>工作线程中有两个循环，内层循环处理和已连接上的客户端进行数据交互，外层循环监测信号量，处理文件描述符集合新的客户端请求</li>
+</ol>
+<p><a href="https://blog.csdn.net/zhuoya_/article/details/78724637" target="_blank" rel="noopener">参考链接</a></p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>本章主要对Linux下高并发服务中常见的多进程，多线程模型进行实现，其模型搭建简单快速，但是局限性也很大。一来进程和线程的频繁创建太消耗资源（一个客户端对应一个进程或者线程），二来创建的进程、线程的数量大小也受限于系统资源大小。线程池模型是之前两种模型上的升级版，是一种相对理想的模型，其可以动态的响应客户端的请求，内部使用信号量、锁等同步机制保证访问资源的唯一性，同时内部使用线程代替进程，消耗资源也得到有效控制。当然最理想的还要在下章节中介绍的多路IO转接模型 select、poll、epoll 等模型。</p>
+<blockquote>
+<p>邢文鹏Linux教学资料</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/并发服务器/" rel="tag"># 并发服务器</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/18/Linux系统编程之Socket编程/" rel="next" title="Linux系统编程之Socket编程">
+                <i class="fa fa-chevron-left"></i> Linux系统编程之Socket编程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/23/Linux系统编程之多路IO转接服务器/" rel="prev" title="Linux系统编程之多路IO转接服务器">
+                Linux系统编程之多路IO转接服务器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#高并发服务器"><span class="nav-number">1.</span> <span class="nav-text">高并发服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#多进程并发服务器"><span class="nav-number">1.1.</span> <span class="nav-text">多进程并发服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Server"><span class="nav-number">1.1.1.</span> <span class="nav-text">Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Clinet"><span class="nav-number">1.1.2.</span> <span class="nav-text">Clinet</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多线程并发服务器"><span class="nav-number">1.2.</span> <span class="nav-text">多线程并发服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Server-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Client"><span class="nav-number">1.2.2.</span> <span class="nav-text">Client</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程池并发服务器"><span class="nav-number">1.3.</span> <span class="nav-text">线程池并发服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Server-2"><span class="nav-number">1.3.1.</span> <span class="nav-text">Server</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#小结"><span class="nav-number">1.4.</span> <span class="nav-text">小结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

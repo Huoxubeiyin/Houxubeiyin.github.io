@@ -1,0 +1,2383 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="init,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="init为安卓系统开启后，由kernel引导的第一个进程，其通过解析代码中不同的init.rc脚本，不断的将系统服务启动起来，具体的脚本文件已在之前博文中进行了介绍。本章节主要介绍init进程的启动流程。  init流程分析 主要任务  第一个应用程序 创建目录，挂在分区 解析应用脚本 启动服务 守护服务   主要过程  创建目录 klog_init()    将log重定向到/proc/km">
+<meta name="keywords" content="init">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析之init进程">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="init为安卓系统开启后，由kernel引导的第一个进程，其通过解析代码中不同的init.rc脚本，不断的将系统服务启动起来，具体的脚本文件已在之前博文中进行了介绍。本章节主要介绍init进程的启动流程。  init流程分析 主要任务  第一个应用程序 创建目录，挂在分区 解析应用脚本 启动服务 守护服务   主要过程  创建目录 klog_init()    将log重定向到/proc/km">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc_on.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc_services.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_prop.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.rc_parse_config_file.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shijianjiegou.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shijianliebiao.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/zhenglishijianliebiao.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_goujianshijian.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_start.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng1.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng2.png">
+<meta property="og:updated_time" content="2019-02-21T07:35:06.790Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="源码分析之init进程">
+<meta name="twitter:description" content="init为安卓系统开启后，由kernel引导的第一个进程，其通过解析代码中不同的init.rc脚本，不断的将系统服务启动起来，具体的脚本文件已在之前博文中进行了介绍。本章节主要介绍init进程的启动流程。  init流程分析 主要任务  第一个应用程序 创建目录，挂在分区 解析应用脚本 启动服务 守护服务   主要过程  创建目录 klog_init()    将log重定向到/proc/km">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/init.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/04/源码分析之init进程/">
+
+
+
+
+
+  <title>源码分析之init进程 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/04/源码分析之init进程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">源码分析之init进程</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-04T16:34:23+08:00">
+                2018-06-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/06/04/源码分析之init进程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/04/源码分析之init进程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>init为安卓系统开启后，由kernel引导的第一个进程，其通过解析代码中不同的init.rc脚本，不断的将系统服务启动起来，具体的脚本文件已在之前博文中进行了介绍。本章节主要介绍init进程的启动流程。</strong></p>
+<!--moew-->
+<h1 id="init流程分析"><a href="#init流程分析" class="headerlink" title="init流程分析"></a>init流程分析</h1><ul>
+<li><p>主要任务</p>
+<ol>
+<li>第一个应用程序</li>
+<li>创建目录，挂在分区</li>
+<li>解析应用脚本</li>
+<li>启动服务</li>
+<li>守护服务</li>
+</ol>
+</li>
+<li><p>主要过程</p>
+<ol>
+<li>创建目录</li>
+<li>klog_init()    将log重定向到/proc/kmsg中</li>
+<li>property_init()    初始化属性服务</li>
+<li>signal_handler_init()    初始化子进程退出的信号处理过程</li>
+<li>property_load_boot_defaults()    初始化环境变量</li>
+<li>init_parse_config_file(“/init.rc”)    解析init.rc</li>
+<li>action_for_each_trigger(…)    执行rc脚本文件中对应的触发器</li>
+<li>queue_builtin_action(…)    构建自定义事件，加入队列</li>
+<li>execute_one_command()    死循环，执行脚本命令（启动进程）</li>
+<li>restart_processes()        重启服务进程（守护进程）</li>
+<li>epoll_wait()        监听管道，等待事件</li>
+</ol>
+</li>
+</ul>
+<ul>
+<li>在分析init.cpp的具体流程，先来回顾下init.rc脚本的主要组成部分</li>
+</ul>
+<p><a href="https://github.com/Huoxubeiyin/Android_Soucecode/issues/19" target="_blank" rel="noopener">安卓源码分析之init.rc脚本</a></p>
+<h2 id="rc脚本文件可以用以下几张图片概括"><a href="#rc脚本文件可以用以下几张图片概括" class="headerlink" title="rc脚本文件可以用以下几张图片概括"></a>rc脚本文件可以用以下几张图片概括</h2><ul>
+<li>文件结构</li>
+</ul>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.png" title="init.png">
+<pre><code>init.rc文件路径在/system/core/rootdir/init.rc下存在，根据不同的平台又有自己的rc脚本，通过import导入
+</code></pre><ul>
+<li>导包内容</li>
+</ul>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc.png" title="init.rc.png">
+<pre><code>其中 ${ ro.hardware } 的值可以通过 getprop ro.harware 命令获取，其对应于特定平台的rc文件，例如 getprop ro.hardware = mooney , 那么导包对应的rc脚本文件为init.mooney.rc
+</code></pre><ul>
+<li>触发器</li>
+</ul>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc_on.png" title="init.rc_on.png">
+<pre><code>脚本中声明多个 on ... 触发器，可以通过代码action_for_each_trigger(...)触发实现
+</code></pre><ul>
+<li>service服务</li>
+</ul>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc_services.png" title="init.rc_services.png">
+<pre><code>service服务脚本声明：指定脚本文件名称，路径，启动参数，类属以及其他属性值
+</code></pre><h3 id="init进程具体流程分析"><a href="#init进程具体流程分析" class="headerlink" title="init进程具体流程分析"></a>init进程具体流程分析</h3><p>init 主要的执行流程如下图所示</p>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init.png" title="init.png">
+<h4 id="初始化-kernel-log-，位于设备节点-dev-kmsg"><a href="#初始化-kernel-log-，位于设备节点-dev-kmsg" class="headerlink" title="初始化 kernel log ，位于设备节点/dev/kmsg"></a>初始化 kernel log ，位于设备节点/dev/kmsg</h4><p>–&gt; klog.c</p>
+<pre><code>void klog_init(void) {
+    if (klog_fd &gt;= 0) return; /* Already initialized */
+
+    // 打开指定设备
+    klog_fd = open(&quot;/dev/kmsg&quot;, O_WRONLY | O_CLOEXEC);
+    if (klog_fd &gt;= 0) {
+        return;
+    }
+
+    static const char* name = &quot;/dev/__kmsg__&quot;;
+    // 创建节点
+    if (mknod(name, S_IFCHR | 0600, (1 &lt;&lt; 8) | 11) == 0) {
+        // 尝试打开
+        klog_fd = open(name, O_WRONLY | O_CLOEXEC);
+        unlink(name);
+    }
+}
+</code></pre><h4 id="初始化子进程退出的信号处理过程signal-handler-init"><a href="#初始化子进程退出的信号处理过程signal-handler-init" class="headerlink" title="初始化子进程退出的信号处理过程signal_handler_init()"></a>初始化子进程退出的信号处理过程signal_handler_init()</h4><p>–&gt; signal_handler.cpp</p>
+<pre><code>void signal_handler_init() {
+    // Create a signalling mechanism for SIGCHLD.
+    int s[2];
+    // 创建socket pair套接字
+    if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, s) == -1) {
+        ERROR(&quot;socketpair failed: %s\n&quot;, strerror(errno));
+        exit(1);
+    }
+
+    // 赋值
+    signal_write_fd = s[0];
+    signal_read_fd = s[1];
+
+    // Write to signal_write_fd if we catch SIGCHLD.
+    // 当捕获SIGCHLD信号，则写入signal_write_fd
+    struct sigaction act;
+    memset(&amp;act, 0, sizeof(act));
+    act.sa_handler = SIGCHLD_handler;
+    act.sa_flags = SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &amp;act, 0);
+
+    reap_any_outstanding_children();
+
+    // 注册监听处理
+    register_epoll_handler(signal_read_fd, handle_signal);
+}
+
+
+static void reap_any_outstanding_children() {
+    while (wait_for_one_process()) {
+    }
+}
+
+
+static bool wait_for_one_process() {
+    int status;
+    //等待任意子进程，如果子进程没有退出则返回0，否则返回盖子进程的pid
+    pid_t pid = TEMP_FAILURE_RETRY(waitpid(-1, &amp;status, WNOHANG));
+    if (pid == 0) {
+        return false;
+    } else if (pid == -1) {
+        ERROR(&quot;waitpid failed: %s\n&quot;, strerror(errno));
+        return false;
+    }
+
+    //根据pid查找相应的service
+    service* svc = service_find_by_pid(pid);
+
+    std::string name;
+    if (svc) {
+        name = android::base::StringPrintf(&quot;Service &apos;%s&apos; (pid %d)&quot;, svc-&gt;name, pid);
+    } else {
+        name = android::base::StringPrintf(&quot;Untracked pid %d&quot;, pid);
+    }
+
+    NOTICE(&quot;%s %s\n&quot;, name.c_str(), DescribeStatus(status).c_str());
+
+    if (!svc) {
+        return true;
+    }
+
+    // TODO: all the code from here down should be a member function on service.
+    // 当flag为RESTART，且不是ONESHOT时，先kill进程组内的所有的子进程或子线程
+    if (!(svc-&gt;flags &amp; SVC_ONESHOT) || (svc-&gt;flags &amp; SVC_RESTART)) {
+        NOTICE(&quot;Service &apos;%s&apos; (pid %d) killing any children in process group\n&quot;, svc-&gt;name, pid);
+        kill(-pid, SIGKILL);
+    }
+
+    // Remove any sockets we may have created.
+    // 移除当前服务中所有创建过的socket
+    for (socketinfo* si = svc-&gt;sockets; si; si = si-&gt;next) {
+        char tmp[128];
+        snprintf(tmp, sizeof(tmp), ANDROID_SOCKET_DIR&quot;/%s&quot;, si-&gt;name);
+        unlink(tmp);
+    }
+
+    // 当flag为EXEC时，释放相应的服务
+    if (svc-&gt;flags &amp; SVC_EXEC) {
+        INFO(&quot;SVC_EXEC pid %d finished...\n&quot;, svc-&gt;pid);
+        waiting_for_exec = false;
+        list_remove(&amp;svc-&gt;slist);
+        free(svc-&gt;name);
+        free(svc);
+        return true;
+    }
+
+    svc-&gt;pid = 0;
+    svc-&gt;flags &amp;= (~SVC_RUNNING);
+
+    // Oneshot processes go into the disabled state on exit,
+    // except when manually restarted.
+    // 对于ONESHOT服务，使其进入disabled状态
+    if ((svc-&gt;flags &amp; SVC_ONESHOT) &amp;&amp; !(svc-&gt;flags &amp; SVC_RESTART)) {
+        svc-&gt;flags |= SVC_DISABLED;
+    }
+
+    // Disabled and reset processes do not get restarted automatically.
+    // 禁用和重置的服务，都不在自动重启
+    if (svc-&gt;flags &amp; (SVC_DISABLED | SVC_RESET))  {
+        svc-&gt;NotifyStateChange(&quot;stopped&quot;);
+        return true;
+    }
+
+    time_t now = gettime();
+    // 服务在4分钟内重启次数超过4次，则重启进入recovery模式
+    if ((svc-&gt;flags &amp; SVC_CRITICAL) &amp;&amp; !(svc-&gt;flags &amp; SVC_RESTART)) {
+        if (svc-&gt;time_crashed + CRITICAL_CRASH_WINDOW &gt;= now) {
+            if (++svc-&gt;nr_crashed &gt; CRITICAL_CRASH_THRESHOLD) {
+                ERROR(&quot;critical process &apos;%s&apos; exited %d times in %d minutes; &quot;
+                      &quot;rebooting into recovery mode\n&quot;, svc-&gt;name,
+                      CRITICAL_CRASH_THRESHOLD, CRITICAL_CRASH_WINDOW / 60);
+                android_reboot(ANDROID_RB_RESTART2, 0, &quot;recovery&quot;);
+                return true;
+            }
+        } else {
+            svc-&gt;time_crashed = now;
+            svc-&gt;nr_crashed = 1;
+        }
+    }
+
+    svc-&gt;flags &amp;= (~SVC_RESTART);
+    svc-&gt;flags |= SVC_RESTARTING;
+
+    // Execute all onrestart commands for this service.
+    // 执行当前service中的所有onstart命令
+    struct listnode* node;
+    list_for_each(node, &amp;svc-&gt;onrestart.commands) {
+        command* cmd = node_to_item(node, struct command, clist);
+        cmd-&gt;func(cmd-&gt;nargs, cmd-&gt;args);
+    }
+    svc-&gt;NotifyStateChange(&quot;restarting&quot;);
+    return true;
+}
+</code></pre><h4 id="加载-prop-属性文件"><a href="#加载-prop-属性文件" class="headerlink" title="加载 *.prop 属性文件"></a>加载 *.prop 属性文件</h4><p>–&gt; property_service.cpp</p>
+<pre><code>void property_load_boot_defaults() {
+    //加载指定文件路径下的 *.prop 文件
+    load_properties_from_file(PROP_PATH_RAMDISK_DEFAULT, NULL);
+}
+
+
+static void load_properties_from_file(const char* filename, const char* filter) {
+    Timer t;
+    std::string data;
+    if (read_file(filename, &amp;data)) {
+        data.push_back(&apos;\n&apos;);
+        load_properties(&amp;data[0], filter);
+    }
+    NOTICE(&quot;(Loading properties from %s took %.2fs.)\n&quot;, filename, t.duration());
+}
+
+
+//解析文件到指定数据data结构中
+static void load_properties(char *data, const char *filter)
+{
+    char *key, *value, *eol, *sol, *tmp, *fn;
+    size_t flen = 0;
+
+    if (filter) {
+        flen = strlen(filter);
+    }
+
+    sol = data;
+    while ((eol = strchr(sol, &apos;\n&apos;))) {
+        key = sol;
+        *eol++ = 0;
+        sol = eol;
+
+        while (isspace(*key)) key++;
+        if (*key == &apos;#&apos;) continue;
+
+        tmp = eol - 2;
+        while ((tmp &gt; key) &amp;&amp; isspace(*tmp)) *tmp-- = 0;
+
+        // import节点
+        if (!strncmp(key, &quot;import &quot;, 7) &amp;&amp; flen == 0) {
+            fn = key + 7;
+            while (isspace(*fn)) fn++;
+
+            key = strchr(fn, &apos; &apos;);
+            if (key) {
+                *key++ = 0;
+                while (isspace(*key)) key++;
+            }
+
+            // 导入import节点文件，再次解析
+            load_properties_from_file(fn, key);
+
+        } else {
+            value = strchr(key, &apos;=&apos;);
+            if (!value) continue;
+            *value++ = 0;
+
+            tmp = value - 2;
+            while ((tmp &gt; key) &amp;&amp; isspace(*tmp)) *tmp-- = 0;
+
+            while (isspace(*value)) value++;
+
+            if (flen &gt; 0) {
+                if (filter[flen - 1] == &apos;*&apos;) {
+                    if (strncmp(key, filter, flen - 1)) continue;
+                } else {
+                    if (strcmp(key, filter)) continue;
+                }
+            }
+
+            // 设置属性
+            property_set(key, value);
+        }
+    }
+}
+</code></pre><h4 id="启动属性服务器（通过sockert通信）"><a href="#启动属性服务器（通过sockert通信）" class="headerlink" title="启动属性服务器（通过sockert通信）"></a>启动属性服务器（通过sockert通信）</h4><p>–&gt; property_service.cpp</p>
+<pre><code>// 开启属性服务
+void start_property_service() {
+    // 创建seocker套接字
+    property_set_fd = create_socket(PROP_SERVICE_NAME, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+                                    0666, 0, 0, NULL);
+    if (property_set_fd == -1) {
+        ERROR(&quot;start_property_service socket creation failed: %s\n&quot;, strerror(errno));
+        exit(1);
+    }
+
+    // 加入监听
+    listen(property_set_fd, 8);
+
+    // 注册监听
+    register_epoll_handler(property_set_fd, handle_property_set_fd);
+}
+</code></pre><p>用户可以通过串口开启、结束指定服务，通过命令setprop更改系统属性值，三方app也可以通过指定的api更改系统属性（权限限制），其到底层都是通过socket机制，通过init中的handle_property_***()方法实现。其流程模型如下：</p>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_prop.png" title="init_prop.png">
+<h4 id="解析-rc-脚本文件"><a href="#解析-rc-脚本文件" class="headerlink" title="解析 *.rc 脚本文件"></a>解析 *.rc 脚本文件</h4><img src="/fuckingcode/2018/06/04/源码分析之init进程/init.rc_parse_config_file.png" title="init.rc_parse_config_file.png">
+<p>–&gt; init_parser.cpp</p>
+<pre><code>// 解析指定路径下文件
+int init_parse_config_file(const char* path) {
+    INFO(&quot;Parsing %s...\n&quot;, path);
+    Timer t;
+    std::string data;
+    // 读取文件信息到data中
+    if (!read_file(path, &amp;data)) {
+        return -1;
+    }
+
+    data.push_back(&apos;\n&apos;); // TODO: fix parse_config.
+    parse_config(path, data);
+    dump_parser_state();
+
+    // MStar Android Patch Begin
+    INFO(&quot;(Parsing %s took %.2fs.)\n&quot;, path, t.duration());
+    // MStar Android Patch End
+    return 0;
+}
+
+
+// 解析脚本文件信息
+static void parse_config(const char *fn, const std::string&amp; data)
+{
+    struct listnode import_list;
+    struct listnode *node;
+    char *args[INIT_PARSER_MAXARGS];
+
+    int nargs = 0;
+
+    parse_state state;
+    state.filename = fn;
+    state.line = 0;
+    state.ptr = strdup(data.c_str());  // TODO: fix this code!
+    state.nexttoken = 0;
+    state.parse_line = parse_line_no_op;
+
+    list_init(&amp;import_list);
+    state.priv = &amp;import_list;
+
+    for (;;) {
+        switch (next_token(&amp;state)) {
+        case T_EOF:    // 导入行
+            state.parse_line(&amp;state, 0, 0);
+            goto parser_done;
+        case T_NEWLINE:    // 命令行
+            state.line++;
+            if (nargs) {
+                int kw = lookup_keyword(args[0]);
+                if (kw_is(kw, SECTION)) {
+                    state.parse_line(&amp;state, 0, 0);
+                    parse_new_section(&amp;state, kw, nargs, args);
+                } else {
+                    state.parse_line(&amp;state, nargs, args);
+                }
+                nargs = 0;
+            }
+            break;
+        case T_TEXT:
+            if (nargs &lt; INIT_PARSER_MAXARGS) {
+                args[nargs++] = state.text;
+            }
+            break;
+        }
+    }
+
+parser_done:
+    list_for_each(node, &amp;import_list) {
+         struct import *import = node_to_item(node, struct import, list);
+         int ret;
+
+         // 解析导入文件
+         ret = init_parse_config_file(import-&gt;filename);
+         if (ret)
+             ERROR(&quot;could not import file &apos;%s&apos; from &apos;%s&apos;\n&quot;,
+                   import-&gt;filename, fn);
+    }
+}
+
+
+int next_token(struct parse_state *state)
+{
+    char *x = state-&gt;ptr;
+    char *s;
+
+    if (state-&gt;nexttoken) {
+        int t = state-&gt;nexttoken;
+        state-&gt;nexttoken = 0;
+        return t;
+    }
+
+    for (;;) {
+        switch (*x) {
+        case 0:
+            state-&gt;ptr = x;
+            return T_EOF;
+        case &apos;\n&apos;:
+            x++;
+            state-&gt;ptr = x;
+            return T_NEWLINE;
+        case &apos; &apos;:
+        case &apos;\t&apos;:
+        case &apos;\r&apos;:
+            x++;
+            continue;
+        case &apos;#&apos;:
+            while (*x &amp;&amp; (*x != &apos;\n&apos;)) x++;
+            if (*x == &apos;\n&apos;) {
+                state-&gt;ptr = x+1;
+                return T_NEWLINE;
+            } else {
+                state-&gt;ptr = x;
+                return T_EOF;
+            }
+        default:
+            goto text;
+        }
+    }
+
+textdone:
+    state-&gt;ptr = x;
+    *s = 0;
+    return T_TEXT;
+text:
+    state-&gt;text = s = x;
+textresume:
+    for (;;) {
+        switch (*x) {
+        case 0:
+            goto textdone;
+        case &apos; &apos;:
+        case &apos;\t&apos;:
+        case &apos;\r&apos;:
+            x++;
+            goto textdone;
+        case &apos;\n&apos;:
+            state-&gt;nexttoken = T_NEWLINE;
+            x++;
+            goto textdone;
+        case &apos;&quot;&apos;:
+            x++;
+            for (;;) {
+                switch (*x) {
+                case 0:
+                        /* unterminated quoted thing */
+                    state-&gt;ptr = x;
+                    return T_EOF;
+                case &apos;&quot;&apos;:
+                    x++;
+                    goto textresume;
+                default:
+                    *s++ = *x++;
+                }
+            }
+            break;
+        case &apos;\\&apos;:
+            x++;
+            switch (*x) {
+            case 0:
+                goto textdone;
+            case &apos;n&apos;:
+                *s++ = &apos;\n&apos;;
+                break;
+            case &apos;r&apos;:
+                *s++ = &apos;\r&apos;;
+                break;
+            case &apos;t&apos;:
+                *s++ = &apos;\t&apos;;
+                break;
+            case &apos;\\&apos;:
+                *s++ = &apos;\\&apos;;
+                break;
+            case &apos;\r&apos;:
+                    /* \ &lt;cr&gt; &lt;lf&gt; -&gt; line continuation */
+                if (x[1] != &apos;\n&apos;) {
+                    x++;
+                    continue;
+                }
+            case &apos;\n&apos;:
+                    /* \ &lt;lf&gt; -&gt; line continuation */
+                state-&gt;line++;
+                x++;
+                    /* eat any extra whitespace */
+                while((*x == &apos; &apos;) || (*x == &apos;\t&apos;)) x++;
+                continue;
+            default:
+                    /* unknown escape -- just copy */
+                *s++ = *x++;
+            }
+            continue;
+        default:
+            *s++ = *x++;
+        }
+    }
+    return T_EOF;
+}
+
+
+// 根据命令匹配相应的操作
+// 通过宏定义匹配相应的操作指令
+static int lookup_keyword(const char *s)
+{
+    switch (*s++) {
+    case &apos;b&apos;:
+        if (!strcmp(s, &quot;ootchart_init&quot;)) return K_bootchart_init;
+        break;
+    case &apos;c&apos;:
+        if (!strcmp(s, &quot;opy&quot;)) return K_copy;
+        if (!strcmp(s, &quot;lass&quot;)) return K_class;
+        if (!strcmp(s, &quot;lass_start&quot;)) return K_class_start;
+        if (!strcmp(s, &quot;lass_stop&quot;)) return K_class_stop;
+        if (!strcmp(s, &quot;lass_reset&quot;)) return K_class_reset;
+        if (!strcmp(s, &quot;onsole&quot;)) return K_console;
+        if (!strcmp(s, &quot;hown&quot;)) return K_chown;
+        if (!strcmp(s, &quot;hmod&quot;)) return K_chmod;
+        if (!strcmp(s, &quot;ritical&quot;)) return K_critical;
+        break;
+    case &apos;d&apos;:
+        if (!strcmp(s, &quot;isabled&quot;)) return K_disabled;
+        if (!strcmp(s, &quot;omainname&quot;)) return K_domainname;
+        break;
+    case &apos;e&apos;:
+        if (!strcmp(s, &quot;nable&quot;)) return K_enable;
+        if (!strcmp(s, &quot;xec&quot;)) return K_exec;
+        if (!strcmp(s, &quot;xport&quot;)) return K_export;
+        break;
+    case &apos;g&apos;:
+        if (!strcmp(s, &quot;roup&quot;)) return K_group;
+        break;
+    case &apos;h&apos;:
+        if (!strcmp(s, &quot;ostname&quot;)) return K_hostname;
+        break;
+    case &apos;i&apos;:
+        if (!strcmp(s, &quot;oprio&quot;)) return K_ioprio;
+        if (!strcmp(s, &quot;fup&quot;)) return K_ifup;
+        if (!strcmp(s, &quot;nsmod&quot;)) return K_insmod;
+        if (!strcmp(s, &quot;mport&quot;)) return K_import;
+        if (!strcmp(s, &quot;nstallkey&quot;)) return K_installkey;
+        break;
+    case &apos;k&apos;:
+        if (!strcmp(s, &quot;eycodes&quot;)) return K_keycodes;
+        break;
+    case &apos;l&apos;:
+        if (!strcmp(s, &quot;oglevel&quot;)) return K_loglevel;
+        if (!strcmp(s, &quot;oad_persist_props&quot;)) return K_load_persist_props;
+        if (!strcmp(s, &quot;oad_all_props&quot;)) return K_load_all_props;
+        break;
+    case &apos;m&apos;:
+        if (!strcmp(s, &quot;kdir&quot;)) return K_mkdir;
+        if (!strcmp(s, &quot;ount_all&quot;)) return K_mount_all;
+        if (!strcmp(s, &quot;ount&quot;)) return K_mount;
+        break;
+    case &apos;o&apos;:
+        if (!strcmp(s, &quot;n&quot;)) return K_on;
+        if (!strcmp(s, &quot;neshot&quot;)) return K_oneshot;
+        if (!strcmp(s, &quot;nrestart&quot;)) return K_onrestart;
+        break;
+    case &apos;p&apos;:
+        if (!strcmp(s, &quot;owerctl&quot;)) return K_powerctl;
+        break;
+    case &apos;r&apos;:
+        if (!strcmp(s, &quot;estart&quot;)) return K_restart;
+        if (!strcmp(s, &quot;estorecon&quot;)) return K_restorecon;
+        if (!strcmp(s, &quot;estorecon_recursive&quot;)) return K_restorecon_recursive;
+        if (!strcmp(s, &quot;mdir&quot;)) return K_rmdir;
+        if (!strcmp(s, &quot;m&quot;)) return K_rm;
+        break;
+    case &apos;s&apos;:
+        if (!strcmp(s, &quot;eclabel&quot;)) return K_seclabel;
+        if (!strcmp(s, &quot;ervice&quot;)) return K_service;
+        if (!strcmp(s, &quot;etenv&quot;)) return K_setenv;
+        if (!strcmp(s, &quot;etprop&quot;)) return K_setprop;
+        if (!strcmp(s, &quot;etrlimit&quot;)) return K_setrlimit;
+        if (!strcmp(s, &quot;ocket&quot;)) return K_socket;
+        if (!strcmp(s, &quot;tart&quot;)) return K_start;
+        if (!strcmp(s, &quot;top&quot;)) return K_stop;
+        if (!strcmp(s, &quot;wapon_all&quot;)) return K_swapon_all;
+        if (!strcmp(s, &quot;ymlink&quot;)) return K_symlink;
+        if (!strcmp(s, &quot;ysclktz&quot;)) return K_sysclktz;
+        break;
+    case &apos;t&apos;:
+        if (!strcmp(s, &quot;rigger&quot;)) return K_trigger;
+        break;
+    case &apos;u&apos;:
+        if (!strcmp(s, &quot;ser&quot;)) return K_user;
+        break;
+    case &apos;v&apos;:
+        if (!strcmp(s, &quot;erity_load_state&quot;)) return K_verity_load_state;
+        if (!strcmp(s, &quot;erity_update_state&quot;)) return K_verity_update_state;
+        break;
+    case &apos;w&apos;:
+        if (!strcmp(s, &quot;rite&quot;)) return K_write;
+        if (!strcmp(s, &quot;ritepid&quot;)) return K_writepid;
+        if (!strcmp(s, &quot;ait&quot;)) return K_wait;
+        break;
+    }
+    return K_UNKNOWN;
+}
+</code></pre><h4 id="根据脚本文件不同的标签分类解析"><a href="#根据脚本文件不同的标签分类解析" class="headerlink" title="根据脚本文件不同的标签分类解析"></a>根据脚本文件不同的标签分类解析</h4><img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shijianjiegou.png" title="init_shijianjiegou.png">
+<pre><code>static void parse_new_section(struct parse_state *state, int kw,
+                       int nargs, char **args)
+{
+    printf(&quot;[ %s %s ]\n&quot;, args[0],
+           nargs &gt; 1 ? args[1] : &quot;&quot;);
+    switch(kw) {
+    // service 标签
+    case K_service:
+        state-&gt;context = parse_service(state, nargs, args);
+        if (state-&gt;context) {
+            state-&gt;parse_line = parse_line_service;
+            return;
+        }
+        break;
+    // on 标签
+    case K_on:
+        state-&gt;context = parse_action(state, nargs, args);
+        if (state-&gt;context) {
+            state-&gt;parse_line = parse_line_action;
+            return;
+        }
+        break;
+    // import 标签
+    case K_import:
+        parse_import(state, nargs, args);
+        break;
+    }
+    state-&gt;parse_line = parse_line_no_op;
+}
+</code></pre><h4 id="通过不同标签分类解析并加入对应的链表"><a href="#通过不同标签分类解析并加入对应的链表" class="headerlink" title="通过不同标签分类解析并加入对应的链表"></a>通过不同标签分类解析并加入对应的链表</h4><img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shijianliebiao.png" title="init_shijianliebiao.png">
+<pre><code>    // 解析脚本中的service节点加入链表
+    static void *parse_service(struct parse_state *state, int nargs, char **args)
+    {
+        if (nargs &lt; 3) {
+            parse_error(state, &quot;services must have a name and a program\n&quot;);
+            return 0;
+        }
+        if (!valid_name(args[1])) {
+            parse_error(state, &quot;invalid service name &apos;%s&apos;\n&quot;, args[1]);
+            return 0;
+        }
+
+        service* svc = (service*) service_find_by_name(args[1]);
+        if (svc) {
+            parse_error(state, &quot;ignored duplicate definition of service &apos;%s&apos;\n&quot;, args[1]);
+            return 0;
+        }
+
+        nargs -= 2;
+        svc = (service*) calloc(1, sizeof(*svc) + sizeof(char*) * nargs);
+        if (!svc) {
+            parse_error(state, &quot;out of memory\n&quot;);
+            return 0;
+        }
+        svc-&gt;name = strdup(args[1]);
+        svc-&gt;classname = &quot;default&quot;;
+        memcpy(svc-&gt;args, args + 2, sizeof(char*) * nargs);
+        trigger* cur_trigger = (trigger*) calloc(1, sizeof(*cur_trigger));
+        svc-&gt;args[nargs] = 0;
+        svc-&gt;nargs = nargs;
+        list_init(&amp;svc-&gt;onrestart.triggers);
+        cur_trigger-&gt;name = &quot;onrestart&quot;;
+        list_add_tail(&amp;svc-&gt;onrestart.triggers, &amp;cur_trigger-&gt;nlist);
+        list_init(&amp;svc-&gt;onrestart.commands);
+        list_add_tail(&amp;service_list, &amp;svc-&gt;slist);
+        return svc;
+    }
+
+
+        // 解析service的具体信息并加入链表
+        static void parse_line_service(struct parse_state *state, int nargs, char **args)
+        {
+            struct service *svc = (service*) state-&gt;context;
+            struct command *cmd;
+            int i, kw, kw_nargs;
+
+            if (nargs == 0) {
+                return;
+            }
+
+            svc-&gt;ioprio_class = IoSchedClass_NONE;
+
+            kw = lookup_keyword(args[0]);
+            switch (kw) {
+            case K_class:
+                if (nargs != 2) {
+                    parse_error(state, &quot;class option requires a classname\n&quot;);
+                } else {
+                    svc-&gt;classname = args[1];
+                }
+                break;
+            case K_console:
+                svc-&gt;flags |= SVC_CONSOLE;
+                break;
+            case K_disabled:
+                svc-&gt;flags |= SVC_DISABLED;
+                svc-&gt;flags |= SVC_RC_DISABLED;
+                break;
+            case K_ioprio:
+                if (nargs != 3) {
+                    parse_error(state, &quot;ioprio optin usage: ioprio &lt;rt|be|idle&gt; &lt;ioprio 0-7&gt;\n&quot;);
+                } else {
+                    svc-&gt;ioprio_pri = strtoul(args[2], 0, 8);
+
+                    if (svc-&gt;ioprio_pri &lt; 0 || svc-&gt;ioprio_pri &gt; 7) {
+                        parse_error(state, &quot;priority value must be range 0 - 7\n&quot;);
+                        break;
+                    }
+
+                    if (!strcmp(args[1], &quot;rt&quot;)) {
+                        svc-&gt;ioprio_class = IoSchedClass_RT;
+                    } else if (!strcmp(args[1], &quot;be&quot;)) {
+                        svc-&gt;ioprio_class = IoSchedClass_BE;
+                    } else if (!strcmp(args[1], &quot;idle&quot;)) {
+                        svc-&gt;ioprio_class = IoSchedClass_IDLE;
+                    } else {
+                        parse_error(state, &quot;ioprio option usage: ioprio &lt;rt|be|idle&gt; &lt;0-7&gt;\n&quot;);
+                    }
+                }
+                break;
+            case K_group:
+                if (nargs &lt; 2) {
+                    parse_error(state, &quot;group option requires a group id\n&quot;);
+                } else if (nargs &gt; NR_SVC_SUPP_GIDS + 2) {
+                    parse_error(state, &quot;group option accepts at most %d supp. groups\n&quot;,
+                                NR_SVC_SUPP_GIDS);
+                } else {
+                    int n;
+                    svc-&gt;gid = decode_uid(args[1]);
+                    for (n = 2; n &lt; nargs; n++) {
+                        svc-&gt;supp_gids[n-2] = decode_uid(args[n]);
+                    }
+                    svc-&gt;nr_supp_gids = n - 2;
+                }
+                break;
+            case K_keycodes:
+                if (nargs &lt; 2) {
+                    parse_error(state, &quot;keycodes option requires atleast one keycode\n&quot;);
+                } else {
+                    svc-&gt;keycodes = (int*) malloc((nargs - 1) * sizeof(svc-&gt;keycodes[0]));
+                    if (!svc-&gt;keycodes) {
+                        parse_error(state, &quot;could not allocate keycodes\n&quot;);
+                    } else {
+                        svc-&gt;nkeycodes = nargs - 1;
+                        for (i = 1; i &lt; nargs; i++) {
+                            svc-&gt;keycodes[i - 1] = atoi(args[i]);
+                        }
+                    }
+                }
+                break;
+            case K_oneshot:
+                svc-&gt;flags |= SVC_ONESHOT;
+                break;
+            case K_onrestart:
+                nargs--;
+                args++;
+                kw = lookup_keyword(args[0]);
+                if (!kw_is(kw, COMMAND)) {
+                    parse_error(state, &quot;invalid command &apos;%s&apos;\n&quot;, args[0]);
+                    break;
+                }
+                kw_nargs = kw_nargs(kw);
+                if (nargs &lt; kw_nargs) {
+                    parse_error(state, &quot;%s requires %d %s\n&quot;, args[0], kw_nargs - 1,
+                        kw_nargs &gt; 2 ? &quot;arguments&quot; : &quot;argument&quot;);
+                    break;
+                }
+
+                cmd = (command*) malloc(sizeof(*cmd) + sizeof(char*) * nargs);
+                cmd-&gt;func = kw_func(kw);
+                cmd-&gt;nargs = nargs;
+                memcpy(cmd-&gt;args, args, sizeof(char*) * nargs);
+                list_add_tail(&amp;svc-&gt;onrestart.commands, &amp;cmd-&gt;clist);
+                break;
+            case K_critical:
+                svc-&gt;flags |= SVC_CRITICAL;
+                break;
+            case K_setenv: { /* name value */
+                if (nargs &lt; 3) {
+                    parse_error(state, &quot;setenv option requires name and value arguments\n&quot;);
+                    break;
+                }
+                svcenvinfo* ei = (svcenvinfo*) calloc(1, sizeof(*ei));
+                if (!ei) {
+                    parse_error(state, &quot;out of memory\n&quot;);
+                    break;
+                }
+                ei-&gt;name = args[1];
+                ei-&gt;value = args[2];
+                ei-&gt;next = svc-&gt;envvars;
+                svc-&gt;envvars = ei;
+                break;
+            }
+            case K_socket: {/* name type perm [ uid gid context ] */
+                if (nargs &lt; 4) {
+                    parse_error(state, &quot;socket option requires name, type, perm arguments\n&quot;);
+                    break;
+                }
+                if (strcmp(args[2],&quot;dgram&quot;) &amp;&amp; strcmp(args[2],&quot;stream&quot;)
+                        &amp;&amp; strcmp(args[2],&quot;seqpacket&quot;)) {
+                    parse_error(state, &quot;socket type must be &apos;dgram&apos;, &apos;stream&apos; or &apos;seqpacket&apos;\n&quot;);
+                    break;
+                }
+                socketinfo* si = (socketinfo*) calloc(1, sizeof(*si));
+                if (!si) {
+                    parse_error(state, &quot;out of memory\n&quot;);
+                    break;
+                }
+                si-&gt;name = args[1];
+                si-&gt;type = args[2];
+                si-&gt;perm = strtoul(args[3], 0, 8);
+                if (nargs &gt; 4)
+                    si-&gt;uid = decode_uid(args[4]);
+                if (nargs &gt; 5)
+                    si-&gt;gid = decode_uid(args[5]);
+                if (nargs &gt; 6)
+                    si-&gt;socketcon = args[6];
+                si-&gt;next = svc-&gt;sockets;
+                svc-&gt;sockets = si;
+                break;
+            }
+            case K_user:
+                if (nargs != 2) {
+                    parse_error(state, &quot;user option requires a user id\n&quot;);
+                } else {
+                    svc-&gt;uid = decode_uid(args[1]);
+                }
+                break;
+            case K_seclabel:
+                if (nargs != 2) {
+                    parse_error(state, &quot;seclabel option requires a label string\n&quot;);
+                } else {
+                    svc-&gt;seclabel = args[1];
+                }
+                break;
+            case K_writepid:
+                if (nargs &lt; 2) {
+                    parse_error(state, &quot;writepid option requires at least one filename\n&quot;);
+                    break;
+                }
+                svc-&gt;writepid_files_ = new std::vector&lt;std::string&gt;;
+                for (int i = 1; i &lt; nargs; ++i) {
+                    svc-&gt;writepid_files_-&gt;push_back(args[i]);
+                }
+                break;
+
+            default:
+                parse_error(state, &quot;invalid option &apos;%s&apos;\n&quot;, args[0]);
+            }
+        }
+
+
+
+        // 解析脚本中的action节点并加入链表中
+        static void *parse_action(struct parse_state *state, int nargs, char **args)
+        {
+            struct trigger *cur_trigger;
+            int i;
+            if (nargs &lt; 2) {
+                parse_error(state, &quot;actions must have a trigger\n&quot;);
+                return 0;
+            }
+
+            action* act = (action*) calloc(1, sizeof(*act));
+            list_init(&amp;act-&gt;triggers);
+
+            for (i = 1; i &lt; nargs; i++) {
+                if (!(i % 2)) {
+                    if (strcmp(args[i], &quot;&amp;&amp;&quot;)) {
+                        struct listnode *node;
+                        struct listnode *node2;
+                        parse_error(state, &quot;&amp; is the only symbol allowed to concatenate actions\n&quot;);
+                        list_for_each_safe(node, node2, &amp;act-&gt;triggers) {
+                            struct trigger *trigger = node_to_item(node, struct trigger, nlist);
+                            free(trigger);
+                        }
+                        free(act);
+                        return 0;
+                    } else
+                        continue;
+                }
+                cur_trigger = (trigger*) calloc(1, sizeof(*cur_trigger));
+                cur_trigger-&gt;name = args[i];
+                list_add_tail(&amp;act-&gt;triggers, &amp;cur_trigger-&gt;nlist);
+            }
+
+            list_init(&amp;act-&gt;commands);
+            list_init(&amp;act-&gt;qlist);
+            list_add_tail(&amp;action_list, &amp;act-&gt;alist);
+                /* XXX add to hash */
+            return act;
+        }
+
+
+    // 解析脚本中action的具体信息，加入action链表中
+    static void parse_line_action(struct parse_state* state, int nargs, char **args)
+    {
+        struct action *act = (action*) state-&gt;context;
+        int kw, n;
+
+        if (nargs == 0) {
+            return;
+        }
+
+        kw = lookup_keyword(args[0]);
+        if (!kw_is(kw, COMMAND)) {
+            parse_error(state, &quot;invalid command &apos;%s&apos;\n&quot;, args[0]);
+            return;
+        }
+
+        n = kw_nargs(kw);
+        if (nargs &lt; n) {
+            parse_error(state, &quot;%s requires %d %s\n&quot;, args[0], n - 1,
+                n &gt; 2 ? &quot;arguments&quot; : &quot;argument&quot;);
+            return;
+        }
+        command* cmd = (command*) malloc(sizeof(*cmd) + sizeof(char*) * nargs);
+        cmd-&gt;func = kw_func(kw);
+        cmd-&gt;line = state-&gt;line;
+        cmd-&gt;filename = state-&gt;filename;
+        cmd-&gt;nargs = nargs;
+        memcpy(cmd-&gt;args, args, sizeof(char*) * nargs);
+        list_add_tail(&amp;act-&gt;commands, &amp;cmd-&gt;clist);
+    }
+
+
+    static void parse_import(struct parse_state *state, int nargs, char **args)
+    {
+        struct listnode *import_list = (listnode*) state-&gt;priv;
+        char conf_file[PATH_MAX];
+        int ret;
+
+        if (nargs != 2) {
+            ERROR(&quot;single argument needed for import\n&quot;);
+            return;
+        }
+
+        ret = expand_props(conf_file, args[1], sizeof(conf_file));
+        if (ret) {
+            ERROR(&quot;error while handling import on line &apos;%d&apos; in &apos;%s&apos;\n&quot;,
+                  state-&gt;line, state-&gt;filename);
+            return;
+        }
+
+        struct import* import = (struct import*) calloc(1, sizeof(struct import));
+        import-&gt;filename = strdup(conf_file);
+        list_add_tail(import_list, &amp;import-&gt;list);
+        INFO(&quot;Added &apos;%s&apos; to import list\n&quot;, import-&gt;filename);
+    }
+
+{% asset_img jiaobenfenxijieguo.png jiaobenfenxijieguo.png %}
+</code></pre><h4 id="执行脚本中指定触发器的操作"><a href="#执行脚本中指定触发器的操作" class="headerlink" title="执行脚本中指定触发器的操作"></a>执行脚本中指定触发器的操作</h4><p>–&gt; init.cpp</p>
+<pre><code>// 找到解析列表的action并运行
+void action_for_each_trigger(const char *trigger,
+                             void (*func)(struct action *act))
+{
+    struct listnode *node, *node2;
+    struct action *act;
+    struct trigger *cur_trigger;
+
+    // 找到脚本文件中指定的node节点
+    list_for_each(node, &amp;action_list) {
+        // 获取指定节点的action
+        act = node_to_item(node, struct action, alist);
+        // 执行节点下fun()
+        list_for_each(node2, &amp;act-&gt;triggers) {
+            cur_trigger = node_to_item(node2, struct trigger, nlist);
+            if (!strcmp(cur_trigger-&gt;name, trigger)) {
+                func(act);
+            }
+        }
+    }
+}
+</code></pre><p>通过指定的触发器，遍历解析的rc脚本文件相应command，执行具体的操作，流程图如下：</p>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/zhenglishijianliebiao.png" title="zhenglishijianliebiao.png">
+<h4 id="构建事件，并加入队列中"><a href="#构建事件，并加入队列中" class="headerlink" title="构建事件，并加入队列中"></a>构建事件，并加入队列中</h4><p>–&gt; init.cpp</p>
+<pre><code>// 构建事件，并加入队列中
+void queue_builtin_action(int (*func)(int nargs, char **args), const char *name)
+{
+    action* act = (action*) calloc(1, sizeof(*act));
+    trigger* cur_trigger = (trigger*) calloc(1, sizeof(*cur_trigger));
+    cur_trigger-&gt;name = name;
+    list_init(&amp;act-&gt;triggers);
+    list_add_tail(&amp;act-&gt;triggers, &amp;cur_trigger-&gt;nlist);
+    list_init(&amp;act-&gt;commands);
+    list_init(&amp;act-&gt;qlist);
+
+    command* cmd = (command*) calloc(1, sizeof(*cmd));
+    cmd-&gt;func = func;
+    cmd-&gt;args[0] = const_cast&lt;char*&gt;(name);
+    cmd-&gt;nargs = 1;
+    list_add_tail(&amp;act-&gt;commands, &amp;cmd-&gt;clist);
+
+    list_add_tail(&amp;action_list, &amp;act-&gt;alist);
+    action_add_queue_tail(act);
+}
+</code></pre><p>根据构建自定事件，并加入对列中，通指定触发器来触发操作，增加灵活性，如下图所示流程：</p>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_goujianshijian.png" title="init_goujianshijian.png">
+<h4 id="开启服务（死循环）"><a href="#开启服务（死循环）" class="headerlink" title="开启服务（死循环）"></a>开启服务（死循环）</h4><p>–&gt; init.cpp</p>
+<pre><code>// 执行命令
+void execute_one_command() {
+    Timer t;
+
+    char cmd_str[256] = &quot;&quot;;
+    char name_str[256] = &quot;&quot;;
+
+    if (!cur_action || !cur_command || is_last_command(cur_action, cur_command)) {
+        //    获取链表的第一个action
+        cur_action = action_remove_queue_head();
+        cur_command = NULL;
+        if (!cur_action) {
+            return;
+        }
+
+        build_triggers_string(name_str, sizeof(name_str), cur_action);
+
+        INFO(&quot;processing action %p (%s)\n&quot;, cur_action, name_str);
+        // 获取第一条command命令
+        cur_command = get_first_command(cur_action);
+    } else {
+        // 下一跳command命令
+        cur_command = get_next_command(cur_action, cur_command);
+    }
+
+    if (!cur_command) {
+        return;
+    }
+
+    // 调用相应command的fun() 方法
+    int result = cur_command-&gt;func(cur_command-&gt;nargs, cur_command-&gt;args);
+    if (klog_get_level() &gt;= KLOG_INFO_LEVEL) {
+        for (int i = 0; i &lt; cur_command-&gt;nargs; i++) {
+            strlcat(cmd_str, cur_command-&gt;args[i], sizeof(cmd_str));
+            if (i &lt; cur_command-&gt;nargs - 1) {
+                strlcat(cmd_str, &quot; &quot;, sizeof(cmd_str));
+            }
+        }
+        char source[256];
+        if (cur_command-&gt;filename) {
+            snprintf(source, sizeof(source), &quot; (%s:%d)&quot;, cur_command-&gt;filename, cur_command-&gt;line);
+        } else {
+            *source = &apos;\0&apos;;
+        }
+        INFO(&quot;Command &apos;%s&apos; action=%s%s returned %d took %.2fs\n&quot;,
+             cmd_str, cur_action ? name_str : &quot;&quot;, source, result, t.duration());
+    }
+}
+
+
+// 返回头部action并移除队列
+struct action *action_remove_queue_head(void)
+{
+    if (list_empty(&amp;action_queue)) {
+        return 0;
+    } else {
+        struct listnode *node = list_head(&amp;action_queue);
+        struct action *act = node_to_item(node, struct action, qlist);
+        list_remove(node);
+        list_init(node);
+        return act;
+    }
+}
+</code></pre><p>如下所示，是init进程执行开启服务的具体流程：</p>
+<ol>
+<li>首先从action_queue中查找到cmd</li>
+<li>根据cmd对应的宏定义KEYWORD</li>
+<li>执行对应的func方法</li>
+<li>例如service，遍历解析的services列表，找到指定的service</li>
+<li>启动指定的service服务</li>
+</ol>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_start.png" title="init_start.png">
+<h4 id="守护进程，重启服务"><a href="#守护进程，重启服务" class="headerlink" title="守护进程，重启服务"></a>守护进程，重启服务</h4><p>–&gt; init.cpp</p>
+<pre><code>// 重启服务
+static void restart_processes()
+{
+    process_needs_restart = 0;
+    // 根据flag=SVC_RESTARTING，有选择的重启
+    service_for_each_flags(SVC_RESTARTING,
+                           restart_service_if_needed);
+}
+
+
+// 根据服务名称找到解析列表中对应的服务并启动起来
+void service_for_each_class(const char *classname,
+                            void (*func)(struct service *svc))
+{
+    struct listnode *node;
+    struct service *svc;
+    // 找到列表中对应服务的节点
+    list_for_each(node, &amp;service_list) {
+        svc = node_to_item(node, struct service, slist);
+        if (!strcmp(svc-&gt;classname, classname)) {
+            // 启动服务
+            func(svc);
+        }
+    }
+}
+</code></pre><img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng1.png" title="init_shouhujincheng1.png">
+<ol>
+<li>内核通过fork产生父子两个进程，之间通过socket产生通信</li>
+<li>init进程死循环等待socket内的消息</li>
+<li>如果出现服务死掉，根据进程pid，找到脚本解析文件中对应的service</li>
+<li>启动找到的service服务（是否起启动取决service中具体的约束内容）</li>
+</ol>
+<p>具体的消息传递流程如下：</p>
+<img src="/fuckingcode/2018/06/04/源码分析之init进程/init_shouhujincheng2.png" title="init_shouhujincheng2.png">
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ol>
+<li>init 脚本中将服务统一归纳起来，由 init.cpp 统一解析，开启服务并守护，实现了两者之间的解耦</li>
+<li>通过import导入相关脚本文件，初始化属性服务，开启socket通信处理，解析脚本文件，开启守护进程服务，死循环等待socket通信</li>
+<li>一旦有服务异常死掉，便会通过socket通信机制，依据pid找到之前解析的脚本内容，重启服务</li>
+<li>可以适当在脚本中添加代码实现自定义开机启动服务</li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/init/" rel="tag"># init</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/05/31/源码修改之55寸双屏镜像修改单屏/" rel="next" title="屏参修改">
+                <i class="fa fa-chevron-left"></i> 屏参修改
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/06/源码分析之SystemServer流程分析1/" rel="prev" title="源码分析之SystemServer流程分析1">
+                源码分析之SystemServer流程分析1 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#init流程分析"><span class="nav-number">1.</span> <span class="nav-text">init流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#rc脚本文件可以用以下几张图片概括"><span class="nav-number">1.1.</span> <span class="nav-text">rc脚本文件可以用以下几张图片概括</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#init进程具体流程分析"><span class="nav-number">1.1.1.</span> <span class="nav-text">init进程具体流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#初始化-kernel-log-，位于设备节点-dev-kmsg"><span class="nav-number">1.1.1.1.</span> <span class="nav-text">初始化 kernel log ，位于设备节点/dev/kmsg</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#初始化子进程退出的信号处理过程signal-handler-init"><span class="nav-number">1.1.1.2.</span> <span class="nav-text">初始化子进程退出的信号处理过程signal_handler_init()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#加载-prop-属性文件"><span class="nav-number">1.1.1.3.</span> <span class="nav-text">加载 *.prop 属性文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#启动属性服务器（通过sockert通信）"><span class="nav-number">1.1.1.4.</span> <span class="nav-text">启动属性服务器（通过sockert通信）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#解析-rc-脚本文件"><span class="nav-number">1.1.1.5.</span> <span class="nav-text">解析 *.rc 脚本文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#根据脚本文件不同的标签分类解析"><span class="nav-number">1.1.1.6.</span> <span class="nav-text">根据脚本文件不同的标签分类解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#通过不同标签分类解析并加入对应的链表"><span class="nav-number">1.1.1.7.</span> <span class="nav-text">通过不同标签分类解析并加入对应的链表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#执行脚本中指定触发器的操作"><span class="nav-number">1.1.1.8.</span> <span class="nav-text">执行脚本中指定触发器的操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建事件，并加入队列中"><span class="nav-number">1.1.1.9.</span> <span class="nav-text">构建事件，并加入队列中</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#开启服务（死循环）"><span class="nav-number">1.1.1.10.</span> <span class="nav-text">开启服务（死循环）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#守护进程，重启服务"><span class="nav-number">1.1.1.11.</span> <span class="nav-text">守护进程，重启服务</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

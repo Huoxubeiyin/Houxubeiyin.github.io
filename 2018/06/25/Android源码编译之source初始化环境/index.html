@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="源码编译,Makefile,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="Android这个庞大的系统，采用的是自己的Android Makefile来进行编译的。在编译系统时，我们通常需要命令行 source build/envsetup.sh 导入相关环境变量，之后 lunch 选择自己想要编译的版本，最后 make 才可进行系统的全局编译。首先我们来分析source build/envsetup.sh的具体执行流程。">
+<meta name="keywords" content="源码编译,Makefile">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android源码编译之source初始化环境分析">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/25/Android源码编译之source初始化环境/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="Android这个庞大的系统，采用的是自己的Android Makefile来进行编译的。在编译系统时，我们通常需要命令行 source build/envsetup.sh 导入相关环境变量，之后 lunch 选择自己想要编译的版本，最后 make 才可进行系统的全局编译。首先我们来分析source build/envsetup.sh的具体执行流程。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-07-16T01:51:19.735Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android源码编译之source初始化环境分析">
+<meta name="twitter:description" content="Android这个庞大的系统，采用的是自己的Android Makefile来进行编译的。在编译系统时，我们通常需要命令行 source build/envsetup.sh 导入相关环境变量，之后 lunch 选择自己想要编译的版本，最后 make 才可进行系统的全局编译。首先我们来分析source build/envsetup.sh的具体执行流程。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/25/Android源码编译之source初始化环境/">
+
+
+
+
+
+  <title>Android源码编译之source初始化环境分析 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/25/Android源码编译之source初始化环境/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android源码编译之source初始化环境分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-25T16:33:18+08:00">
+                2018-06-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码编译/" itemprop="url" rel="index">
+                    <span itemprop="name">源码编译</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/06/25/Android源码编译之source初始化环境/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/25/Android源码编译之source初始化环境/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>Android这个庞大的系统，采用的是自己的Android Makefile来进行编译的。在编译系统时，我们通常需要命令行 source build/envsetup.sh 导入相关环境变量，之后 lunch 选择自己想要编译的版本，最后 make 才可进行系统的全局编译。首先我们来分析source build/envsetup.sh的具体执行流程。</strong></p>
+<a id="more"></a>
+<h3 id="编译脚本的导入"><a href="#编译脚本的导入" class="headerlink" title="编译脚本的导入"></a>编译脚本的导入</h3><p>编译安卓系统之前，我们需要在shell环境中，进入安卓源码跟路径下，通过 source build/envsetup.sh 脚本导入安卓系统相关的环境变量。脚本文件提供了很多方法，下面我们来具体分析一下。</p>
+<h4 id="多个方法的声明"><a href="#多个方法的声明" class="headerlink" title="多个方法的声明"></a>多个方法的声明</h4><p>文件build/envsetup.sh是一个bash shell脚本，从它里面定义的函数hmm可以知道，它提供了lunch、m、mm和mmm等命令供我们初始化编译环境或者编译Android源码。</p>
+<pre><code>#!/usr/bin/env bash
+function hmm() {
+cat &lt;&lt;EOF
+Invoke &quot;. build/envsetup.sh&quot; from your shell to add the following functions to your environment:
+- lunch:   lunch &lt;product_name&gt;-&lt;build_variant&gt;
+- tapas:   tapas [&lt;App1&gt; &lt;App2&gt; ...] [arm|x86|mips|armv5|arm64|x86_64|mips64] [eng|userdebug|user]
+- croot:   Changes directory to the top of the tree.
+- m:       Makes from the top of the tree.
+- mm:      Builds all of the modules in the current directory, but not their dependencies.
+- mmm:     Builds all of the modules in the supplied directories, but not their dependencies.
+           To limit the modules being built use the syntax: mmm dir/:target1,target2.
+- mma:     Builds all of the modules in the current directory, and their dependencies.
+- mmma:    Builds all of the modules in the supplied directories, and their dependencies.
+
+...
+
+EOF
+    T=$(gettop)
+    local A
+    A=&quot;&quot;
+    for i in `cat $T/build/envsetup.sh | sed -n &quot;/^[ \t]*function /s/function \([a-z_]*\).*/\1/p&quot; | sort | uniq`; do
+      A=&quot;$A $i&quot;
+    done
+    echo $A
+}
+</code></pre><p>函数hmm主要完成三个工作：</p>
+<ol>
+<li>调用另外一个函数gettop获得Android源码的根目录T</li>
+<li>通过cat命令显示一个Here Document，说明$T/build/envsetup.sh文件加载到当前终端后所提供的主要命令</li>
+<li>通过sed命令解析$T/build/envsetup.sh文件，并且获得在里面定义的所有函数的名称，这些函数名称就是$T/build/envsetup.sh文件加载到当前终端后提供的所有命令。</li>
+</ol>
+<p>注意，sed命令是一个强大的文本分析工具，它以行为单位为执行文本替换、删除、新增和选取等操作。函数hmm通过执行以下的sed命令来获得在$T/build/envsetup.sh文件定义的函数的名称：</p>
+<pre><code>cat $T/build/envsetup.sh | sed -n &quot;/^[ \t]*function /s/function \([a-z_]*\).*/\1/p&quot;
+
+1. cat读入$T/build/envsetup.sh脚本文件
+2. 管道命令sed -n &quot;.../p&quot;一起使用，表示单行处理数据
+3. 命令&quot;/^[ \t]*function /s/function \([a-z_]*\).*/\1&quot;表示匹配文本内容以若干制表符开头的连接字符&quot;function&quot;字符（声明的方法），使用&quot;function ***&quot;替换,其中&quot;***&quot;内容是匹配若干以&quot;a-z&quot;或者&quot;_&quot;为内容的字符串，即声明的方法规则必须是这两种情况
+4. 最后那个&quot;\1&quot;为样式匹配，表示获取得到匹配并替换后的第一个符合字符串结果
+</code></pre><p>上面的分析主要是获取脚本文件中声明的各种方法并打印出来。这里可以在控制台输入hmm，即可最后打印出脚本文件所有声明可用的方法。至于其他的方法，这里就不一一例举了，直接进入添加编译分支部分。</p>
+<h4 id="添加默认编译版本"><a href="#添加默认编译版本" class="headerlink" title="添加默认编译版本"></a>添加默认编译版本</h4><p>build/envsetup.sh脚本中开头声明了众多函数，之间夹杂着添加默认编译版本的代码，具体如下：</p>
+<pre><code># 滞空LUNCH_MENU_CHOICES变量值
+unset LUNCH_MENU_CHOICES
+# 向环境变量LUNCH_MENU_CHOICES标识的列表中添加项
+function add_lunch_combo()
+{
+    local new_combo=$1
+    local c
+    for c in ${LUNCH_MENU_CHOICES[@]} ; do
+        if [ &quot;$new_combo&quot; = &quot;$c&quot; ] ; then
+            return
+        fi
+    done
+    LUNCH_MENU_CHOICES=(${LUNCH_MENU_CHOICES[@]} $new_combo)
+}
+
+# add the default one here
+add_lunch_combo aosp_arm-eng
+add_lunch_combo aosp_arm64-eng
+add_lunch_combo aosp_mips-eng
+add_lunch_combo aosp_mips64-eng
+add_lunch_combo aosp_x86-eng
+add_lunch_combo aosp_x86_64-eng
+</code></pre><p>其步骤总结如下：</p>
+<ol>
+<li>滞空LUNCH_MENU_CHOICES变量值用于重新赋值</li>
+<li>声明add_lunch_combo方法，用于向环境变量LUNCH_MENU_CHOICES标识的列表中添加项</li>
+<li>添加默认的几个编译版本</li>
+<li>注意，${LUNCH_MENU_CHOICES[@]}表示数组LUNCH_MENU_CHOICES的所有元素</li>
+</ol>
+<p>其中方法add_lunch_combo中，首先遍历获取LUNCH_MENU_CHOICES中的值，查看取出的值是否和添加的一致，不一致才会执行添加操作</p>
+<h4 id="检查当前shell版本"><a href="#检查当前shell版本" class="headerlink" title="检查当前shell版本"></a>检查当前shell版本</h4><p>对当前的编译系统的shell进行检查和警告。这里只支持bash，如果是其他的shell会发出这个WARNING。之后便是厂商定制脚本的导入部分：</p>
+<pre><code>if [ &quot;x$SHELL&quot; != &quot;x/bin/bash&quot; ]; then
+    case `ps -o command -p $$` in
+        *bash*)
+            ;;
+        *)
+            echo &quot;WARNING: Only bash is supported, use of other shell would lead to erroneous results&quot;
+            ;;
+    esac
+fi
+</code></pre><h4 id="导入厂商定制的脚本"><a href="#导入厂商定制的脚本" class="headerlink" title="导入厂商定制的脚本"></a>导入厂商定制的脚本</h4><p>查找指定文件夹下，指定层级深度的指定文件脚本进行导入，代码如下：</p>
+<pre><code># Execute the contents of any vendorsetup.sh files we can find.
+for f in `test -d device &amp;&amp; find -L device -maxdepth 4 -name &apos;vendorsetup.sh&apos; 2&gt; /dev/null | sort` \
+         `test -d vendor &amp;&amp; find -L vendor -maxdepth 4 -name &apos;vendorsetup.sh&apos; 2&gt; /dev/null | sort`
+do
+    echo &quot;including $f&quot;
+    . $f
+done
+unset f
+</code></pre><p>下面对上面代码进行解释：</p>
+<ol>
+<li>test -d device ：查看device是否为文件夹，如果是文件夹返回ture。这里device显然是文件夹，返回true，通过 &amp;&amp; 操作符连接后面的指令</li>
+<li>find -L device -maxdepth 4 -name ‘vendorsetup.sh’ 2&gt; /dev/null  ：查找当前decice目录下最深层级4级下名为”vendorsetup.sh”的文件（-L表示跟随所有的符号连接），并且将错误信息丢弃</li>
+<li>| sort  ：附加管道命令，对查询结果进行排序</li>
+<li>echo “including $f”：  打印输出当前找到的 vendorsetup.sh 信息</li>
+<li>. $f： 导入脚本到当前环境中（. 后面有空格，导入当前shell环境，同source，不另开shell进程）</li>
+<li>unset f： 删除shell变量f</li>
+</ol>
+<p>从上面分析，可以看出：脚本文件 build/envsetup.sh 被source到当前shell的过程中，会在vendor和device两个目录将厂商指定的 envsetup.sh 也source到当前shell当中，这样就可以获得厂商提供的产品配置信息。</p>
+<p>例如如下厂商MSTAR定制的脚本信息：</p>
+<pre><code>--&gt; /device/mstar/avocado/vendorsetup.sh
+
+add_lunch_combo aosp_avocado-userdebug
+add_lunch_combo aosp_avocado_dtmb-userdebug
+</code></pre><h4 id="addcompletions完成脚本的导入"><a href="#addcompletions完成脚本的导入" class="headerlink" title="addcompletions完成脚本的导入"></a>addcompletions完成脚本的导入</h4><p>在导入三方定制的初始化脚本信息后，便调用addcompletions完成最后的操作，其具体代码如下：</p>
+<pre><code>addcompletions
+
+function addcompletions()
+{
+    local T dir f
+
+    # Keep us from trying to run in something that isn&apos;t bash.
+    if [ -z &quot;${BASH_VERSION}&quot; ]; then
+        return
+    fi
+
+    # Keep us from trying to run in bash that&apos;s too old.
+    if [ ${BASH_VERSINFO[0]} -lt 3 ]; then
+        return
+    fi
+
+    dir=&quot;sdk/bash_completion&quot;
+    if [ -d ${dir} ]; then
+        for f in `/bin/ls ${dir}/[a-z]*.bash 2&gt; /dev/null`; do
+            echo &quot;including $f&quot;
+            . $f
+        done
+    fi
+}
+</code></pre><p>这里主要分为有三步：</p>
+<ol>
+<li>判断安装在系统里的Bash版本，Bash版本名称为空直接返回。可通过echo ${BASH_VERSION}获取版本名</li>
+<li><p>判断系统Bash主版本号是否小于3，是即直接返回</p>
+<pre><code>${BASH_VERSINFO}返回一个数组，这个数组含有6个元素，指示了安装的Bash版本的信息。
+# BASH_VERSINFO[0] = 3                      # 主版本号.
+# BASH_VERSINFO[1] = 00                     # 次版本号.
+# BASH_VERSINFO[2] = 14                     # 补丁级.
+# BASH_VERSINFO[3] = 1                      # 编译版本.
+# BASH_VERSINFO[4] = release                # 发行状态.
+# BASH_VERSINFO[5] = i386-redhat-linux-gnu  # 结构体系
+</code></pre></li>
+<li><p>判断给定的”sdk/bash_completion”是否为文件夹，是文件夹变列出此文件夹下以[a-z]小写开头的.bash文件，错误信息直接抛弃，之后有的话直接打印输出，并通过”. $f”导入当前shell环境</p>
+</li>
+</ol>
+<p>到此，source导入脚本初始化编译环境部分就告一段落了。</p>
+<h3 id="lunch选择合适的编译版本"><a href="#lunch选择合适的编译版本" class="headerlink" title="lunch选择合适的编译版本"></a>lunch选择合适的编译版本</h3><ul>
+<li>原本打算一次性将编译安卓系统的三步骤一起讲完，但由于具体分析脚本文件内容比较多，这里就按照编译步骤，也分为三部分。下面两节便分别具体分析一下lunch和make的具体流程。</li>
+</ul>
+<hr>
+<h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><p>本内容针对 MASTR定制的安卓6.0电视系统，本人能力有限，在分析过程查找了相关的资料，比较有参考价值的在下面链接中提到。</p>
+<p><a href="https://blog.csdn.net/luoshengyang/article/details/18466779" target="_blank" rel="noopener">参考博客</a></p>
+<blockquote>
+<p>老罗的Android之旅</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/源码编译/" rel="tag"># 源码编译</a>
+          
+            <a href="/fuckingcode/tags/Makefile/" rel="tag"># Makefile</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/25/Andnroid系统odex优化加快开机速度/" rel="next" title="Andnroid系统odex优化加快开机速度">
+                <i class="fa fa-chevron-left"></i> Andnroid系统odex优化加快开机速度
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/" rel="prev" title="Android源码编译之lunch流程分析">
+                Android源码编译之lunch流程分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#编译脚本的导入"><span class="nav-number">1.</span> <span class="nav-text">编译脚本的导入</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#多个方法的声明"><span class="nav-number">1.1.</span> <span class="nav-text">多个方法的声明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#添加默认编译版本"><span class="nav-number">1.2.</span> <span class="nav-text">添加默认编译版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#检查当前shell版本"><span class="nav-number">1.3.</span> <span class="nav-text">检查当前shell版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#导入厂商定制的脚本"><span class="nav-number">1.4.</span> <span class="nav-text">导入厂商定制的脚本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#addcompletions完成脚本的导入"><span class="nav-number">1.5.</span> <span class="nav-text">addcompletions完成脚本的导入</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lunch选择合适的编译版本"><span class="nav-number">2.</span> <span class="nav-text">lunch选择合适的编译版本</span></a></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#说明"><span class="nav-number"></span> <span class="nav-text">说明</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

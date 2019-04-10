@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="AIDL,Binder,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="提及安卓的跨进程通信机制，那肯定非Binder机制莫属了！然而安卓为什么不采用原生linux提供的管道、消息队列、信号、secket以及共享内存呢？而是自己大费周章的写了一套自己的Binder跨进程通信机制，由此可见Binder通信机制的重要性。本人学习Binder后，感悟颇深。为了更好的理解，避免方便上层应用开发者直接看底层c实现难度太大，便拿其最直接的aidl文件实现跨进程开刀，庖丁解牛，由表">
+<meta name="keywords" content="AIDL,Binder">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Binder系统分析之应用层AIDL的具体实现">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="提及安卓的跨进程通信机制，那肯定非Binder机制莫属了！然而安卓为什么不采用原生linux提供的管道、消息队列、信号、secket以及共享内存呢？而是自己大费周章的写了一套自己的Binder跨进程通信机制，由此可见Binder通信机制的重要性。本人学习Binder后，感悟颇深。为了更好的理解，避免方便上层应用开发者直接看底层c实现难度太大，便拿其最直接的aidl文件实现跨进程开刀，庖丁解牛，由表">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-07-16T02:47:34.476Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Binder系统分析之应用层AIDL的具体实现">
+<meta name="twitter:description" content="提及安卓的跨进程通信机制，那肯定非Binder机制莫属了！然而安卓为什么不采用原生linux提供的管道、消息队列、信号、secket以及共享内存呢？而是自己大费周章的写了一套自己的Binder跨进程通信机制，由此可见Binder通信机制的重要性。本人学习Binder后，感悟颇深。为了更好的理解，避免方便上层应用开发者直接看底层c实现难度太大，便拿其最直接的aidl文件实现跨进程开刀，庖丁解牛，由表">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/">
+
+
+
+
+
+  <title>Binder系统分析之应用层AIDL的具体实现 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Binder系统分析之应用层AIDL的具体实现</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-12T17:26:35+08:00">
+                2018-07-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Binder分析/" itemprop="url" rel="index">
+                    <span itemprop="name">Binder分析</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Binder分析/AIDL/" itemprop="url" rel="index">
+                    <span itemprop="name">AIDL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>提及安卓的跨进程通信机制，那肯定非Binder机制莫属了！然而安卓为什么不采用原生linux提供的管道、消息队列、信号、secket以及共享内存呢？而是自己大费周章的写了一套自己的Binder跨进程通信机制，由此可见Binder通信机制的重要性。本人学习Binder后，感悟颇深。为了更好的理解，避免方便上层应用开发者直接看底层c实现难度太大，便拿其最直接的aidl文件实现跨进程开刀，庖丁解牛，由表及里，拨开云雾见天日！</strong></p>
+<a id="more"></a>
+<h3 id="AIDL"><a href="#AIDL" class="headerlink" title="AIDL"></a>AIDL</h3><p>AIDl（Android Interface Definition Language），解释为安卓接口定义语言。以AIDl定义的服务接口文件是以.aidl文件结尾的。在系统编译时，会自动将其转换成对应的java文件。此java自动生成了若干类提供开发者无缝调用其他进程定义好的接口而无需关注其内部的具体实现。本文后面会借此java文件内容，初探分析Binder内部的具体实现方式。对于AIDL的具体语法，这里不做过多解释了。</p>
+<h3 id="案例描述"><a href="#案例描述" class="headerlink" title="案例描述"></a>案例描述</h3><p>为了方便清晰的描述跨进程通信机制Binder的具体实现方式aidl，这里我们采用一下案例进行实现。</p>
+<ul>
+<li>用户使用手机购物需要支付时，一般调用第三方的支付接口服务，此服务运行在不同进程中</li>
+<li>支付服务运行商的支付逻辑自己实现，其约定接口，发放接口文件aidl提供开发者调用</li>
+<li>支付请求基于跨进程通信，此方式解耦了商品购买和支付之间的关系，开发者只需要知道支付是否成功即可</li>
+</ul>
+<h3 id="Server端实现"><a href="#Server端实现" class="headerlink" title="Server端实现"></a>Server端实现</h3><h4 id="接口声明"><a href="#接口声明" class="headerlink" title="接口声明"></a>接口声明</h4><p>支付接口需要aidl声明，便于跨进程交互。其在as中可以自行建立。这里在定义接口之前，还需约定好传递的数据类型，aidl不仅仅支持基本的数据类型，也支持自定的数据类型。首先右击新建aidl文件，命名IAlipayInterface.aidl，系统会自动为其新建指定包名的aidl文件夹，位于main文件夹下。在此文件夹下进行下面的操作。</p>
+<h5 id="支付数据PayInfo"><a href="#支付数据PayInfo" class="headerlink" title="支付数据PayInfo"></a>支付数据PayInfo</h5><p>PayInfo声明为简单的JavaBean，其主要是支付信息数据的封装，这里主要包括支付时间，地点，描述信息，金额，支付结果，错误信息等。其简单实现如下：</p>
+<pre><code>package com.example.rememberme.alipay_server;
+
+public class PayInfo implements Parcelable {
+
+    private String data;
+    private String local;
+    private String desc;
+    private float money;
+    private boolean ok;
+    private String errorInfo;
+
+    public PayInfo() {
+    }
+
+    protected PayInfo(Parcel in) {
+        data = in.readString();
+        local = in.readString();
+        desc = in.readString();
+        money = in.readFloat();
+        ok = in.readByte() != 0;
+        errorInfo = in.readString();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(data);
+        dest.writeString(local);
+        dest.writeString(desc);
+        dest.writeFloat(money);
+        dest.writeByte((byte) (ok ? 1 : 0));
+        dest.writeString(errorInfo);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator&lt;PayInfo&gt; CREATOR = new Creator&lt;PayInfo&gt;() {
+        @Override
+        public PayInfo createFromParcel(Parcel in) {
+            return new PayInfo(in);
+        }
+
+        @Override
+        public PayInfo[] newArray(int size) {
+            return new PayInfo[size];
+        }
+    };
+
+    //各种set方法
+    public PayInfo setData(String data) {
+        this.data = data;
+        return this;
+    }
+
+    ...
+
+    @Override
+    public String toString() {
+        return &quot;PayInfo{&quot; +
+                &quot;data=&apos;&quot; + data + &apos;\&apos;&apos; +
+                &quot;, local=&apos;&quot; + local + &apos;\&apos;&apos; +
+                &quot;, desc=&apos;&quot; + desc + &apos;\&apos;&apos; +
+                &quot;, money=&quot; + money +
+                &quot;, ok=&quot; + ok +
+                &quot;, errorInfo=&apos;&quot; + errorInfo + &apos;\&apos;&apos; +
+                &apos;}&apos;;
+    }
+}
+</code></pre><p>这里需要有以下几点注意事项：</p>
+<ol>
+<li>package 包名位置一定要清晰，下面的aidl文件都是以此为基础的</li>
+<li>自定义的 JavaBean 一定要实现 Parcelable 接口，以方便通过此层Binder机制跨进程通信</li>
+<li>先声明好 java 中的成员以及对应的set方法，直接继承 parcelable 接口，使用as快捷键会自动实现具体逻辑</li>
+</ol>
+<h5 id="PayInfo-aidl"><a href="#PayInfo-aidl" class="headerlink" title="PayInfo.aidl"></a>PayInfo.aidl</h5><p>实现PayInfo自定义数据对应的aidl文件。</p>
+<pre><code>// PayInfo.aidl
+package com.example.rememberme.alipay_server;
+parcelable PayInfo;
+</code></pre><ol>
+<li>这里的 PayInfo.aidl 文件位于和 PayInfo.java 文件统计目录下，package 包名一致</li>
+<li>关键字parcelable 声明实现接口类型对应文件 PayInfo</li>
+</ol>
+<h5 id="IAliayInterface"><a href="#IAliayInterface" class="headerlink" title="IAliayInterface"></a>IAliayInterface</h5><p>实现支付接口IAlipayInterface的具体实现。</p>
+<pre><code>// IAllipayInterface.aidl
+package com.example.rememberme.alipay_server;
+import com.example.rememberme.alipay_server.PayInfo;
+// Declare any non-default types here with import statements
+
+interface IAlipayInterface {
+    PayInfo transact(in PayInfo i);
+}
+</code></pre><ol>
+<li>统计目录下 package 内容一致</li>
+<li>import 导入之前对应的自定义数据类型 PayInfo</li>
+<li>接口方法定义 transact ，传入和返回参数都是 PayInfo 类型</li>
+</ol>
+<h5 id="IAlipayInterface-java-的生成"><a href="#IAlipayInterface-java-的生成" class="headerlink" title="IAlipayInterface.java 的生成"></a>IAlipayInterface.java 的生成</h5><p>注意，上面介绍的目录层级和包名一定要相互对应，否则as将无法正常生成对应的接口定义文件 IAlipayInterface.java </p>
+<p>如果一切ok，点击as运行编译旁边的小锤子按钮，系统便会生成如下文件，具体目录如下（目录显示为project）：</p>
+<pre><code>app/build/generated/source/aidl/debug/com/example/rememberme/alipay_server/IAlipayInterface.java
+</code></pre><p>如果编译出错，可能是as没有将aidl文件纳入编译中，需要修改项目的配置文件 build.gradle 内容，在 android{} 的 buildTypes{} 上面添加如下文件配置代码，便可解决。</p>
+<pre><code>sourceSets {
+    main {
+        manifest.srcFile &apos;src/main/AndroidManifest.xml&apos;
+        java.srcDirs = [&apos;src/main/java&apos;, &apos;src/main/aidl&apos;]
+        resources.srcDirs = [&apos;src/main/java&apos;, &apos;src/main/aidl&apos;]
+        aidl.srcDirs = [&apos;src/main/aidl&apos;]
+        res.srcDirs = [&apos;src/main/res&apos;]
+        assets.srcDirs = [&apos;src/main/assets&apos;]
+    }
+}
+</code></pre><p>我们大概浏览一下文件的具体内容，其内部的具体内容较多，下面会具体分析，这里主要关注后面涉及的方法：</p>
+<ol>
+<li>抽象类Stub实例化时，将实例对象与DESCRIPTOR进行了绑定，queryLocalInterface会根据它找到实例对象</li>
+<li>抽象类Stub中asInterface同于将远程代理对象转换成IAlipayInterface接口，方便客户端调用支付逻辑，此实现于客户端内</li>
+<li>方法中的transact和支付接口声明的transact是两码事，这里笔者声明后才发现容易引起混淆，这里主要根据形参可以看出不是同一个方法。</li>
+<li>抽象类Stub还有一个静态内部类Proxy，其主要工作是代理底层传递的远程Binder服务，负责底层和上层客户端的交互。</li>
+<li>从类中，我们发现其接口均以全包名的形式展示出来，这就意味着服务端的接口文件需要和客户端的接口文件相一致，否则会调用失败。这里也是笔者一再强调上述三个在同一文件夹下的必要性。</li>
+</ol>
+<p>到这里，支付接口的定义和声明就告一段落，下面我们来具体实现其服务端和客户端的具体逻辑。</p>
+<h4 id="AlipayService实现"><a href="#AlipayService实现" class="headerlink" title="AlipayService实现"></a>AlipayService实现</h4><p>支付服务独立运行在一个服务进程中，这里我们开启一个Service来提供支付服务。具体实现如下：</p>
+<pre><code>public class AlipayService extends Service {
+
+    private static final String TAG = &quot;AlipayService&quot;;
+
+    public AlipayService() {
+        Log.d(TAG, &quot;AlipayService: &quot; + &quot;服务已启动...&quot;);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        Log.d(TAG, &quot;onBind: &quot; + &quot;服务已绑定...&quot;);
+        return new Alipay();
+    }
+
+
+    class Alipay extends IAlipayInterface.Stub {
+        @Override
+        public PayInfo transact(PayInfo i) throws RemoteException {
+            // client端请求本服务aidl支付接口
+            return doPay(i);
+        }
+    }
+
+    // 支付具体逻辑
+    private PayInfo doPay(PayInfo i) {
+
+        Log.d(TAG, &quot;doPay: &quot; + &quot;支付服务已受理，支付成功！！！&quot;);
+        Log.d(TAG, &quot;请求数据: &quot;+i.toString());
+
+        PayInfo payInfo = new PayInfo();
+        payInfo.setDesc(&quot;返回数据：&quot; + i.getDesc())
+                .setData(&quot;支付请求完成时间：&quot; + &quot;2018/7/12/16:38&quot;)
+                .setErrorInfo(&quot;&quot;)
+                .setLocal(i.getLocal())
+                .setMoney(i.getMoney())
+                .setOk(true);
+        return payInfo;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return super.onUnbind(intent);
+    }
+}
+</code></pre><ul>
+<li>服务中在绑定时，返回一个Alipay的对象，AliPay继承了之前AIDL接口文件生成的中间类Stub类，提供了实现具体支付的接口。</li>
+<li>这里显然Stub提供的接口需要服务端具体实现，Stub的作用就是远程客户端请求支付服务的时候，通过IPC多线程下的Binder通信机制，跨进程获取服务支付代理对象，从而通过约定好的接口实现支付逻辑。</li>
+<li>在支付接口方法transact中，我们通过形参PayInfo可以获取到客户端传来的支付信息，这里我们简单的对数据进行处理，更改时间并将支付成功置位true后返回客户端。</li>
+</ul>
+<p>至此，服务就基本处理完成。下面我们在应用打开的时候就将这个服务开启起来，以便供客户端使用（注意：这里不启动也可以，因为在客户端中就已实现了关联，这里只是为了方便查看进程id，便于解释跨进程通信）</p>
+<h5 id="MainActivity实现"><a href="#MainActivity实现" class="headerlink" title="MainActivity实现"></a>MainActivity实现</h5><p>主页面的实现很简单，就是在页面开始时候启动服务，同时在Manifest中声明服务的action值。</p>
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // 开启服务
+        Intent intent = new Intent(MainActivity.this, AlipayService.class);
+        startService(intent);
+    }
+}
+</code></pre><p>Mainfest 声明</p>
+<pre><code>&lt;service
+    android:name=&quot;.AlipayService&quot;
+    android:enabled=&quot;true&quot;
+    android:exported=&quot;true&quot;&gt;
+    &lt;intent-filter&gt;
+        &lt;action android:name=&quot;android.intent.action.alipayserver&quot;&gt;&lt;/action&gt;
+    &lt;/intent-filter&gt;
+&lt;/service&gt;
+</code></pre><p>如上，server端的实现就具体完成了，编译打包安装到机器上，运行后ps一下就可以看到其进程id了。</p>
+<h3 id="Client实现"><a href="#Client实现" class="headerlink" title="Client实现"></a>Client实现</h3><h4 id="接口文件"><a href="#接口文件" class="headerlink" title="接口文件"></a>接口文件</h4><p>AIDL跨进程通信约束了客户端和服务端都必须遵循相同的接口文件。这里我们直接将server端中aidl文件夹下的文件直接拷贝到client端中对应的位置即可，同时在 build.gradle 中声明 aidl 编译配置，锤子点一下，生成同样的 IAlipayInterface.java 中间文件即可。</p>
+<h4 id="MainActivity实现-1"><a href="#MainActivity实现-1" class="headerlink" title="MainActivity实现"></a>MainActivity实现</h4><p>这里我们简化客户模式购物请求，直接在MainActivity中实现支付请求，传入支付参数即可。具体代码如下：</p>
+<pre><code>public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = &quot;ALIPAY_CLIENT&quot;;
+    private IAlipayInterface alipayInterface;
+    private MyConn conn;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Intent intent = new Intent();
+        conn = new MyConn();
+        //通过意图过滤器建立关系
+        intent.setAction(&quot;android.intent.action.alipayserver&quot;);
+        //自从Android5.0开始通过setAction的方式已经失效，必须要传入应用包名
+        intent.setPackage(&quot;com.example.rememberme.alipay_server&quot;);
+        //绑定服务
+        bindService(intent, conn, Service.BIND_AUTO_CREATE);
+
+        Button alipay = findViewById(R.id.alipay);
+        alipay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    // 生成请求数据信息
+                    PayInfo payInfo = new PayInfo();
+                    payInfo.setMoney(7000)
+                            .setLocal(&quot;广东省深圳市宝安区西乡大道...&quot;)
+                            .setErrorInfo(&quot;&quot;)
+                            .setDesc(&quot;用户请求支付宝服务支付接口：商品：苹果X（128g），红色国行&quot;)
+                            .setData(&quot;2018/7/12/16:35&quot;)
+                            .setOk(false);
+
+                    // 调用远程服务接口支付
+                    PayInfo callback = alipayInterface.transact(payInfo);
+
+                    Log.d(TAG, &quot;onClick: &quot;+ callback.toString());
+
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private class MyConn implements ServiceConnection {
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            Log.d(TAG, &quot;onServiceConnected: &quot; + &quot;远程服务连接成功...&quot;);
+            // 这里采用asInterface方式，不再强转形式
+            alipayInterface = IAlipayInterface.Stub.asInterface(iBinder);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            Log.d(TAG, &quot;onServiceDisconnected: &quot; + &quot;远程服务已断开...&quot;);
+            alipayInterface = null;
+        }
+
+        @Override
+        public void onBindingDied(ComponentName name) {
+            Log.d(TAG, &quot;onBindingDied: &quot; + &quot;远程服务死亡通知...&quot;);
+        }
+    }
+}
+</code></pre><p>这里对代码进行解释：</p>
+<ol>
+<li>通过 bindService 实现远程服务端的绑定，方便调用远程服务提供的支付接口</li>
+<li>bindService 需要传入三个参数，第一个意图对象，即远程服务；第二个本地 ServiceConnection 具体实现，即获取到远程服务绑定成功回传的代理对象；第三个为标志位，即绑定服务及创建服务，意味远程服务不存在时候，绑定时候便启动服务进程。</li>
+<li>Intent 用来通过意图过滤器建立远程服务之间的关系，这里需要注意5.0以后需要指定服务的包名</li>
+<li>ServiceConnection 的具体实现 MyConn，其为 bindService 远程服务时的回调，回传远程服务对象IBinder。这里IBinder对象是底层会传的引用，由系统返回的代理对象的基类。可以调用生成的中间文件asInterface方法将其转成接口服务IAlipayInterface。</li>
+<li>btn是一个Button控件，点击即生成请求参数PayInfo，调用获取到的远程支付接口 alipayInterface.transact方法，得到支付结果，这里我们直接打印log查看。</li>
+</ol>
+<p>至此，一个aidl跨进程通信模型就基本实现完成，下面我们进行调试观察，以便了解跨进程通信的原理。</p>
+<h4 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h4><h5 id="服务端-gt-客户端"><a href="#服务端-gt-客户端" class="headerlink" title="服务端-&gt;客户端"></a>服务端-&gt;客户端</h5><p>我们先启动服务端，在启动客户端进行支付请求。</p>
+<ul>
+<li><p>启动服务</p>
+<pre><code>服务端
+u0_a25    3820  1452  1100144 59428 SyS_epoll_ 7f94979574 S com.example.rememberme.alipay_server
+
+客户端
+u0_a25    3820  1452  1075500 49968 SyS_epoll_ 7f94979574 S com.example.rememberme.alipay_server
+u0_a26    3917  1452  1149604 63084 SyS_epoll_ 7f94979574 S com.example.rememberme.alipay_client
+</code></pre></li>
+</ul>
+<p>上面由进程id可以看出两着不在同一个进程，server端位于3820，client端位于3917，我们调用支付接口看一下log。</p>
+<ul>
+<li><p>调用支付接口</p>
+<pre><code>服务端
+07-13 10:36:41.693 3820-3831/com.example.rememberme.alipay_server D/AlipayService: doPay: 支付服务已受理，支付成功！！！
+
+客户端
+07-13 10:36:41.693 3917-3917/com.example.rememberme.alipay_client D/ALIPAY_CLIENT: onClick: PayInfo{data=&apos;支付请求完成时间：2018/7/12/16:38&apos;, local=&apos;广东省深圳市宝安区西乡大道...&apos;, desc=&apos;返回数据：用户请求支付宝服务支付接口：商品：苹果X（128g），红色国行&apos;, money=7000.0, ok=true, errorInfo=&apos;&apos;}
+</code></pre></li>
+</ul>
+<p>下面我们将服务端kill掉在试一下，kill 3820，再请求支付。</p>
+<ul>
+<li><p>kill 后</p>
+<pre><code>服务端
+    07-13 10:39:39.333 4014-4014/com.example.rememberme.alipay_server I/InstantRun: starting instant run server: is main process
+    07-13 10:39:39.343 4014-4014/com.example.rememberme.alipay_server D/AlipayService: AlipayService: 服务已启动...
+    07-13 10:39:39.344 4014-4014/com.example.rememberme.alipay_server D/AlipayService: onBind: 服务已绑定...
+
+客户端
+    07-13 10:39:37.456 3917-3917/com.example.rememberme.alipay_client D/ALIPAY_CLIENT: onServiceDisconnected: 远程服务已断开...
+    07-13 10:39:39.347 3917-3917/com.example.rememberme.alipay_client D/ALIPAY_CLIENT: onServiceConnected: com.example.rememberme.alipay_server
+        onServiceConnected: 远程服务连接成功...
+</code></pre></li>
+<li><p>请求支付            </p>
+<pre><code>服务端
+07-13 10:40:19.800 4014-4048/com.example.rememberme.alipay_server D/AlipayService: doPay: 支付服务已受理，支付成功！！！
+
+客户端
+07-13 10:40:19.801 3917-3917/com.example.rememberme.alipay_client D/ALIPAY_CLIENT: onClick: PayInfo{data=&apos;支付请求完成时间：2018/7/12/16:38&apos;, local=&apos;广东省深圳市宝安区西乡大道...&apos;, desc=&apos;返回数据：用户请求支付宝服务支付接口：商品：苹果X（128g），红色国行&apos;, money=7000.0, ok=true, errorInfo=&apos;&apos;}
+</code></pre></li>
+</ul>
+<h5 id="只客户端"><a href="#只客户端" class="headerlink" title="只客户端"></a>只客户端</h5><ul>
+<li><p>启动服务（未调用支付）</p>
+<pre><code>服务端
+07-13 10:54:31.125 3301-3301/com.example.rememberme.alipay_server I/InstantRun: starting instant run server: is main process
+07-13 10:54:31.135 3301-3301/com.example.rememberme.alipay_server D/AlipayService: AlipayService: 服务已启动...
+07-13 10:54:31.136 3301-3301/com.example.rememberme.alipay_server D/AlipayService: onBind: 服务已绑定...
+
+客户端
+07-13 10:54:31.140 3227-3227/com.example.rememberme.alipay_client D/ALIPAY_CLIENT: onServiceConnected: com.example.rememberme.alipay_server
+    onServiceConnected: 远程服务连接成功...
+</code></pre></li>
+</ul>
+<p>注意：如果这个时候kill掉cilent，在kill掉server，有可能出现服务不断重启，此时只需要重启设备即可。</p>
+<ul>
+<li><p>请求支付</p>
+<pre><code>服务端
+07-13 10:55:57.026 3301-3354/com.example.rememberme.alipay_server D/AlipayService: doPay: 支付服务已受理，支付成功！！！
+
+客户端
+07-13 10:55:57.027 3227-3227/com.example.rememberme.alipay_client D/ALIPAY_CLIENT: onClick: PayInfo{data=&apos;支付请求完成时间：2018/7/12/16:38&apos;, local=&apos;广东省深圳市宝安区西乡大道...&apos;, desc=&apos;返回数据：用户请求支付宝服务支付接口：商品：苹果X（128g），红色国行&apos;, money=7000.0, ok=true, errorInfo=&apos;&apos;}
+
+进程id
+u0_a26    3227  1446  1152892 63496 SyS_epoll_ 7fa8d6b574 S com.example.rememberme.alipay_client
+u0_a25    3301  1446  1034472 36832 SyS_epoll_ 7fa8d6b574 S com.example.rememberme.alipay_server
+</code></pre></li>
+</ul>
+<h5 id="小结现象"><a href="#小结现象" class="headerlink" title="小结现象"></a>小结现象</h5><ul>
+<li>先启动服务端，再启动客户端，pid是服务端先于客户端分配</li>
+<li>先启动客户端，绑定服务时即自动启动服务端，pid是客户端先于服务端分配</li>
+<li>客户端存在，服务端kill掉也会不断重启（BIND_AUTO_CREATE），以维护绑定机制正常运行</li>
+</ul>
+<p>由上面可以看出，客户端不用关注服务端的运行状态，因为其在绑定时即进行了相关操作，不存在就直接创建服务。从log打印流程可以看出。</p>
+<p>这里我们可以大概总结内部通信的流程：</p>
+<ol>
+<li><p>Client绑定服务端获取到远程代理对象</p>
+<ul>
+<li>通过绑定服务，通过意图对象过滤器与远程服务建立连接</li>
+<li>绑定服务返回接口ServiceConnection具体实现类回传底层分配的代理对象IBinder</li>
+<li>通过IAlipayInterface接口文件编译的中间产物IAlipayInterface.Stub.asInterface 将回传对象IBinder转成接口文件类型，以实现无缝调用</li>
+</ul>
+</li>
+<li><p>调用远程对象的支付逻辑</p>
+<ul>
+<li>服务端和客户端实现相同的aidl接口文件，方便底层驱动识别查找</li>
+<li>底层通知调用其支付方法。服务端根据传入请求支付消息，调用其支付接口，返回支付结果。其实质是通过中间文件转达消息到binder底层驱动后，再间接调用远程服务提供的支付逻辑</li>
+</ul>
+</li>
+<li><p>客户端得到支付结果处理</p>
+<ul>
+<li>支付结果通过底层回传到客户端，客户端得到服务端支付的回传结果，继续处理</li>
+</ul>
+</li>
+</ol>
+<p>以上便是整个支付请求的大概流程，只停留在上层应用中，涉及到底层驱动部分不作过多的解释。由于我们关注的是其中Binder机制下aidl的具体实现原理，我们就集中对生成的中间文件进行分析。</p>
+<h3 id="AIDL中间文件分析"><a href="#AIDL中间文件分析" class="headerlink" title="AIDL中间文件分析"></a>AIDL中间文件分析</h3><p>开篇中我们就说到，aidl是为了跨进程通信实现的一种方式，它是Binder上层应用的直接体现。我们可以借此大概了解Binder的运行机制。</p>
+<h4 id="类Binder和接口IBinder"><a href="#类Binder和接口IBinder" class="headerlink" title="类Binder和接口IBinder"></a>类Binder和接口IBinder</h4><p>为了便于下面文档的说明，这里有必要了解一下上层应用的Binder类和IBinder接口的相关说明。</p>
+<ul>
+<li><p>IBinder是远程对象的基本接口，代表了跨进程通信的能力，是为了高性能而设计的轻量级远程调用机制的核心部分。但他不仅用于远程调用，也用于进程内调用。实现这个接口，便可以将这个对象进行跨进程传递，这是底层驱动支持的。该接口定义了与远程对象间交互的协议。但不要直接实现这个接口，而是继承(extends)Binder。</p>
+</li>
+<li><p>IBinder负责数据传输，那么client和server端的调用契约呢，即同步的接口声明？这里就用到了IInterface，其代表了远程server具体执行的能力，开发者只需要实现自定的接口文件aidl，其中间编译文件会自动让你生命的接口继承于这个类。</p>
+</li>
+<li><p>IBinder主要的API是transact()，与之对应的API是Binder.onTransact()。通过前者，你能向远程IBinder对象发送发出调用，后者使你的远程对象能够响应接收到的调用。IBinder的API都是 Syncronous(同步)执行的，比如transact()直到对方的Binder.onTransact()方法调用玩 后才返回。调用发生在进程内时无疑是一样的，而在进程间时，在IPC的帮助下，也是同样的效果。</p>
+</li>
+<li><p>Java层的Binder类，其实就是代表一个Binder本地对象。BinderProxy为其一个内部类，它代表远程进程的Binder对象的本地代理。这两个类都继承自IBinder，因而都具有跨进程通信的能力。在跨进程通信，驱动会自动实现这两个对象的转换。</p>
+</li>
+<li><p>通过transact()发送的数据是Parcel，Parcel是一种一般的缓冲区，除了有数据外还带有一些描述它内容的元数据。元数据用于管理IBinder对象的引用，这样就能在缓冲区从一个进程移动到另一个进程时保存这些引用。这样就保证了当一个IBinder被写入到Parcel并发送到另一个进程中，如果另一个进程把同一个IBinder的引用回发到原来的进程，那么这个原来的进程就能接收到发出的那个IBinder的引用。这种机制使IBinder和Binder像唯一标志符那样在进程间管理。</p>
+</li>
+<li><p>系统为每个进程维护一个存放交互线程的线程池。这些交互线程用于派送所有从另外进程发来的IPC 调用。例如：当一个IPC从进程Ａ发到进程Ｂ，Ａ中那个发出调用的线程(这个应该不在线程池中)就阻塞 在transact()中了。进程Ｂ中的交互线程池中的一个线程接收了这个调用，它调用 Binder.onTransact()，完成后用一个Parcel来做为结果返回。然后进程Ａ中的那个等待的线程在 收到返回的Parcel后得以继续执行。实际上，另一个进程看起来就像是当前进程的一个线程，但不是当前进程创建的。</p>
+</li>
+<li><p>Binder机制还支持进程间的递归调用。例如，进程Ａ执行自己的IBinder的transact()调用进程Ｂ 的Binder，而进程Ｂ在其Binder.onTransact()中又用transact()向进程Ａ发起调用，那么进程Ａ 在等待它发出的调用返回的同时，还会用Binder.onTransact()响应进程Ｂ的transact()。 总之Binder造成的结果就是让我们感觉到跨进程的调用与进程内的调用没什么区别。</p>
+</li>
+<li><p>部分解释来源于网络，参考如下：</p>
+<p>  <a href="https://blog.csdn.net/ls5718/article/details/51854106" target="_blank" rel="noopener">参考链接</a></p>
+</li>
+</ul>
+<h4 id="中间文件（IAlipayInterface-java）"><a href="#中间文件（IAlipayInterface-java）" class="headerlink" title="中间文件（IAlipayInterface.java）"></a>中间文件（IAlipayInterface.java）</h4><p>IAlipayInterface.java是aidl文件IAlipayInterface的编译中间产物，我们来具体分析一下：</p>
+<pre><code>package com.example.rememberme.alipay_server;
+
+public interface IAlipayInterface extends android.os.IInterface {
+    public static abstract class Stub extends android.os.Binder implements com.example.rememberme.alipay_server.IAlipayInterface {
+
+        //DESCRIPTOR Binder的唯一标识，一般用当前Binder的类名表示
+        private static final java.lang.String DESCRIPTOR = &quot;com.example.rememberme.alipay_server.IAlipayInterface&quot;;
+
+        public Stub() {
+            this.attachInterface(this, DESCRIPTOR);
+        }
+
+        //将服务端的Binder对象转换成客户端所需的aidl接口类型的对象，这种转换过程是区分进程的
+        //位于同一进程，该方法返回的是服务端的Stub对象本身
+        //不在同一进程，该方法返回的是系统封装后都Stub.proxy对象
+        public static com.example.rememberme.alipay_server.IAlipayInterface asInterface(android.os.IBinder obj) {
+            if ((obj == null)) {
+                return null;
+            }
+            android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+            if (((iin != null) &amp;&amp; (iin instanceof com.example.rememberme.alipay_server.IAlipayInterface))) {
+                return ((com.example.rememberme.alipay_server.IAlipayInterface) iin);
+            }
+            return new com.example.rememberme.alipay_server.IAlipayInterface.Stub.Proxy(obj);
+        }
+
+        //返回当前Binder对象（Alipay）
+        @Override
+        public android.os.IBinder asBinder() {
+            return this;
+        }
+
+        /**
+         * onTransact运行在服务端中的Binder线程池中
+         * 当客户端发起跨进程请求时，远程请求会通过系统底层封装后交由此方法来处理
+         * code 通过code确定客户端请求的目标方法
+         * data 从data中取出目标方法所需的参数，然后执行目标方法
+         * reply执行完目标方法，将返回值写入reply中
+         * return 如果返回false，客户端去请求失败。可以用这个特性来做权限验证，过滤掉 不希望访问的进程
+         * /
+        @Override
+        public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException {
+            switch (code) {
+                case INTERFACE_TRANSACTION: {
+                    reply.writeString(DESCRIPTOR);
+                    return true;
+                }
+                case TRANSACTION_transact: {
+                    data.enforceInterface(DESCRIPTOR);
+                    com.example.rememberme.alipay_server.PayInfo _arg0;
+                    if ((0 != data.readInt())) {
+                        _arg0 = com.example.rememberme.alipay_server.PayInfo.CREATOR.createFromParcel(data);
+                    } else {
+                        _arg0 = null;
+                    }
+                    com.example.rememberme.alipay_server.PayInfo _result = this.transact(_arg0);
+                    reply.writeNoException();
+                    if ((_result != null)) {
+                        reply.writeInt(1);
+                        _result.writeToParcel(reply, android.os.Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+                    } else {
+                        reply.writeInt(0);
+                    }
+                    return true;
+                }
+            }
+            return super.onTransact(code, data, reply, flags);
+        }
+
+        private static class Proxy implements com.example.rememberme.alipay_server.IAlipayInterface {
+            //远程的代理对象
+            private android.os.IBinder mRemote;
+
+            //接受底层分配的远程IBinder对象
+            Proxy(android.os.IBinder remote) {
+                mRemote = remote;
+            }
+
+            //返回的是远程代理对象（由底层支持）
+            @Override
+            public android.os.IBinder asBinder() {
+                return mRemote;
+            }
+
+            public java.lang.String getInterfaceDescriptor() {
+                return DESCRIPTOR;
+            }
+
+            /**
+             * 运行在客户端
+             * 首先创建该方法所需要的输入型Parcel 对象_data，输入型Parcel对象_reply和返回值对象_result
+             * 然后把该方法的参数信息写入 _data 中
+             * 接着调用transact方法发起RPC（远程过程调用）请求，同时挂起当前线程
+             * 然后服务端的 onTransact方法会被调用，直到RPC过程返回后，当前线程继续执行，
+             * 并从_reply中取出RPC过程的返回结果
+             * 最后返回_reply中的数据
+             */
+            @Override
+            public com.example.rememberme.alipay_server.PayInfo transact(com.example.rememberme.alipay_server.PayInfo i) throws android.os.RemoteException {
+                android.os.Parcel _data = android.os.Parcel.obtain();
+                android.os.Parcel _reply = android.os.Parcel.obtain();
+                com.example.rememberme.alipay_server.PayInfo _result;
+                try {
+                    _data.writeInterfaceToken(DESCRIPTOR);
+                    if ((i != null)) {
+                        _data.writeInt(1);
+                        i.writeToParcel(_data, 0);
+                    } else {
+                        _data.writeInt(0);
+                    }
+                    mRemote.transact(Stub.TRANSACTION_transact, _data, _reply, 0);
+                    _reply.readException();
+                    if ((0 != _reply.readInt())) {
+                        _result = com.example.rememberme.alipay_server.PayInfo.CREATOR.createFromParcel(_reply);
+                    } else {
+                        _result = null;
+                    }
+                } finally {
+                    _reply.recycle();
+                    _data.recycle();
+                }
+                return _result;
+            }
+        }
+
+        //声明指定ID，便于底层Binder处理时事件区分
+        static final int TRANSACTION_transact = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+    }
+
+    public com.example.rememberme.alipay_server.PayInfo transact(com.example.rememberme.alipay_server.PayInfo i) throws android.os.RemoteException;
+}
+</code></pre><p>下面我们来集中对其进行解释并说明调用流程：</p>
+<ol>
+<li>首先之前分析过，在AliService中的onBind方法中返回一个AliPay对象，其继承了IAlipayInterface.Stub对象，实现具体的支付方法，两者都在上层服务端中实现，最后以IBinder形式返回给了系统。（此时Alipay是抽象类IAlipayInterface.Stub的具体实现）</li>
+<li>Stub构造函数中调用attachInterface将Alipay实现与DESCRIPTOR实现绑定，便于查询方法queryLocalInterface</li>
+<li>asInterface方法接收了一个IBinder的接口对象，这个对象怎么来的呢？实际上是底层的Binder驱动提供的，在onBind方法中返回的抽象类Stub实例Alipay（以IBinder形式传递）实际上首先扔给了驱动，binder驱动进行了对其包装改变（因为binder驱动也在一个进程中，onBind返回的过程由于首先给binder驱动，所以也属于进程间对象的传递，所以binder驱动肯定会对Alipay进行包装和改变），binder驱动完成了改变之后，又交给了客户端的进程，所以客户端进程中的onServiceConnected才可以拿到一个IBinder的对象，并执行后续的asInterface方法。以上就解释了asInterface方法的参数IBinder obj的由来，它并不是直接的Alipay(服务端的onBind方法所返回的IBinder)。</li>
+<li>asInterface是在客户端中调用的，在onServiceConnected中间接实现。首先调用queryLocalInterface进行本地查询。此时因为是跨进程，直接通过IAlipayInterface.Stub.Proxy(obj)新建实例返回</li>
+<li>代理对象Proxy内部有一个mRemote的IBinder对象，所以这个对象也是可以跨进程的。在这个代理方法中，将binder驱动传递给客户端进程的IBinder赋值给了Proxy代理类的私有变量mRemote，而Proxy是Stub的内部类，这里千万不要被两个类在同一个文件中给弄迷糊了，这两个类在实际执行的时候是分属不同的进程空间中的。Proxy这个内部类实现了AIDL接口，所以其对象也是可以供客户端进程使用的AIDL接口对象。</li>
+<li>这样的话，就通过服务端的Alipay（源自AIDL接口的内部类Stub）、客户端的asInterface得到AIDL接口对象(基于代理)实现了跨进程AIDL接口的使用，进行数据交互。 </li>
+<li>抽象类Stub内部的静态代理类Proxy，其方法transact是客户端的直接实现。这里需要注意transact和onTransact并不在一个进程中运行，注释中有说明。transact调用后，对数据PayInfo进行相应的Parcel封装，便于进程间传递，之后调用代理对象mRemote的transact方法进入底层binder驱动，此时客户端处于阻塞等待状态。</li>
+<li>binder驱动得到请求后，将封装的数据传递到抽象类Stub的onTransact方法中，由于其Stub继承了Binder类（底层驱动支持）。onTransact方法中对Parcel数据进行解析，得到PayInfo数据后，调用其直接实现类this.transact(_arg0)实现服务端实现的具体逻辑。处理完成具体支付逻辑后，返回的支付结果也按照同样的相反的流程返回到了客户端。</li>
+</ol>
+<p>通过上面的解释，基本就说通了adil接口在binder跨进程通信中的作用。其实aidl语言约束了开发者使用binder进行跨进程通信的相关接口文件声明，而开发者根本不需要知道其内部复杂的工作机制，只需要根据指定的规范进行接口声明及aidl文件实现即可，大大提高了不同进程间通信的开发工作效率。</p>
+<h3 id="相关总结"><a href="#相关总结" class="headerlink" title="相关总结"></a>相关总结</h3><h4 id="关于aidl的总结"><a href="#关于aidl的总结" class="headerlink" title="关于aidl的总结"></a>关于aidl的总结</h4><ol>
+<li>aidl的基于底层Binder跨进程通信基础上实现的，例如Binder类和IBinder接口</li>
+<li>aidl文件仅仅是一个壳，as会根据其编译生成中间产物，这个中间产物才是最终需要用的文件</li>
+<li>aidl可以传递各种数据，包括自定义JavaBean，但是必须实现其parcelable接口，在aidl接口中还要import进入</li>
+<li>aidl对包名的要求极其严格，其约束客户端和服务端接口全称必须完全一致</li>
+<li>aidl借助底层Binder跨进层通信，向上层提供Binder，IBinder以及IItnerface等类和接口，实现简单而无需了解内部工作机制，极大提高开发效率</li>
+</ol>
+<h4 id="安卓中IPC通信介绍"><a href="#安卓中IPC通信介绍" class="headerlink" title="安卓中IPC通信介绍"></a>安卓中IPC通信介绍</h4><ol>
+<li>Bundle：简单易用，只能传输Bundle支持的数据类型，四大组件的进程间通信</li>
+<li>文件共享：简单易用，不适合高并发场景，并且无法做到进程间的即时通讯 无并发访问情形，交换简单的数据实时性不高的场景</li>
+<li>AIDL：功能强大，支持一对多并发通信，支持实时通信，使用稍复杂，需要处理好线程同步，一对多通信且RPC需要</li>
+<li>Messenger：功能一般，支持一对多串行通信，支持实时通信 不能很好的处理高并发情形，不支持RPC，数据通过Message进行传输，因此只能传输Bundle支持的数据类型 低并发的一对多即时通讯，无RPC需要，或者无需返回结果的RPC需求</li>
+<li>ContentProvider 在数据访问功能很强大，支持一对多并发数据共享，可通过call方法扩展其他操作 可以理解为受约束的AIDL，主要提供数据的CRUD操作 一对多的进程间的数据共享</li>
+<li>Socket：功能强大，可以通过网络传输字节流，并支持一对多并发实时通信 实现细节稍微有点繁琐，不支持直接的RPC、网络数据交换 </li>
+</ol>
+<h4 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h4><p>本文集中分析了AIDL的实现，AIDL文件接口的声明是方便as编译器生成中间文件，调用底层binder实现好的Binder，IBinder以及IInterface等，其最重要的就是抽象类Stub的asInterface方法和Stub.proxy代理类的实现。分析完AIDl的运行过程，我们很清晰的得出binder在此通信过程所占有的地位。</p>
+<ol>
+<li>首先在数据传递上，跨进程数据传递要求数据必要可以序列化和反序列化，自定义数据类型必须实现Parcelable接口。数据在上层客户端传递到底层binder，需要进行一次封装；底层传给上层服务端再解封使用，处理结果回传到底层继续封装，到达客户端在一次解封。</li>
+<li>AIDl效率很高，可以传递自定义数据类型，可以处理多并发访问请求，需要客户端和服务约定同一套接口服务。</li>
+<li>AIDL基于底层Binder底层实现，实现多并发同步操作，多种数据支持；Message消息则是AIDL的进一步封装，单线程，异步操作，传递数据有限；Intent意图是Binder的最高封装形式，使用Bundle数据传输</li>
+</ol>
+<p>借助于底层binder机制的实现，以及系统为上层应用提供了Binder，IBinder等类和接口，加上AIDL语言的支持，上层应用将很容易的实现应用之间的跨进程通信。此篇仅仅是binder的开篇引入，后续会从底层分析binder的实现。</p>
+<p><strong><em>由上总结，作为将来成为大佬级人物的你，还有什么理由不学习一下Binder跨进程通信机制呢？</em></strong></p>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://blog.csdn.net/ls5718/article/details/51854106" target="_blank" rel="noopener">参考链接</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/AIDL/" rel="tag"># AIDL</a>
+          
+            <a href="/fuckingcode/tags/Binder/" rel="tag"># Binder</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/27/Android源码编译之make流程分析/" rel="next" title="Android源码编译之make流程分析">
+                <i class="fa fa-chevron-left"></i> Android源码编译之make流程分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/07/16/Binder系统分析之Native层、framework层使用/" rel="prev" title="Binder系统分析之Native层、framework层使用">
+                Binder系统分析之Native层、framework层使用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#AIDL"><span class="nav-number">1.</span> <span class="nav-text">AIDL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#案例描述"><span class="nav-number">2.</span> <span class="nav-text">案例描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Server端实现"><span class="nav-number">3.</span> <span class="nav-text">Server端实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#接口声明"><span class="nav-number">3.1.</span> <span class="nav-text">接口声明</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#支付数据PayInfo"><span class="nav-number">3.1.1.</span> <span class="nav-text">支付数据PayInfo</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PayInfo-aidl"><span class="nav-number">3.1.2.</span> <span class="nav-text">PayInfo.aidl</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#IAliayInterface"><span class="nav-number">3.1.3.</span> <span class="nav-text">IAliayInterface</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#IAlipayInterface-java-的生成"><span class="nav-number">3.1.4.</span> <span class="nav-text">IAlipayInterface.java 的生成</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AlipayService实现"><span class="nav-number">3.2.</span> <span class="nav-text">AlipayService实现</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#MainActivity实现"><span class="nav-number">3.2.1.</span> <span class="nav-text">MainActivity实现</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Client实现"><span class="nav-number">4.</span> <span class="nav-text">Client实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#接口文件"><span class="nav-number">4.1.</span> <span class="nav-text">接口文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#MainActivity实现-1"><span class="nav-number">4.2.</span> <span class="nav-text">MainActivity实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#运行结果"><span class="nav-number">4.3.</span> <span class="nav-text">运行结果</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#服务端-gt-客户端"><span class="nav-number">4.3.1.</span> <span class="nav-text">服务端-&gt;客户端</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#只客户端"><span class="nav-number">4.3.2.</span> <span class="nav-text">只客户端</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#小结现象"><span class="nav-number">4.3.3.</span> <span class="nav-text">小结现象</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AIDL中间文件分析"><span class="nav-number">5.</span> <span class="nav-text">AIDL中间文件分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#类Binder和接口IBinder"><span class="nav-number">5.1.</span> <span class="nav-text">类Binder和接口IBinder</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中间文件（IAlipayInterface-java）"><span class="nav-number">5.2.</span> <span class="nav-text">中间文件（IAlipayInterface.java）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#相关总结"><span class="nav-number">6.</span> <span class="nav-text">相关总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#关于aidl的总结"><span class="nav-number">6.1.</span> <span class="nav-text">关于aidl的总结</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#安卓中IPC通信介绍"><span class="nav-number">6.2.</span> <span class="nav-text">安卓中IPC通信介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结束语"><span class="nav-number">6.3.</span> <span class="nav-text">结束语</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考链接"><span class="nav-number">6.4.</span> <span class="nav-text">参考链接</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

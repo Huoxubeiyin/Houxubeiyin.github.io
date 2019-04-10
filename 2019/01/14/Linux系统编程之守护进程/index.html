@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Daemon">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="本章节介绍Linux系统中特殊的进程-守护进程（Daemon），其类似于安卓中后台服务的存在，生存周期足够长，能够长期运行于后台，周期的执行某些任务或事件。其次，在介绍守护进程模型之前，我们还需要了解进程间几个重要的概念，例如控制终端、进程组和会话等。">
+<meta name="keywords" content="Daemon">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程之守护进程">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/14/Linux系统编程之守护进程/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="本章节介绍Linux系统中特殊的进程-守护进程（Daemon），其类似于安卓中后台服务的存在，生存周期足够长，能够长期运行于后台，周期的执行某些任务或事件。其次，在介绍守护进程模型之前，我们还需要了解进程间几个重要的概念，例如控制终端、进程组和会话等。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/14/Linux系统编程之守护进程/终端设备模块.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/14/Linux系统编程之守护进程/网络终端.png">
+<meta property="og:updated_time" content="2019-01-14T03:53:10.836Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux系统编程之守护进程">
+<meta name="twitter:description" content="本章节介绍Linux系统中特殊的进程-守护进程（Daemon），其类似于安卓中后台服务的存在，生存周期足够长，能够长期运行于后台，周期的执行某些任务或事件。其次，在介绍守护进程模型之前，我们还需要了解进程间几个重要的概念，例如控制终端、进程组和会话等。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2019/01/14/Linux系统编程之守护进程/终端设备模块.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/14/Linux系统编程之守护进程/">
+
+
+
+
+
+  <title>Linux系统编程之守护进程 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/14/Linux系统编程之守护进程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux系统编程之守护进程</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-14T09:20:40+08:00">
+                2019-01-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2019/01/14/Linux系统编程之守护进程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2019/01/14/Linux系统编程之守护进程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>本章节介绍Linux系统中特殊的进程-守护进程（Daemon），其类似于安卓中后台服务的存在，生存周期足够长，能够长期运行于后台，周期的执行某些任务或事件。其次，在介绍守护进程模型之前，我们还需要了解进程间几个重要的概念，例如控制终端、进程组和会话等。</strong></p>
+<a id="more"></a>
+<h3 id="守护进程"><a href="#守护进程" class="headerlink" title="守护进程"></a>守护进程</h3><p>Daemon(精灵)进程,是Linux中的后台服务进程,生存期较长的进程，通常独立于控制终端并且周期性地执行某种任务或等待处理某些发生的事件。</p>
+<p>它不需要用户输入就能运行而且提供某种服务，不是对整个系统就是对某个用户程序提供服务。Linux系统的大多数服务器就是通过守护进程实现的。常见的守护进程包括系统日志进程syslogd、 web服务器httpd、邮件服务器sendmail和数据库服务器mysqld等。</p>
+<p>守护进程一般在系统启动时开始运行，除非强行终止，否则直到系统关机都保持运行。守护进程经常以超级用户（root）权限运行，因为它们要使用特殊的端口（1-1024）或访问某些特殊的资源。</p>
+<p>守护进程的父进程是init进程，因为它真正的父进程在fork出子进程后就先于子进程exit退出了，所以它是一个由init继承的孤儿进程。守护进程是非交互式程序，没有控制终端，所以任何输出，无论是向标准输出设备stdout还是标准出错设备stderr的输出都需要特殊处理。</p>
+<p>守护进程的名称通常以d结尾，比如sshd、xinetd、crond等。</p>
+<p>对于守护进程的创建过程，需要了解进程中几个重要概念，控制终端、进程组和会话。</p>
+<h4 id="控制终端"><a href="#控制终端" class="headerlink" title="控制终端"></a>控制终端</h4><p>在UNIX系统中，用户通过终端登录系统后得到一个Shell进程，这个终端成为Shell进程的控制终端(Controlling Terminal)。</p>
+<p>控制终端是保存在PCB中的信息，而我们知道fork会复制PCB中的信息，因此由Shell进程启动的其它进程的控制终端也是这个终端。</p>
+<p>默认情况下(没有重定向)，每个进程的标准输入、标准输出和标准错误输出都指向控制终端，进程从标准输入读也就是读用户的键盘输入，进程往标准输出或标准错误输 出写也就是输出到显示器上。</p>
+<p>文件与I/O中讲过，每个进程都可以通过一个特殊的设备文件/dev/tty访问它的控制终端。事实上每个终端设备都对应一个不同的设备文件，/dev/tty提供了一个通用的接口，一个进程要访问它的控制终端既可以通过/dev/tty也可以通过该终端设备所对应的设备文件来访问。ttyname函数可以由文件描述符查出对应的文件名，该文件描述符必须指向一个终端设备而不能是任意文件。</p>
+<h5 id="终端数据执行流程"><a href="#终端数据执行流程" class="headerlink" title="终端数据执行流程"></a>终端数据执行流程</h5><p>数据流在终端中执行流程如下图：</p>
+<img src="/fuckingcode/2019/01/14/Linux系统编程之守护进程/终端设备模块.png" class="终端设备模块">
+<p>硬件驱动程序负责读写实际的硬件设备，比如从键盘读入字符和把字符输出到显示器， 线路规程像一个过滤器，对于某些特殊字符并不是让它直接通过，而是做特殊处理，比如在 键盘上按下Ctrl-Z，对应的字符并不会被用户程序的read读到，而是被线路规程截获，解释成SIGTSTP信号发给前台进程，通常会使该进程停止。线路规程应该过滤哪些字符和做哪些<br>特殊处理是可以配置的。</p>
+<h5 id="网络终端"><a href="#网络终端" class="headerlink" title="网络终端"></a>网络终端</h5><p>虚拟终端或串口终端的数目是有限的，虚拟终端(字符控制终端)一般就是/dev/tty1 ∼ /dev/tty6六个，串口终端的数目也不超过串口的数目。然而网络终端或图形终端窗口的数目却是不受限制的，这是通过伪终端(Pseudo TTY)实现的。一套伪终端由一个主设备(PTY Master)和一个从设备(PTY Slave)组成。主设备在概念上相当于键盘和显示器，只不过它不是真正的硬件而是一个内核模块，操作它的也不是用户而是另外一个进程。从设备和上面介绍的/dev/tty1这样的终端设备模块类似，只不过它的底层驱动程序不是访问硬件而是访问主设备。网络终端或图形终端窗口的Shell进程以及它启动的其它进程都会认为自己的控制终端是伪终端从设备，例如/dev/pts/0、/dev/pts/1等。下面以telnet为例说明网络登录和使用伪终端的过程。</p>
+<p>如果telnet客户端和服务器之间的网络延迟较大，我们会观察到按下一个键之后要过几秒钟才能回显到屏幕上。这说明我们每按一个键telnet客户端都会立刻把该字符发送给服务器，然后这个字符经过伪终端主设备和从设备之后被Shell进程读取，同时回显到伪终端从设备，回显的字符再经过伪终端主设备、telnetd服务器和网络发回给telnet客户端，显示给用户看。也许你会觉得吃惊，但真的是这样:每按一个键都要在网络上走个来回!</p>
+<p>其网络终端中数据流导向如下图所示：</p>
+<img src="/fuckingcode/2019/01/14/Linux系统编程之守护进程/网络终端.png" class="网络终端">
+<h4 id="进程组"><a href="#进程组" class="headerlink" title="进程组"></a>进程组</h4><p>进程组： 一个或多个进程的集合,进程组ID是一个正整数。</p>
+<h5 id="获取进程组id"><a href="#获取进程组id" class="headerlink" title="获取进程组id"></a>获取进程组id</h5><p>用来获得当前进程进程组ID的函数</p>
+<pre><code>pid_t getpgid(pid_t pid)
+pid_t getpgrp(void)
+</code></pre><h5 id="获取进程组实例"><a href="#获取进程组实例" class="headerlink" title="获取进程组实例"></a>获取进程组实例</h5><p>获取父子进程的进程组</p>
+<pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+int main(void){
+
+    pid_t pid;
+    if((pid = fork()) &lt; 0){
+        perror(&quot;fork&quot;);
+        exit(1);
+    }else if(pid == 0){
+
+        printf(&quot;child process PID is %d\n&quot;, getpid());
+        printf(&quot;Group ID is %d\n&quot;, getpgrp());
+        printf(&quot;Group ID is %d\n&quot;, getpgid(0));
+        printf(&quot;Group ID is %d\n&quot;, getpgid(getpid()));
+        exit(0);
+
+    }
+
+    sleep(3);
+    printf(&quot;parent process PID is %d\n&quot;,getpid());
+    printf(&quot;Group ID is %d\n&quot;, getpgrp());
+
+    return 0;
+}
+</code></pre><p>注意：</p>
+<ol>
+<li>组长进程标识:其进程组ID == 其进程ID</li>
+<li>组长进程可以创建一个进程组，创建该进程组中的进程，然后终止,只要进程组中有一个进程存在，进程组就存在，与组长进程是否终止无关</li>
+<li>进程组生存期:进程组创建到最后一个进程离开(终止或转移到另一个进程组)</li>
+<li>一个进程可以为自己或子进程设置进程组ID</li>
+</ol>
+<h5 id="创建或设置进程组"><a href="#创建或设置进程组" class="headerlink" title="创建或设置进程组"></a>创建或设置进程组</h5><p>setpgid()加入一个现有的进程组或创建一个新进程组,如改变父子进程为新的组</p>
+<pre><code>int setpgit(pid_t pid, pid_t pgid)
+如改变子进程为新的组，应在fork后，exec之前
+非root进程只能改变自己创建的子进程，或者有权限操作的进程
+</code></pre><h5 id="设置进程组实例"><a href="#设置进程组实例" class="headerlink" title="设置进程组实例"></a>设置进程组实例</h5><pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+int main(void){
+
+    pid_t pid;
+    if((pid = fork()) &lt; 0){
+        perror(&quot;fork&quot;);
+        exit(1);
+    }else if(pid == 0){
+
+        printf(&quot;child process PID is %d\n&quot;, getpid());
+        // 返回当前的组id
+        printf(&quot;Group ID is %d\n&quot;, getpgid(0));
+
+        sleep(5);
+        // 返回改变之后的组id
+        printf(&quot;Group ID of child is changed to %d\n&quot;, getpgid(0)); 
+        exit(0);
+    }
+
+    sleep(1);
+    printf(&quot;parent process PID is %d\n&quot;,getpid());
+    printf(&quot;Group ID is %d\n&quot;, getpgrp());
+
+    setpgid(pid, pid);
+    sleep(5);
+
+    printf(&quot;parent process PID is %d\n&quot;,getpid());
+    printf(&quot;parent of parent process PID is %d\n&quot;,getppid());
+    printf(&quot;Group ID of parent is %d\n&quot;, getpgid(0));
+
+    // 改变父进程的组id为父进程的父进程
+    setpgid(getpid(), getpgid());
+    printf(&quot;Group ID of parent is changed to %d\n&quot;, getpgid(0));
+
+    return 0;
+}
+</code></pre><h4 id="会话session"><a href="#会话session" class="headerlink" title="会话session"></a>会话session</h4><p>其实叫做会话期(session)，它包括了期间所有的进程组，一般一个会话期开始于用户login，一般login的是shell终端，所以shell终端又是此次会话期的首进程，会话一般结束于logout。对于非进程组长，它可以调用setsid()创建一个新的会话。</p>
+<pre><code>pid_t setsid(void)
+</code></pre><p>注意：</p>
+<ol>
+<li>调用进程不能是进程组组长,该进程变成新会话首进程(session header) </li>
+<li>该进程成为一个新进程组的组长进程。 </li>
+<li>需有root权限(ubuntu不需要) </li>
+<li>新会话丢弃原有的控制终端,该会话没有控制终端 </li>
+<li>该调用进程是组长进程，则出错返回 </li>
+<li>建立新会话时，先调用 fork, 父进程终止，子进程调用</li>
+</ol>
+<p>获取会话id</p>
+<pre><code>pid_t getsid(pid_t pid)
+</code></pre><p>pid 为 0 表示察看当前进程session ID</p>
+<p>ps ajx命令查看系统中的进程。</p>
+<pre><code>参数a表示不仅列当前用户的进程，也列出所有其他用户的进程，
+参数x表示不仅列有控制终端的进程，也列出所有无控制终端的进程，
+参数j表示 列出与作业控制相关的信息。
+</code></pre><p>组长进程不能成为新会话首进程，新会话首进程必定会成为组长进程。</p>
+<h5 id="会话实例"><a href="#会话实例" class="headerlink" title="会话实例"></a>会话实例</h5><pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+int main(void){
+
+    pid_t pid;
+    if((pid = fork()) &lt; 0){
+        perror(&quot;fork&quot;);
+        exit(1);
+    }else if(pid == 0){
+
+        printf(&quot;child process PID is %d\n&quot;, getpid());
+        printf(&quot;Group ID is %d\n&quot;, getpgid(0));
+        printf(&quot;Session ID of child is %d\n&quot;, getsgid(0));
+
+        sleep(10);
+        // 子进程非组长进程，故其成为新会话首进程，且为组长进程。
+        // 该进程组id极为会话进程。
+        setsid();
+
+        printf(&quot;Changed: \n&quot;);
+        printf(&quot;parent process PID is %d\n&quot;,getpid());
+        printf(&quot;Group ID is %d\n&quot;, getpgrp());
+
+        printf(&quot;Session ID of child is %d\n&quot;,getsid(0));
+        sleep(20);
+
+        exit(0);
+    }
+    return 0;
+}
+</code></pre><h4 id="守护进程模型"><a href="#守护进程模型" class="headerlink" title="守护进程模型"></a>守护进程模型</h4><p>守护进程的创建有一定的规律，如下总结：</p>
+<ol>
+<li><p>创建子进程，父进程退出<br> 任务工作于子进程中，形式上脱离控制终端</p>
+</li>
+<li><p>子进程创建新会话，独立出来<br> setsid()</p>
+</li>
+<li><p>改变当前工作目录为根目录（也可以其他路径），防止占用可卸载的文件系统<br> chdir()</p>
+</li>
+<li><p>重设文件权限掩码值，防止继承的文件创建屏蔽字拒绝某些权限，增减守护进程的灵活性<br> umask()</p>
+</li>
+<li><p>关闭文件描述符，减少系统资源浪费<br> 由于子进程继承父进程的文件描述符，关闭他们</p>
+</li>
+<li><p>开始执行守护进程的核心工作<br> while()死循环处理</p>
+</li>
+<li><p>守护进程退出处理（非必要）<br> 释放必要的资源</p>
+</li>
+</ol>
+<h4 id="守护进程代码模型"><a href="#守护进程代码模型" class="headerlink" title="守护进程代码模型"></a>守护进程代码模型</h4><p>通过以上模型介绍，我们可以代码实现Daemon守护进程的模型。</p>
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+
+/*
+Daemon 精灵 守护进程编程实现步骤
+*/
+void daemonize(void){
+    pid_t pid;
+    //1. 创建子进程，父进程退出
+    if((pid = fork()) &lt; 0){
+        perror(&quot;fork error!&quot;);
+        exit(1);
+    }
+    else if(pid !=0){
+        exit(0);
+    }
+    // 子进程，创建新会话，独立终端，父进程成为init
+    setsid();
+    // 更改当期那路径为根路径，或者其他路径，避免占用可卸载文件系统
+    if(chdir(&quot;/&quot;) &lt; 0){
+        perror(&quot;chdir error!&quot;);
+        exit(1);
+    }
+    // 设置umask，防止继承文件系统创建屏蔽字拒绝某些权限
+    umask(0);
+    // 关闭文件描述符，较少系统资源浪费
+    close(0);
+    open(&quot;/dev/null&quot;, O_RDWR);
+    dup2(0,1);
+    dup2(0,2);
+
+}
+
+int main(void){
+
+    daemonize();
+    while(1){
+        /* do something here!!!*/
+
+    }
+}
+</code></pre><p>运行这个程序，它变成一个守护进程，不再和当前终端关联。用ps命令看不到，必须运行带x参数的ps命令才能看到。</p>
+<p>另外还可以看到，用户关闭终端窗口或注销也不会影响守护进程的运行。</p>
+<h4 id="守护进程参考实例"><a href="#守护进程参考实例" class="headerlink" title="守护进程参考实例"></a>守护进程参考实例</h4><p>创建一个守护进程，定时的记录时间到文件 /tmp/daemon.log 中。</p>
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;time.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;fcntl.h&gt;  
+#include &lt;string.h&gt;
+
+
+#define FILEPATH &quot;/tmp/daemon.log&quot;
+#define NEWLINE &quot;\n&quot;
+
+/*
+Daemon 精灵 守护进程编程实现步骤
+*/
+void daemonize(void){
+
+    pid_t pid;
+    //1. 创建子进程，父进程退出
+    if((pid = fork()) &lt; 0){
+        perror(&quot;fork error!&quot;);
+        exit(1);
+    }else if(pid !=0){
+        exit(0);
+    }
+
+    // 子进程，创建新会话，独立终端，父进程成为init
+    setsid();
+
+    // 更改当期那路径为根路径，或者其他路径，避免占用可卸载文件系统
+    if(chdir(&quot;/&quot;) &lt; 0){
+        perror(&quot;chdir error!&quot;);
+        exit(1);
+    }
+
+    // 设置umask，防止继承文件系统创建屏蔽字拒绝某些权限
+    umask(0);
+
+    // 关闭文件描述符，较少系统资源浪费
+    close(0);
+    open(&quot;/dev/null&quot;, O_RDWR);
+    dup2(0,1);
+    dup2(0,2);
+
+}
+
+int testFile(){
+    return access(FILEPATH,F_OK);
+}
+
+int createFile(){
+    int fd;
+    if((fd = open(FILEPATH, O_CREAT, 0644)) &lt; 0){
+        perror(&quot;open file error!&quot;);
+        exit(1);
+    }
+    close(fd);
+    return 0;
+}
+
+int getTime(char *buf){
+
+    time_t t;
+
+    if(time(&amp;t) != -1)
+        return 0;
+    else 
+        retrun -1;
+}
+
+int saveTime2file(char *buf){
+    int fd;
+    if((fd = open(FILEPATH,O_RDWR | O_APPEND)) &gt; 0){
+        // strcat(buf,NEWLINE);
+        write(fd,buf,strlen(buf));
+        close(fd);
+        printf(&quot;write time to file %s\n&quot;,buf);
+    }
+}
+
+int main(void){
+
+    char buf[1024] = {0};
+
+    // 文件不存在，创建
+    if(testFile() == -1){
+        createFile();
+    }
+
+    daemonize();
+    while(1){
+        /* do something here!!!*/
+
+        // 每10s记录一次
+        sleep(10);
+
+        if(getTime(buf)==0){
+            saveTime2file(buf);
+            memset(buf,0,1024);
+        }
+    }
+
+}
+</code></pre><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本博文主要介绍了Linux下进程组、会话以及守护进程方面的内容，对于守护进程，其有一套约定俗成的编程模版，不必死记，只需要了解起工作原理，脱离终端，孤儿进程，新会话，长期运行等特性，其特殊性也就决定了他和其他进程的不同。在以后用到的时候，回过头来看一下模版，即可迅速的实现Daemon守护进程的。</p>
+<p><a href="https://blog.csdn.net/a511244213/article/details/79625801" target="_blank" rel="noopener">参考链接</a></p>
+<blockquote>
+<p>邢文鹏Linux教学资料</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/守护进程/" rel="tag"># 守护进程</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/10/Linux系统编程之信号后记/" rel="next" title="Linux系统编程之信号后记">
+                <i class="fa fa-chevron-left"></i> Linux系统编程之信号后记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/14/Linux系统编程之线程/" rel="prev" title="Linux系统编程之线程">
+                Linux系统编程之线程 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#守护进程"><span class="nav-number">1.</span> <span class="nav-text">守护进程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#控制终端"><span class="nav-number">1.1.</span> <span class="nav-text">控制终端</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#终端数据执行流程"><span class="nav-number">1.1.1.</span> <span class="nav-text">终端数据执行流程</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#网络终端"><span class="nav-number">1.1.2.</span> <span class="nav-text">网络终端</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程组"><span class="nav-number">1.2.</span> <span class="nav-text">进程组</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#获取进程组id"><span class="nav-number">1.2.1.</span> <span class="nav-text">获取进程组id</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#获取进程组实例"><span class="nav-number">1.2.2.</span> <span class="nav-text">获取进程组实例</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#创建或设置进程组"><span class="nav-number">1.2.3.</span> <span class="nav-text">创建或设置进程组</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#设置进程组实例"><span class="nav-number">1.2.4.</span> <span class="nav-text">设置进程组实例</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#会话session"><span class="nav-number">1.3.</span> <span class="nav-text">会话session</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#会话实例"><span class="nav-number">1.3.1.</span> <span class="nav-text">会话实例</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#守护进程模型"><span class="nav-number">1.4.</span> <span class="nav-text">守护进程模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#守护进程代码模型"><span class="nav-number">1.5.</span> <span class="nav-text">守护进程代码模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#守护进程参考实例"><span class="nav-number">1.6.</span> <span class="nav-text">守护进程参考实例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

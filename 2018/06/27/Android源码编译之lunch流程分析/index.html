@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="源码编译,Makefile,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="通过之前介绍的source导入编译源码的相关配置，下面就进入了lunch操作。用户通过source build/envsetup.sh命令后，系统初始化相关变量环境工作，脚本提供一个lunch函数，让用户选择自己想要编译的版本分支，下面我们就来具体分析一下。">
+<meta name="keywords" content="源码编译,Makefile">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android源码编译之lunch流程分析">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="通过之前介绍的source导入编译源码的相关配置，下面就进入了lunch操作。用户通过source build/envsetup.sh命令后，系统初始化相关变量环境工作，脚本提供一个lunch函数，让用户选择自己想要编译的版本分支，下面我们就来具体分析一下。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-07-16T01:37:18.575Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android源码编译之lunch流程分析">
+<meta name="twitter:description" content="通过之前介绍的source导入编译源码的相关配置，下面就进入了lunch操作。用户通过source build/envsetup.sh命令后，系统初始化相关变量环境工作，脚本提供一个lunch函数，让用户选择自己想要编译的版本分支，下面我们就来具体分析一下。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/">
+
+
+
+
+
+  <title>Android源码编译之lunch流程分析 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android源码编译之lunch流程分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-27T15:45:30+08:00">
+                2018-06-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Makefile/" itemprop="url" rel="index">
+                    <span itemprop="name">Makefile</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Makefile/源码编译/" itemprop="url" rel="index">
+                    <span itemprop="name">源码编译</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>通过之前介绍的source导入编译源码的相关配置，下面就进入了lunch操作。用户通过source build/envsetup.sh命令后，系统初始化相关变量环境工作，脚本提供一个lunch函数，让用户选择自己想要编译的版本分支，下面我们就来具体分析一下。</strong></p>
+<a id="more"></a>
+<h3 id="lunch选择合适的编译版本"><a href="#lunch选择合适的编译版本" class="headerlink" title="lunch选择合适的编译版本"></a>lunch选择合适的编译版本</h3><p>在source流程之后，紧接着就是执行lunch操作，lunch操作执行的其实就是build/envsetup.sh脚本中的lunch函数，下面看看lunch函数如何执行。由于lunch代码众多，这里就不总的例举，下面分模块进行具体分析。</p>
+<h4 id="lunch参数处理"><a href="#lunch参数处理" class="headerlink" title="lunch参数处理"></a>lunch参数处理</h4><h5 id="读取lunch参数"><a href="#读取lunch参数" class="headerlink" title="读取lunch参数"></a>读取lunch参数</h5><p>获取用户编译目标到answer变量，如果用户没有输入参数，调用print_lunch_menu打印可选编译项，提示用户继续输入</p>
+<pre><code>local answer
+
+if [ &quot;$1&quot; ] ; then
+    # lunch后面直接带参数
+    answer=$1
+else
+    # lunch后面不带参数，则打印处所有的target product和variant菜单提供用户选择
+    print_lunch_menu
+    echo -n &quot;Which would you like? [aosp_arm-eng] &quot;
+    read answer
+fi
+</code></pre><p>打印函数print_lunch_menu如下：</p>
+<pre><code>#该函数负责打印已经定义的版本
+function print_lunch_menu()
+{
+    local uname=$(uname)
+    echo
+    echo &quot;You&apos;re building on&quot; $uname
+    echo
+    echo &quot;Lunch menu... pick a combo:&quot;
+
+    local i=1
+    local choice
+    for choice in ${LUNCH_MENU_CHOICES[@]}
+    do
+        echo &quot;     $i. $choice&quot;
+        # i自增1
+        i=$(($i+1))
+    done
+
+    echo
+}
+</code></pre><h5 id="根据参数，判断选择对应的编译版本"><a href="#根据参数，判断选择对应的编译版本" class="headerlink" title="根据参数，判断选择对应的编译版本"></a>根据参数，判断选择对应的编译版本</h5><pre><code>如果判断answer值是否为空，空即默认值缺省值aosp_arm-eng。之后对answer进行异常判断，因为用户输入多样性，需要适当的过滤。
+
+    local selection=
+
+    if [ -z &quot;$answer&quot; ]
+    then
+        # 如果用户在菜单中没有选择，直接回车，则为系统缺省的aosp_arm-eng
+        selection=aosp_arm-eng
+    # 不换行输出answer值，静默指定字符匹配开头数字两位内容
+    elif (echo -n $answer | grep -q -e &quot;^[0-9][0-9]*$&quot;)
+    then
+        # 如果answer是选择菜单的数字，则获取该数字对应的字符串
+        if [ $answer -le ${#LUNCH_MENU_CHOICES[@]} ]
+        then
+            selection=${LUNCH_MENU_CHOICES[$(($answer-1))]}
+        fi
+    # 如果 answer字符串匹配 *-*模式(*的开头不能为-)
+    elif (echo -n $answer | grep -q -e &quot;^[^\-][^\-]*-[^\-][^\-]*$&quot;)
+    then
+        selection=$answer
+    fi
+
+    if [ -z &quot;$selection&quot; ]
+    then
+        echo
+        echo &quot;Invalid lunch combo: $answer&quot;
+        return 1
+    fi
+</code></pre><p>筛选过程总结如下：</p>
+<ol>
+<li><p>输入为空，静默值aosp_arm-eng</p>
+</li>
+<li><p>输入数字，取出数字前两位</p>
+</li>
+<li><p>输入数字前两位小于编译版本可选项，选定指定数字的编译版本（可选项存在数组，下标为0，需要answer-1）</p>
+</li>
+<li><p>输入字符串，进行匹配过滤。字符串使用”-”连接，而且”-”连接的前后两个子串中都没有”-”，则认为是板型名称字符串，直接赋给selection</p>
+</li>
+</ol>
+<p>经过筛选，selection值还是空，直接报错。</p>
+<h5 id="分离selection中参数product"><a href="#分离selection中参数product" class="headerlink" title="分离selection中参数product"></a>分离selection中参数product</h5><p>将 product-variant模式中的product分离出来，类似从字符串”aosp_arm-eng”中取出”aosp_arm”，具体如下：</p>
+<pre><code>export TARGET_BUILD_APPS=
+
+# 将 product-variant模式中的product分离出来
+local product=$(echo -n $selection | sed -e &quot;s/-.*$//&quot;)
+
+# 检查product，调用关系 check_product()-&gt;get_build_var()-&gt;build/core/config.mk
+check_product $product
+if [ $? -ne 0 ]
+then
+    echo
+    echo &quot;** Don&apos;t have a product spec for: &apos;$product&apos;&quot;
+    echo &quot;** Do you have the right repo manifest?&quot;
+    product=
+fi
+</code></pre><p>代码具体流程如下：</p>
+<ol>
+<li><p>echo -n $selection | sed -e “s/-.*$//“ </p>
+<p> 不换行取出用户输入的selection，使用sed -e “s/-.<em>$//“过滤掉selection字符串中”-**</em>“的部分后，例如从”aosp_arm-eng”过滤”-eng”得到”aosp_arm”，赋值到product中</p>
+</li>
+</ol>
+<p>2.调用check_product，传入product赋值到TARGET_PRODUCT，之后流程如下：</p>
+<pre><code># 检查指定的TARGET_PRODUCT是否允许，默认的有sim和generic。如果不允许，则输出错误信息，允许则不显示
+function check_product()
+{
+    T=$(gettop)
+    if [ ! &quot;$T&quot; ]; then
+        echo &quot;Couldn&apos;t locate the top of the tree.  Try setting TOP.&quot; &gt;&amp;2
+        return
+    fi
+        TARGET_PRODUCT=$1 \
+        TARGET_BUILD_VARIANT= \
+        TARGET_BUILD_TYPE= \
+        TARGET_BUILD_APPS= \
+        get_build_var TARGET_DEVICE &gt; /dev/null
+    # hide successful answers, but allow the errors to show
+}        
+
+# 列出make脚本中某变量的值，当前为build/core/config.mk
+function get_build_var()
+{
+    T=$(gettop)
+    if [ ! &quot;$T&quot; ]; then
+        echo &quot;Couldn&apos;t locate the top of the tree.  Try setting TOP.&quot; &gt;&amp;2
+        return
+    fi
+    (\cd $T; CALLED_FROM_SETUP=true BUILD_SYSTEM=build/core \
+      command make --no-print-directory -f build/core/config.mk dumpvar-$1)
+}
+</code></pre><p> T=$(gettop)获取源码顶层目录，这里不做过多解释。下面是get_build_var中比较复杂的部分：</p>
+<pre><code>(\cd $T; CALLED_FROM_SETUP=true BUILD_SYSTEM=build/core \
+              command make --no-print-directory -f build/core/config.mk dumpvar-$1)
+</code></pre><ol>
+<li><p>首先进入源码根目录</p>
+</li>
+<li><p>设置两个静态变量 CALLED_FROM_SETUP=true BUILD_SYSTEM=build/core</p>
+</li>
+<li><p>shell环境中command命令执行make，指定文件build/core/config.mk</p>
+</li>
+<li><p>config.mk会include dumpvar.mk,这个文件中会提取我们传入的dumpvar-TARGET_DEVICE变量中的TARGET_DEVICE，打印TARGET_PRODUCT</p>
+</li>
+</ol>
+<p>总之，函数get_build_var实际上就是通过make命令在Android源代码工程根目录中执行build/core/config.mk文件，并且将make目标设置为dumpvar-$1，也就是dumpvar-TARGET_DEVICE。这里函数如果执行成功，便返回0</p>
+<p>文件build/core/config.mk的内容比较多，这里我们只关注与产品名称合法性检查相关的逻辑，这些逻辑也基本上涵盖了Android编译系统初始化的逻辑，下面具体分析。</p>
+<h4 id="依赖mk文件的导入分析"><a href="#依赖mk文件的导入分析" class="headerlink" title="依赖mk文件的导入分析"></a>依赖mk文件的导入分析</h4><h5 id="相关mk文件的导入"><a href="#相关mk文件的导入" class="headerlink" title="相关mk文件的导入"></a>相关mk文件的导入</h5><p>build/core/config.mk 中 include 了众多的mk文件，这里例举其中重要的部分：</p>
+<pre><code>...
+
+# Various mappings to avoid hard-coding paths all over the place
+include $(BUILD_SYSTEM)/pathmap.mk
+
+# ---------------------------------------------------------------
+# Define most of the global variables.  These are the ones that
+# are specific to the user&apos;s build configuration.
+include $(BUILD_SYSTEM)/envsetup.mk
+
+...
+
+include $(BUILD_SYSTEM)/dumpvar.mk
+</code></pre><p>其中比较重要的是中间的 envsetup.mk 这个文件</p>
+<h5 id="envsetup-mk-文件分析"><a href="#envsetup-mk-文件分析" class="headerlink" title="envsetup.mk 文件分析"></a>envsetup.mk 文件分析</h5><p>envsetup.mk 文件中逻辑众多，这里我们只关注重要的两个逻辑：AndroidProduct.mk和BoardCong.mk 文件的搜集工作。代码如下：</p>
+<pre><code>...
+
+# 搜集AndroidProduct.mk文件
+include $(BUILD_SYSTEM)/product_config.mk
+
+# Boards may be defined under $(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)
+# or under vendor/*/$(TARGET_DEVICE).  Search in both places, but
+# make sure only one exists.
+# Real boards should always be associated with an OEM vendor.
+# 搜集BoardConfig.mk文件
+board_config_mk := \
+    $(strip $(wildcard \
+        $(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)/BoardConfig.mk \
+        $(shell test -d device &amp;&amp; find device -maxdepth 4 -path &apos;*/$(TARGET_DEVICE)/BoardConfig.mk&apos;) \
+        $(shell test -d vendor &amp;&amp; find vendor -maxdepth 4 -path &apos;*/$(TARGET_DEVICE)/BoardConfig.mk&apos;) \
+    ))
+ifeq ($(board_config_mk),)
+  $(error No config file found for TARGET_DEVICE $(TARGET_DEVICE))
+endif
+ifneq ($(words $(board_config_mk)),1)
+  $(error Multiple board config files for TARGET_DEVICE $(TARGET_DEVICE): $(board_config_mk))
+endif
+include $(board_config_mk)
+ifeq ($(TARGET_ARCH),)
+  $(error TARGET_ARCH not defined by board config: $(board_config_mk))
+endif
+TARGET_DEVICE_DIR := $(patsubst %/,%,$(dir $(board_config_mk)))
+board_config_mk :=
+
+...
+</code></pre><h5 id="AndroidProducts-mk文件搜集及TARGET-DEVICE值的确定"><a href="#AndroidProducts-mk文件搜集及TARGET-DEVICE值的确定" class="headerlink" title="AndroidProducts.mk文件搜集及TARGET_DEVICE值的确定"></a>AndroidProducts.mk文件搜集及TARGET_DEVICE值的确定</h5><p>envsetup.mk 文件首先会 include product_config.mk文件，这个文件中设置了相关的变量，如下：</p>
+<pre><code># 步骤1
+ifneq ($(strip $(TARGET_BUILD_APPS)),)
+all_product_configs := $(call get-product-makefiles,\
+    $(SRC_TARGET_DIR)/product/AndroidProducts.mk)
+else
+all_product_configs := $(get-all-product-makefiles)
+endif
+
+# 步骤2
+current_product_makefile :=
+all_product_makefiles :=
+$(foreach f, $(all_product_configs),\
+    $(eval _cpm_words := $(subst :,$(space),$(f)))\
+    $(eval _cpm_word1 := $(word 1,$(_cpm_words)))\
+    $(eval _cpm_word2 := $(word 2,$(_cpm_words)))\
+    $(if $(_cpm_word2),\
+        $(eval all_product_makefiles += $(_cpm_word2))\
+        $(if $(filter $(TARGET_PRODUCT),$(_cpm_word1)),\
+            $(eval current_product_makefile += $(_cpm_word2)),),\
+        $(eval all_product_makefiles += $(f))\
+        $(if $(filter $(TARGET_PRODUCT),$(basename $(notdir $(f)))),\
+            $(eval current_product_makefile += $(f)),)))
+_cpm_words :=
+_cpm_word1 :=
+_cpm_word2 :=
+current_product_makefile := $(strip $(current_product_makefile))
+all_product_makefiles := $(strip $(all_product_makefiles))
+
+# 步骤3
+ifneq (,$(filter product-graph dump-products, $(MAKECMDGOALS)))
+$(call import-products, $(all_product_makefiles))
+else
+ifndef current_product_makefile
+$(error Can not locate config makefile for product &quot;$(TARGET_PRODUCT)&quot;)
+endif
+ifneq (1,$(words $(current_product_makefile)))
+$(error Product &quot;$(TARGET_PRODUCT)&quot; ambiguous: matches $(current_product_makefile))
+endif
+$(call import-products, $(current_product_makefile))
+endif  # Import all or just the current product makefile
+
+$(check-all-products)
+
+ifneq ($(filter dump-products, $(MAKECMDGOALS)),)
+$(dump-products)
+$(error done)
+endif
+
+# 步骤4
+INTERNAL_PRODUCT := $(call resolve-short-product-name, $(TARGET_PRODUCT))
+ifneq ($(current_product_makefile),$(INTERNAL_PRODUCT))
+$(error PRODUCT_NAME inconsistent in $(current_product_makefile) and $(INTERNAL_PRODUCT))
+endif
+current_product_makefile :=
+all_product_makefiles :=
+all_product_configs :=
+
+# 步骤5
+PRODUCT_BOOT_JARS := $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_BOOT_JARS))
+PRODUCT_SYSTEM_SERVER_JARS := $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SYSTEM_SERVER_JARS))
+
+TARGET_DEVICE := $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_DEVICE)
+</code></pre><ol>
+<li><p>检查环境变量TARGET_BUILD_APPS的值是否等于空。如果不等于空，那么就说明此次编译不是针对整个系统，因此只要将核心的产品相关的Makefile文件加载进来就行了，否则的话，就要将所有与产品相关的Makefile文件加载进来的。核心产品Makefile文件在$(SRC_TARGET_DIR)/product/AndroidProducts.mk文件中指定，也就是在build/target/product/AndroidProducts.mk文件，通过调用函数get-product-makefiles可以获得。所有与产品相关的Makefile文件可以通过另外一个函数get-all-product-makefiles获得。无论如何，最终获得的产品Makefie文件列表保存在变量all_product_configs中。</p>
+</li>
+<li><p>遍历变量all_product_configs所描述的产品Makefile列表，并且在这些Makefile文件中，找到名称与环境变量TARGET_PRODUCT的值相同的文件，保存在另外一个变量current_product_makefile中，作为需要为当前指定的产品所加载的Makefile文件列表。在这个过程当中，上一步找到的所有的产品Makefile文件也会保存在变量all_product_makefiles中。注意，环境变量TARGET_PRODUCT的值是在我们执行lunch命令的时候设置并且传递进来的。</p>
+</li>
+<li><p>如果指定的make目标等于product-graph或者dump-products，那么就将所有的产品相关的Makefile文件加载进来，否则的话，只加载与目标产品相关的Makefile文件。从前面的分析可以知道，此时的make目标为dumpvar-TARGET_DEVICE，因此接下来只会加载与目标产品，即$(TARGET_PRODUCT)，相关的Makefile文件，这是通过调用另外一个函数import-products实现的。</p>
+</li>
+<li><p>调用函数resolve-short-product-name解析环境变量TARGET_PRODUCT的值，将它变成一个Makefile文件路径。并且保存在变量INTERNAL_PRODUCT中。这里要求变量INTERNAL_PRODUCT和current_product_makefile的值相等，否则的话，就说明用户指定了一个非法的产品名称。</p>
+</li>
+<li><p>找到一个名称为PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_DEVICE的变量，并且将它的值保存另外一个变量TARGET_DEVICE中。变量PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_DEVICE是在加载产品Makefile文件的过程中定义的，用来描述当前指定的产品的名称</p>
+</li>
+</ol>
+<p>上述过程主要涉及到了get-all-product-makefiles、import-products和resolve-short-product-name三个关键函数，理解它们的执行过程对理解Android编译系统的初始化过程很有帮助，接下来我们分别分析它们的实现。</p>
+<h5 id="查找product相关文件的mk实现"><a href="#查找product相关文件的mk实现" class="headerlink" title="查找product相关文件的mk实现"></a>查找product相关文件的mk实现</h5><p>其主要方法集中在 build/core/product.mk 文件中，下面具体分析：</p>
+<ol>
+<li><p>get-all-product-makefiles的具体实现</p>
+<pre><code>define get-all-product-makefiles
+$(call get-product-makefiles,$(_find-android-products-files))
+endef
+</code></pre><p> 首先是调用函数_find-android-products-files来找到Android源代码目录中定义的所有AndroidProducts.mk文件，然后再调用函数get-product-makefiles获得在这里AndroidProducts.mk文件里面定义的产品Makefile文件。</p>
+</li>
+<li><p>_find-android-products-files的具体实现</p>
+<pre><code>define _find-android-products-files
+$(shell test -d device &amp;&amp; find device -maxdepth 6 -name AndroidProducts.mk) \
+  $(shell test -d vendor &amp;&amp; find vendor -maxdepth 6 -name AndroidProducts.mk) \
+  $(SRC_TARGET_DIR)/product/AndroidProducts.mk
+endef
+</code></pre><p> 从这里就可以看出，Android源代码目录中定义的所有AndroidProducts.mk文件位于device、vendor或者build/target/product目录或者相应的子目录（最深是6层）中。</p>
+</li>
+<li><p>get-product-makefiles的具体实现</p>
+<pre><code>define get-product-makefiles
+$(sort \
+  $(foreach f,$(1), \
+    $(eval PRODUCT_MAKEFILES :=) \
+    $(eval LOCAL_DIR := $(patsubst %/,%,$(dir $(f)))) \
+    $(eval include $(f)) \
+    $(PRODUCT_MAKEFILES) \
+   ) \
+  $(eval PRODUCT_MAKEFILES :=) \
+  $(eval LOCAL_DIR :=) \
+ )
+endef
+</code></pre><p> 这个函数实际上就是遍历参数$1所描述的AndroidProucts.mk文件列表，并且将定义在这些AndroidProucts.mk文件中的变量PRODUCT_MAKEFILES的值提取出来，形成一个列表返回给调用者。</p>
+<p> 例如：在build/target/product/AndroidProducts.mk文件中，变量PRODUCT_MAKEFILES的值如下所示：</p>
+<pre><code>ifneq ($(TARGET_BUILD_APPS),)
+PRODUCT_MAKEFILES := \
+    $(LOCAL_DIR)/aosp_arm.mk \
+    $(LOCAL_DIR)/full.mk \
+    ...
+    $(LOCAL_DIR)/aosp_mips64.mk \
+    $(LOCAL_DIR)/aosp_x86_64.mk
+else
+PRODUCT_MAKEFILES := \
+    $(LOCAL_DIR)/core.mk \
+    $(LOCAL_DIR)/generic.mk \
+    $(LOCAL_DIR)/generic_x86.mk \
+    ...
+endif
+</code></pre><p> 这里列出的每一个文件都对应于一个产品</p>
+</li>
+<li><p>import-products的具体实现</p>
+<pre><code>define import-products
+$(call import-nodes,PRODUCTS,$(1),$(_product_var_list))
+endef
+</code></pre><p> 它调用另外一个函数import-nodes来加载由参数$1所指定的产品Makefile文件，并且指定了另外两个参数PRODUCTS和$(_product_var_list)。其中，变量_product_var_list也是定义在文件build/core/product.mk中，它的值如下所示：</p>
+<pre><code>_product_var_list := \
+    PRODUCT_NAME \
+    PRODUCT_MODEL \
+    PRODUCT_LOCALES \
+    PRODUCT_AAPT_CONFIG \
+    PRODUCT_AAPT_PREF_CONFIG \
+    PRODUCT_AAPT_PREBUILT_DPI \
+    PRODUCT_PACKAGES \
+    PRODUCT_PACKAGES_DEBUG \
+    PRODUCT_PACKAGES_ENG \
+    PRODUCT_PACKAGES_TESTS \
+    PRODUCT_DEVICE \
+    ...
+</code></pre><p> 它描述的是在产品Makefile文件中定义在各种变量。import-nodes定义在文件build/core/node_fns.mk中，如下所示:</p>
+<pre><code>#
+# $(1): output list variable name, like &quot;PRODUCTS&quot; or &quot;DEVICES&quot;
+# $(2): list of makefiles representing nodes to import
+# $(3): list of node variable names
+#
+define import-nodes
+$(if \
+  $(foreach _in,$(2), \
+    $(eval _node_import_context := _nic.$(1).[[$(_in)]]) \
+    $(if $(_include_stack),$(eval $(error ASSERTION FAILED: _include_stack \
+                should be empty here: $(_include_stack))),) \
+    $(eval _include_stack := ) \
+    $(call _import-nodes-inner,$(_node_import_context),$(_in),$(3)) \
+    $(call move-var-list,$(_node_import_context).$(_in),$(1).$(_in),$(3)) \
+    $(eval _node_import_context :=) \
+    $(eval $(1) := $($(1)) $(_in)) \
+    $(if $(_include_stack),$(eval $(error ASSERTION FAILED: _include_stack \
+                should be empty here: $(_include_stack))),) \
+   ) \
+,)
+endef
+</code></pre><ol>
+<li><p>调用函数_import-nodes-inner将参数$2描述的每一个产品Makefile文件加载进来。</p>
+<ol start="2">
+<li><p>调用函数move-var-list将定义在前面所加载的产品Makefile文件里面的由参数$3指定的变量的值分别拷贝到另外一组独立的变量中。</p>
+</li>
+<li><p>将参数$2描述的每一个产品Makefile文件路径以空格分隔保存在参数$1所描述的变量中，也就是保存在变量PRODUCTS中。</p>
+</li>
+</ol>
+<p>上述第二件事情需要进一步解释一下。由于当前加载的每一个文件都会定义相同的变量，为了区分这些变量，我们需要在这些变量前面加一些前缀。例如，假设加载了build/target/product/full.mk这个产品Makefile文件，它里面定义了以下几个变量：</p>
+<p>PRODUCT_NAME := full<br>PRODUCT_DEVICE := generic<br>PRODUCT_BRAND := Android<br>PRODUCT_MODEL := Full Android on Emulator  </p>
+<p>当调用了函数move-var-list对它进行解析后，就会得到以下的新变量：</p>
+<p>PRODUCTS.build/target/product/full.mk.PRODUCT_NAME := full<br>PRODUCTS.build/target/product/full.mk.PRODUCT_DEVICE := generic<br>PRODUCTS.build/target/product/full.mk.PRODUCT_BRAND := Android<br>PRODUCTS.build/target/product/full.mk.PRODUCT_MODEL := Full Android on Emulator  </p>
+<p>正是由于调用了函数move-var-list，我们在build/core/product_config.mk文件中可以通过PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_DEVICE来设置变量TARGET_DEVICE的值，这样就确定了PRODUCT_DEVICE的值。</p>
+</li>
+</ol>
+</li>
+</ol>
+<h4 id="BoardConfig-mk文件的加载过程"><a href="#BoardConfig-mk文件的加载过程" class="headerlink" title="BoardConfig.mk文件的加载过程"></a>BoardConfig.mk文件的加载过程</h4><p>分析完AndroidProduct.mk文件的加载，回到build/core/config.mk文件中，接下来我们再看BoardConfig.mk文件的加载过程。</p>
+<h5 id="BoardConfig-mk文件加载"><a href="#BoardConfig-mk文件加载" class="headerlink" title="BoardConfig.mk文件加载"></a>BoardConfig.mk文件加载</h5><pre><code># Boards may be defined under $(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)
+# or under vendor/*/$(TARGET_DEVICE).  Search in both places, but
+# make sure only one exists.
+# Real boards should always be associated with an OEM vendor.
+# 搜集BoardConfig.mk文件
+board_config_mk := \
+    $(strip $(wildcard \
+        $(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)/BoardConfig.mk \
+        $(shell test -d device &amp;&amp; find device -maxdepth 4 -path &apos;*/$(TARGET_DEVICE)/BoardConfig.mk&apos;) \
+        $(shell test -d vendor &amp;&amp; find vendor -maxdepth 4 -path &apos;*/$(TARGET_DEVICE)/BoardConfig.mk&apos;) \
+    ))
+ifeq ($(board_config_mk),)
+  $(error No config file found for TARGET_DEVICE $(TARGET_DEVICE))
+endif
+ifneq ($(words $(board_config_mk)),1)
+  $(error Multiple board config files for TARGET_DEVICE $(TARGET_DEVICE): $(board_config_mk))
+endif
+include $(board_config_mk)
+ifeq ($(TARGET_ARCH),)
+  $(error TARGET_ARCH not defined by board config: $(board_config_mk))
+endif
+TARGET_DEVICE_DIR := $(patsubst %/,%,$(dir $(board_config_mk)))
+board_config_mk :=
+</code></pre><p>其中注释内容已经说的很明白了，board_config_mk 实现了查找BoardConfig.mk文件的具体方法。对应的文件的路径存在两个路径下：(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)和vendor/*/$(TARGET_DEVICE)。</p>
+<ol>
+<li><p>strip $(wildcard \</p>
+<pre><code>$(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)/BoardConfig.mk \
+$(***))
+</code></pre><p> wildcard 表示扩展通配符，将（***）内容匹配到$(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)/BoardConfig.mk形式中去</p>
+<p> strip 表示去除结果中的空字符串</p>
+</li>
+<li><p>shell test -d device &amp;&amp; find device -maxdepth 4 -path ‘*/$(TARGET_DEVICE)/BoardConfig.mk’</p>
+<p> shell脚本检查device是否为文件夹，之后查找其内部深度最大4级下,用户选定的编译版本（TARGET_DEVICE）目录下是否存在BoardConfig.mk文件。</p>
+</li>
+</ol>
+<p>BoardConfig.mk文件的位置主要就是由环境变量TARGET_DEVICE来确定，它是用来描述目标产品的硬件模块信息的，例如CPU体系结构。环境变量TARGET_DEVICE用来描述目标设备，它的值是在envsetup.mk文件加载的过程中确定的。一旦目标设备确定后，就可以在$(SRC_TARGET_DIR)/board/$(TARGET_DEVICE)、device/<em>/$(TARGET_DEVICE)和vendor/</em>/$(TARGET_DEVICE)目录中找到对应的BoradConfig.mk文件。注意，变量SRC_TARGET_DIR的值等于build/target。</p>
+<h4 id="小结依赖mk文件的导入"><a href="#小结依赖mk文件的导入" class="headerlink" title="小结依赖mk文件的导入"></a>小结依赖mk文件的导入</h4><ul>
+<li><p><strong>build/core/config.mk</strong> 通过 include 操作依赖众多相关mk文件，比较重要的有以下几个：</p>
+<pre><code>build/envsetup.mk
+build/dumpvar.mk
+</code></pre></li>
+<li><p>其中<strong>envsetup.mk</strong>包含了：</p>
+<pre><code>build/product_config.mk
+build/board_config.mk
+</code></pre></li>
+<li><p><strong>product_config.mk</strong> 中实现了product相关方法的实现，完成 AndroidProduct.mk 文件的查找和解析，确定了 TARGET_DECVICE 。其依赖的mk有：</p>
+<pre><code>build/node_fns.mk
+build/product.mk
+build/device.mk
+</code></pre></li>
+<li><p><strong>board_config.mk</strong> 中实现了 BoardConfig.mk 文件的查找，确定主板配置的相关编译信息。</p>
+</li>
+</ul>
+<h4 id="继续分析lunch参数的处理"><a href="#继续分析lunch参数的处理" class="headerlink" title="继续分析lunch参数的处理"></a>继续分析lunch参数的处理</h4><h5 id="分离selection中参数variant"><a href="#分离selection中参数variant" class="headerlink" title="分离selection中参数variant"></a>分离selection中参数variant</h5><p>接着上面从selection中分离参数product后，便执行分离variant参数的操作，流程如下：</p>
+<pre><code># 将 product-variant模式中的variant分离出来
+local variant=$(echo -n $selection | sed -e &quot;s/^[^\-]*-//&quot;)
+
+# 检查之，看看是否在 (user userdebug eng) 范围内
+check_variant $variant
+if [ $? -ne 0 ]
+then
+    echo
+    echo &quot;** Invalid variant: &apos;$variant&apos;&quot;
+    echo &quot;** Must be one of ${VARIANT_CHOICES[@]}&quot;
+    variant=
+fi
+
+if [ -z &quot;$product&quot; -o -z &quot;$variant&quot; ]
+then
+    echo
+    return 1
+fi
+</code></pre><p>步骤分析如下：</p>
+<ol>
+<li><p>echo -n $selection | sed -e “s/^[^-]*-//“</p>
+<p> 获取过滤字符串中最后一个不是以”-“结尾，且删除”-“之前字符串后剩下的字符串</p>
+</li>
+<li><p>riant $variant</p>
+<pre><code>function check_variant()
+{
+    for v in ${VARIANT_CHOICES[@]}
+    do
+        if [ &quot;$v&quot; = &quot;$1&quot; ]
+        then
+            return 0
+        fi
+    done
+    return 1
+}
+</code></pre><p> 检查获取的variant值是否在可选编译项中，在则返回0，否则返回1</p>
+</li>
+</ol>
+<h5 id="导出变量"><a href="#导出变量" class="headerlink" title="导出变量"></a>导出变量</h5><pre><code>export TARGET_PRODUCT=$product
+export TARGET_BUILD_VARIANT=$variant
+export TARGET_BUILD_TYPE=release
+
+echo
+</code></pre><p>代码执行到此处，导出三个系统全局变量TARGET_PRODUCT，TARGET_BUILD_VARIANT，TARGET_BUILD_TYPE</p>
+<h4 id="设置其他编译环境，打印配置信息"><a href="#设置其他编译环境，打印配置信息" class="headerlink" title="设置其他编译环境，打印配置信息"></a>设置其他编译环境，打印配置信息</h4><p>到这里，基本就完成了编译选项的信息采集，下面最后的工作，设置编译环境参数和打印配置信息</p>
+<h5 id="设置其他编译环境"><a href="#设置其他编译环境" class="headerlink" title="设置其他编译环境"></a>设置其他编译环境</h5><pre><code>set_stuff_for_environment
+printconfig
+</code></pre><p>set_stuff_for_environment 补充剩余环境参数</p>
+<pre><code># 设置android编译需要的环境变量
+function set_stuff_for_environment()
+{
+    settitle
+    set_java_home
+    setpaths
+    set_sequence_number
+    # MStar Android Patch Begin
+    set_ota
+    # MStar Android Patch End
+
+    export ANDROID_BUILD_TOP=$(gettop)
+    # With this environment variable new GCC can apply colors to warnings/errors
+    export GCC_COLORS=&apos;error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01&apos;
+    export ASAN_OPTIONS=detect_leaks=0
+}
+</code></pre><p>此函数继续补充编译中的一些其他变量。其中set_java_home会检查导出JAVA_HOME这个环境变量，这个环境变量就是JDK所在的路径；setpaths函数会给PATH环境变量补充编译Android需要的一些路径；set_ota则是本源码分支（MSTAR电视系统）配置ota升级文件的相关配置</p>
+<h5 id="打印配置信息"><a href="#打印配置信息" class="headerlink" title="打印配置信息"></a>打印配置信息</h5><p>调用 get_build_var函数，参数 report_config，来打印配置信息</p>
+<pre><code>function printconfig()
+{
+    T=$(gettop)
+    if [ ! &quot;$T&quot; ]; then
+        echo &quot;Couldn&apos;t locate the top of the tree.  Try setting TOP.&quot; &gt;&amp;2
+        return
+    fi
+    get_build_var report_config
+}
+</code></pre><p>至此，lunch流程就分析完毕了。</p>
+<h3 id="make正式编译系统"><a href="#make正式编译系统" class="headerlink" title="make正式编译系统"></a>make正式编译系统</h3><p>具体流程请待下节分析。</p>
+<hr>
+<h4 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h4><p>本内容针对 MASTR定制的安卓6.0电视系统，本人能力有限，在分析过程查找了相关的资料，比较有参考价值的在下面链接中提到。</p>
+<p><a href="Android编译系统环境初始化过程分析">参考博客</a></p>
+<blockquote>
+<p>老罗的Android之旅</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/源码编译/" rel="tag"># 源码编译</a>
+          
+            <a href="/fuckingcode/tags/Makefile/" rel="tag"># Makefile</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/25/Android源码编译之source初始化环境/" rel="next" title="Android源码编译之source初始化环境分析">
+                <i class="fa fa-chevron-left"></i> Android源码编译之source初始化环境分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/27/Android源码编译之make流程分析/" rel="prev" title="Android源码编译之make流程分析">
+                Android源码编译之make流程分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#lunch选择合适的编译版本"><span class="nav-number">1.</span> <span class="nav-text">lunch选择合适的编译版本</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#lunch参数处理"><span class="nav-number">1.1.</span> <span class="nav-text">lunch参数处理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#读取lunch参数"><span class="nav-number">1.1.1.</span> <span class="nav-text">读取lunch参数</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#根据参数，判断选择对应的编译版本"><span class="nav-number">1.1.2.</span> <span class="nav-text">根据参数，判断选择对应的编译版本</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分离selection中参数product"><span class="nav-number">1.1.3.</span> <span class="nav-text">分离selection中参数product</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#依赖mk文件的导入分析"><span class="nav-number">1.2.</span> <span class="nav-text">依赖mk文件的导入分析</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#相关mk文件的导入"><span class="nav-number">1.2.1.</span> <span class="nav-text">相关mk文件的导入</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#envsetup-mk-文件分析"><span class="nav-number">1.2.2.</span> <span class="nav-text">envsetup.mk 文件分析</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#AndroidProducts-mk文件搜集及TARGET-DEVICE值的确定"><span class="nav-number">1.2.3.</span> <span class="nav-text">AndroidProducts.mk文件搜集及TARGET_DEVICE值的确定</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#查找product相关文件的mk实现"><span class="nav-number">1.2.4.</span> <span class="nav-text">查找product相关文件的mk实现</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#BoardConfig-mk文件的加载过程"><span class="nav-number">1.3.</span> <span class="nav-text">BoardConfig.mk文件的加载过程</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#BoardConfig-mk文件加载"><span class="nav-number">1.3.1.</span> <span class="nav-text">BoardConfig.mk文件加载</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#小结依赖mk文件的导入"><span class="nav-number">1.4.</span> <span class="nav-text">小结依赖mk文件的导入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#继续分析lunch参数的处理"><span class="nav-number">1.5.</span> <span class="nav-text">继续分析lunch参数的处理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#分离selection中参数variant"><span class="nav-number">1.5.1.</span> <span class="nav-text">分离selection中参数variant</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#导出变量"><span class="nav-number">1.5.2.</span> <span class="nav-text">导出变量</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#设置其他编译环境，打印配置信息"><span class="nav-number">1.6.</span> <span class="nav-text">设置其他编译环境，打印配置信息</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#设置其他编译环境"><span class="nav-number">1.6.1.</span> <span class="nav-text">设置其他编译环境</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#打印配置信息"><span class="nav-number">1.6.2.</span> <span class="nav-text">打印配置信息</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#make正式编译系统"><span class="nav-number">2.</span> <span class="nav-text">make正式编译系统</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#说明"><span class="nav-number">2.1.</span> <span class="nav-text">说明</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,2668 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Handler Looper MessageQueue">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="在 Android 的应用开发中，线程之间的通信机制主要是以 Handler 机制为主。我们都知道 Android 中的 UI 更新只能在主线程中执行，通常的做法是，我们在 Activity 中直接 new Handler，通过 handler 发送消息，在 handlerMessage 处理即可。本篇博文就根据源码来具体分析其中工作机制以及源码架构。">
+<meta name="keywords" content="Handler Looper MessageQueue">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析之Handler、Looper及MessageQueue之间关系">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="在 Android 的应用开发中，线程之间的通信机制主要是以 Handler 机制为主。我们都知道 Android 中的 UI 更新只能在主线程中执行，通常的做法是，我们在 Activity 中直接 new Handler，通过 handler 发送消息，在 handlerMessage 处理即可。本篇博文就根据源码来具体分析其中工作机制以及源码架构。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/MessageQueue.png">
+<meta property="og:updated_time" content="2019-04-10T07:49:48.337Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="源码分析之Handler、Looper及MessageQueue之间关系">
+<meta name="twitter:description" content="在 Android 的应用开发中，线程之间的通信机制主要是以 Handler 机制为主。我们都知道 Android 中的 UI 更新只能在主线程中执行，通常的做法是，我们在 Activity 中直接 new Handler，通过 handler 发送消息，在 handlerMessage 处理即可。本篇博文就根据源码来具体分析其中工作机制以及源码架构。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/">
+
+
+
+
+
+  <title>源码分析之Handler、Looper及MessageQueue之间关系 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">源码分析之Handler、Looper及MessageQueue之间关系</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-09T14:20:05+08:00">
+                2019-04-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>在 Android 的应用开发中，线程之间的通信机制主要是以 Handler 机制为主。我们都知道 Android 中的 UI 更新只能在主线程中执行，通常的做法是，我们在 Activity 中直接 new Handler，通过 handler 发送消息，在 handlerMessage 处理即可。本篇博文就根据源码来具体分析其中工作机制以及源码架构。</strong><br><a id="more"></a></p>
+<h1 id="Java-层的三巨头"><a href="#Java-层的三巨头" class="headerlink" title="Java 层的三巨头"></a>Java 层的三巨头</h1><p>上层的 Java 代码，集中于以下三个类，Handler，Looper 以及 MessageQueue，下面我们集中分析它们。</p>
+<h2 id="Handler"><a href="#Handler" class="headerlink" title="Handler"></a>Handler</h2><p>我们通常都会在 Activity 中直接新建 Handler 来实现主线程下 UI 的更新。我们思考一下为什么直接新建的 handler 便可以更新 UI，默认为主线程呢？（直接新建 Handler 可以更新 UI，但是涉及到 Activity 生命周期以及复杂的逻辑延时处理等，此处建议以弱引用、虚引用方式持有对象，否则在延时处理中，Activity 已经销毁了，才反过来处理消息必定会发生崩溃）。</p>
+<h3 id="Handler-与-Looper-的绑定"><a href="#Handler-与-Looper-的绑定" class="headerlink" title="Handler 与 Looper 的绑定"></a>Handler 与 Looper 的绑定</h3><p>我们都知道 Activity 由 ActivityThread 启动，之后会调用 ActivityThread 的 main 函数，其内部有如下代码：</p>
+<pre><code>public static void main(String[] args) {
+    Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, &quot;ActivityThreadMain&quot;);
+    SamplingProfilerIntegration.start();
+
+    // CloseGuard defaults to true and can be quite spammy.  We
+    // disable it here, but selectively enable it later (via
+    // StrictMode) on debug builds, but using DropBox, not logs.
+    CloseGuard.setEnabled(false);
+
+    Environment.initForCurrentUser();
+
+    // Set the reporter for event logging in libcore
+    EventLogger.setReporter(new EventLoggingReporter());
+
+    AndroidKeyStoreProvider.install();
+
+    // Make sure TrustedCertificateStore looks in the right place for CA certificates
+    final File configDir = Environment.getUserConfigDirectory(UserHandle.myUserId());
+    TrustedCertificateStore.setDefaultUserDirectory(configDir);
+
+    Process.setArgV0(&quot;&lt;pre-initialized&gt;&quot;);
+
+    // 创建主线程 looper,只创建一次
+    Looper.prepareMainLooper();
+
+    ActivityThread thread = new ActivityThread();
+    // attach到系统进程
+    thread.attach(false);
+
+    if (sMainThreadHandler == null) {
+        sMainThreadHandler = thread.getHandler();
+    }
+
+    if (false) {
+        Looper.myLooper().setMessageLogging(new
+                LogPrinter(Log.DEBUG, &quot;ActivityThread&quot;));
+    }
+
+    // End of event ActivityThreadMain.
+    Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+
+    // 主线程进入循环状态
+    Looper.loop();
+
+    throw new RuntimeException(&quot;Main thread loop unexpectedly exited&quot;);
+}
+</code></pre><p>由此可见，Activity 中已经默认给我们创建了 Looper 轮训器。此时我们直接可以使用 Handler 机制进行消息通信了。</p>
+<p>下面我们来看 prepareMainLooper</p>
+<pre><code>public static void prepareMainLooper() {
+    prepare(false);
+    synchronized (Looper.class) {
+        if (sMainLooper != null) {
+            throw new IllegalStateException(&quot;The main Looper has already been prepared.&quot;);
+        }
+        sMainLooper = myLooper();
+    }
+}
+</code></pre><p>此处我们看到，直接调用 prepare，注意参数 false，之后调用 sMainLooper = myLooper()，将内部 sMainLooper 赋值，及主线程 looper 循环器。</p>
+<pre><code>private static void prepare(boolean quitAllowed) {
+    if (sThreadLocal.get() != null) {
+        throw new RuntimeException(&quot;Only one Looper may be created per thread&quot;);
+    }
+    sThreadLocal.set(new Looper(quitAllowed));
+}
+</code></pre><p>此处最后通过线程本地存储 sThreadLocal 新建 Looper 对象并设置进去。sMainLooper 获取就是这个对象。</p>
+<pre><code>private Looper(boolean quitAllowed) {
+    mQueue = new MessageQueue(quitAllowed);
+    mThread = Thread.currentThread();
+}
+</code></pre><p>此处在 Looper 的构造函数中，新建了 MessageQueue 对象。这样，在应用 Activity 启动之时，Looper 与 MessageQueue就已经被系统分配完毕，后续我们直接使用即可，此处的分析暂时告一段落。</p>
+<h3 id="Handler-实例化"><a href="#Handler-实例化" class="headerlink" title="Handler 实例化"></a>Handler 实例化</h3><p>Handler 拥有多个构造函数，我们在 Activity 中直接使用的 Handler 为默认的构造函数，如下：</p>
+<pre><code>// 默认的构造函数 
+public Handler() {
+    this(null, false);
+}
+// 参数为 null，false
+public Handler(Callback callback, boolean async) {
+    if (FIND_POTENTIAL_LEAKS) {
+        final Class&lt;? extends Handler&gt; klass = getClass();
+        if ((klass.isAnonymousClass() || klass.isMemberClass() || klass.isLocalClass()) &amp;&amp;
+                (klass.getModifiers() &amp; Modifier.STATIC) == 0) {
+            Log.w(TAG, &quot;The following Handler class should be static or leaks might occur: &quot; +
+                klass.getCanonicalName());
+        }
+    }
+    // 直接从 Looper 中获取 mLooper 对象
+    mLooper = Looper.myLooper();
+    if (mLooper == null) {
+        throw new RuntimeException(
+            &quot;Can&apos;t create handler inside thread that has not called Looper.prepare()&quot;);
+    }
+    // Looper 创建即产生了 MessageQueue
+    mQueue = mLooper.mQueue;
+    mCallback = callback;
+    mAsynchronous = async;
+}
+</code></pre><p>有上面分析，此处直接获取了 mLooper 对象，由于在 Activity 之前调用了 Looper.prepareMainLooper() 函数，之前分析可以得知，此处获取的便是 sMainLooper 轮训器。Looper 创建之时便已经 与 MessageQueue 建立联系，此处直接可以获取消息队列 mQueue。</p>
+<h3 id="Handler-获取消息"><a href="#Handler-获取消息" class="headerlink" title="Handler 获取消息"></a>Handler 获取消息</h3><p>Handler 内部维持了一个消息池，我们通过 obtainMessage 便可以获取一个消息实例 Message。obtainMessage 重载了很多方法，最终走向 Message.obtain 中去，Message.obtain 中根据多种参数的重载，最终指向了内部方法 obtain()。</p>
+<pre><code>public static Message obtain() {
+    synchronized (sPoolSync) {
+        if (sPool != null) {
+            Message m = sPool;
+            sPool = m.next;
+            m.next = null;
+            m.flags = 0; // clear in-use flag
+            sPoolSize--;
+            return m;
+        }
+    }
+    return new Message();
+}
+</code></pre><p>此方法原译注释 </p>
+<p><strong>Return a new Message instance from the global pool. Allows us to avoid allocating new objects in many cases.</strong></p>
+<p>译文为：从全局池返回新的消息实例。允许我们在许多情况下避免分配新对象。</p>
+<p>由此可见我们通过此方法可以避免自己 new Message，直接是使用提供的接口获取。减少分配对象造成的内存消耗。</p>
+<p>关于 Message 内更多具体的分析，可以参考一下博文</p>
+<p><a href="https://blog.csdn.net/xmh19936688/article/details/51901338" target="_blank" rel="noopener">Message详细解析</a></p>
+<h3 id="Handler-发送消息、Runnable以及取消"><a href="#Handler-发送消息、Runnable以及取消" class="headerlink" title="Handler 发送消息、Runnable以及取消"></a>Handler 发送消息、Runnable以及取消</h3><p>通过 Handler 对象 send<em>Message</em>，或者 post* runnable 都可以，其内部方法重载众多，我们直接追溯根源，其最终调用到 enqueueMessage 方法，期间涉及延迟等不作过多分析。</p>
+<pre><code>private boolean enqueueMessage(MessageQueue queue, Message msg, long uptimeMillis) {
+    msg.target = this;
+    if (mAsynchronous) {
+        msg.setAsynchronous(true);
+    }
+    return queue.enqueueMessage(msg, uptimeMillis);
+}
+</code></pre><p>代码可以看出，最终还是通过内部持有对象 MessageQueue queue 的 enqueueMessage 方法来实现。其内部具体逻辑由后面的 MessageQueue 章节具体分析。</p>
+<p>通过 removeMessages 方法即可取消一个消息，通过 removeCallbacksAndMessages 可取消一个 Callback，其最终实现代码再后面章节中具体分析。</p>
+<pre><code>public final void removeMessages(int what, Object object) {
+    mQueue.removeMessages(this, what, object);
+}
+
+public final void removeCallbacksAndMessages(Object token) {
+    mQueue.removeCallbacksAndMessages(this, token);
+}
+</code></pre><p>从上面分析我们可以得知为什么我们可以拿来主义，直接使用了 Handler，原因是在应用启动之后，系统已经自动帮我们完成了 Looper 以及 MessageQueue 的创建。</p>
+<h3 id="Handler-处理消息"><a href="#Handler-处理消息" class="headerlink" title="Handler 处理消息"></a>Handler 处理消息</h3><p>Handler 内部对消息的处理进行了一定程度的划分，如下代码：</p>
+<pre><code>public void handleMessage(Message msg) {
+
+}
+
+public void dispatchMessage(Message msg) {
+    // 首先调用消息中的 callback 回调
+    if (msg.callback != null) {
+        handleCallback(msg);
+    } else {
+        // 然后检查 Handler 中是否存在 mCallback，回调
+        if (mCallback != null) {
+            if (mCallback.handleMessage(msg)) {
+                return;
+            }
+        }
+        // 最后调用 Handler 自身的 handleMessage
+        handleMessage(msg);
+    }
+}
+</code></pre><p>其接口 handleMessage 由用户自己实现，dispatchMessage 为系统内部默认的处理方式，根据消息内容作不同的处理。</p>
+<h2 id="Looper"><a href="#Looper" class="headerlink" title="Looper"></a>Looper</h2><p>Looper 我们可以称其为消息轮训器，其主要的工作是不断的读取 MessageQueue 内部的消息，取到之后便交给 Handler 来处理。</p>
+<p>之前在 handler 中我们分析了其绑定过程，其调用的 prepareMainLooper 方法只能在主线程中调用一个，我们开发者使用时候不可以直接调用，下面我们用代码来说明。</p>
+<h3 id="Looper-的使用"><a href="#Looper-的使用" class="headerlink" title="Looper 的使用"></a>Looper 的使用</h3><p>Looper 内部有一个静态变量 sThreadLocal，其具有单例唯一性。</p>
+<pre><code>static final ThreadLocal&lt;Looper&gt; sThreadLocal = new ThreadLocal&lt;Looper&gt;();
+</code></pre><p>此时，如果你在主线程中调用了 prepare，那么你将会收到一个RuntimeException，代码中如下：</p>
+<pre><code>public static void prepare() {
+    prepare(true);
+}
+
+private static void prepare(boolean quitAllowed) {
+    if (sThreadLocal.get() != null) {
+        throw new RuntimeException(&quot;Only one Looper may be created per thread&quot;);
+    }
+    sThreadLocal.set(new Looper(quitAllowed));
+}
+</code></pre><p>我们如果要在一个线程中使用 Looper，我们只需要做以下几步即可：</p>
+<ol>
+<li>调用 prepare 初始化 Looper 对象</li>
+<li>调用 loop 方法，启动 Looper 消息轮训</li>
+<li>处理 Handler 的 handlerMessage 方法</li>
+<li>调用 quit，停止 Lopper 轮训工作</li>
+</ol>
+<h3 id="Looper-构造"><a href="#Looper-构造" class="headerlink" title="Looper 构造"></a>Looper 构造</h3><p>Looper 的构造函数，在 prepare 方法中就已经实现了，sThreadLocal.set(new Looper(quitAllowed))，具体代码如下：</p>
+<pre><code>private Looper(boolean quitAllowed) {
+    mQueue = new MessageQueue(quitAllowed);
+    mThread = Thread.currentThread();
+}
+</code></pre><h3 id="prepare"><a href="#prepare" class="headerlink" title="prepare"></a>prepare</h3><p>prepare 方法用于初始化创建一个 Looper，内部新建 Looper 对象，其还会创建 MessageQueue 对象，与其绑定，完成消息队列与轮训的双重工作。具体代码见上。</p>
+<h3 id="loop"><a href="#loop" class="headerlink" title="loop"></a>loop</h3><p>loop 使得 Looper 轮训器开始工作，不断检测 MessageQueue 内部是否存在消息需要处理，代码如下：</p>
+<pre><code>public static void loop() {
+    final Looper me = myLooper();
+    if (me == null) {
+        throw new RuntimeException(&quot;No Looper; Looper.prepare() wasn&apos;t called on this thread.&quot;);
+    }
+    // 获取 loop 轮训器的消息队列 MessageQueue
+    final MessageQueue queue = me.mQueue;
+
+    // Make sure the identity of this thread is that of the local process,
+    // and keep track of what that identity token actually is.
+    Binder.clearCallingIdentity();
+    final long ident = Binder.clearCallingIdentity();
+
+    // 无限循环
+    for (;;) {
+        // 调用 MessageQueue 的 next 获取下一条消息
+        Message msg = queue.next(); // might block
+        if (msg == null) {
+            // No message indicates that the message queue is quitting.
+            return;
+        }
+
+        // This must be in a local variable, in case a UI event sets the logger
+        Printer logging = me.mLogging;
+        if (logging != null) {
+            logging.println(&quot;&gt;&gt;&gt;&gt;&gt; Dispatching to &quot; + msg.target + &quot; &quot; +
+                    msg.callback + &quot;: &quot; + msg.what);
+        }
+
+        // 分发消息，msg.target 为 msg 所依赖的 Handler对象
+        msg.target.dispatchMessage(msg);
+
+        if (logging != null) {
+            logging.println(&quot;&lt;&lt;&lt;&lt;&lt; Finished to &quot; + msg.target + &quot; &quot; + msg.callback);
+        }
+
+        // Make sure that during the course of dispatching the
+        // identity of the thread wasn&apos;t corrupted.
+        final long newIdent = Binder.clearCallingIdentity();
+        if (ident != newIdent) {
+            Log.wtf(TAG, &quot;Thread identity changed from 0x&quot;
+                    + Long.toHexString(ident) + &quot; to 0x&quot;
+                    + Long.toHexString(newIdent) + &quot; while dispatching to &quot;
+                    + msg.target.getClass().getName() + &quot; &quot;
+                    + msg.callback + &quot; what=&quot; + msg.what);
+        }
+
+        // 回收消息资源
+        msg.recycleUnchecked();
+    }
+}
+</code></pre><p>代码中我们可以看出，这里在无限循环中，通过 queue.next() 不断获取消息，得到的消息便调用 msg.target.dispatchMessage(msg) 将消息交与其 handler 进行处理，最终在将 msg 消息资源进行回收。</p>
+<h3 id="quit"><a href="#quit" class="headerlink" title="quit"></a>quit</h3><p>通过 quit 即可停止 Looper 的工作，逻辑很简单，调用 MessageQueue 的 quit，其包含普通退出和安全退出</p>
+<pre><code>public void quit() {
+    mQueue.quit(false);
+}
+
+public void quitSafely() {
+    mQueue.quit(true);
+}
+</code></pre><h2 id="MessageQueue"><a href="#MessageQueue" class="headerlink" title="MessageQueue"></a>MessageQueue</h2><p>MessageQueue 为消息队列，承载 Message 对象的结构。其可以安排 Messgae 的插入，删除，查找，退出等。我们分别来看一下其内部结构。</p>
+<h3 id="MessageQueue-的初始化"><a href="#MessageQueue-的初始化" class="headerlink" title="MessageQueue 的初始化"></a>MessageQueue 的初始化</h3><p>Java 层的 MessageQueue 初始化，直接走向 Native 层，通过 JNI 指向 Native 层，后续分析 Native 层的逻辑。</p>
+<pre><code>MessageQueue(boolean quitAllowed) {
+    mQuitAllowed = quitAllowed;
+    // 调用 native 层，对应于 android_os_MessageQueue.cpp
+    mPtr = nativeInit();
+}
+</code></pre><h3 id="enqueueMessage-发送消息"><a href="#enqueueMessage-发送消息" class="headerlink" title="enqueueMessage 发送消息"></a>enqueueMessage 发送消息</h3><p>Java 层的 Handler 通过 send*Mesage 等通过 MessageQueue 内部方法 enqueueMessage 来发送消息，代码如下：</p>
+<pre><code>boolean enqueueMessage(Message msg, long when) {
+    if (msg.target == null) {
+        throw new IllegalArgumentException(&quot;Message must have a target.&quot;);
+    }
+    if (msg.isInUse()) {
+        throw new IllegalStateException(msg + &quot; This message is already in use.&quot;);
+    }
+
+    synchronized (this) {
+        // 退出轮训
+        if (mQuitting) {
+            IllegalStateException e = new IllegalStateException(
+                    msg.target + &quot; sending message to a Handler on a dead thread&quot;);
+            Log.w(TAG, e.getMessage(), e);
+            // 回收资源
+            msg.recycle();
+            return false;
+        }
+
+        msg.markInUse();
+        msg.when = when;
+        Message p = mMessages;
+        boolean needWake;
+        if (p == null || when == 0 || when &lt; p.when) {
+            // New head, wake up the event queue if blocked.
+            msg.next = p;
+            mMessages = msg;
+            needWake = mBlocked;
+        } else {
+            // Inserted within the middle of the queue.  Usually we don&apos;t have to wake
+            // up the event queue unless there is a barrier at the head of the queue
+            // and the message is the earliest asynchronous message in the queue.
+            needWake = mBlocked &amp;&amp; p.target == null &amp;&amp; msg.isAsynchronous();
+            Message prev;
+            // 找到合适的位置，添加 msg 到队列中去
+            for (;;) {
+                prev = p;
+                p = p.next;
+                if (p == null || when &lt; p.when) {
+                    break;
+                }
+                if (needWake &amp;&amp; p.isAsynchronous()) {
+                    needWake = false;
+                }
+            }
+            msg.next = p; // invariant: p == prev.next
+            prev.next = msg;
+        }
+
+        // We can assume mPtr != 0 because mQuitting is false.
+        // 需要唤醒操作，Native 操作
+        if (needWake) {
+            nativeWake(mPtr);
+        }
+    }
+    return true;
+}
+</code></pre><p>MessageQueue 通过 enqueueMessage 将 msg 封装到队列中去，之后如果需要唤醒，便会调用 nativeWake 进行唤醒。</p>
+<h3 id="next-获取消息"><a href="#next-获取消息" class="headerlink" title="next 获取消息"></a>next 获取消息</h3><p>Looper 消息轮训器通过无限循环调用 MessageQueue 的 next方法，不断获取消息并处理，代码如下：</p>
+<pre><code>Message next() {
+    // Return here if the message loop has already quit and been disposed.
+    // This can happen if the application tries to restart a looper after quit
+    // which is not supported.
+    final long ptr = mPtr;
+    if (ptr == 0) {
+        return null;
+    }
+
+    int pendingIdleHandlerCount = -1; // -1 only during first iteration
+    int nextPollTimeoutMillis = 0;
+    // 无限循环
+    for (;;) {
+        if (nextPollTimeoutMillis != 0) {
+            Binder.flushPendingCommands();
+        }
+
+        // 调用 Native 层的 nativePollOnce
+        nativePollOnce(ptr, nextPollTimeoutMillis);
+
+        synchronized (this) {
+            // Try to retrieve the next message.  Return if found.
+            final long now = SystemClock.uptimeMillis();
+            Message prevMsg = null;
+            Message msg = mMessages;
+            // 异步消息
+            if (msg != null &amp;&amp; msg.target == null) {
+                // Stalled by a barrier.  Find the next asynchronous message in the queue.
+                do {
+                    prevMsg = msg;
+                    msg = msg.next;
+                } while (msg != null &amp;&amp; !msg.isAsynchronous());
+            }
+            if (msg != null) {
+                // 延迟消息处理
+                if (now &lt; msg.when) {
+                    // Next message is not ready.  Set a timeout to wake up when it is ready.
+                    nextPollTimeoutMillis = (int) Math.min(msg.when - now, Integer.MAX_VALUE);
+                } else {
+                    // Got a message.
+                    // 获取消息并返回
+                    mBlocked = false;
+                    if (prevMsg != null) {
+                        prevMsg.next = msg.next;
+                    } else {
+                        mMessages = msg.next;
+                    }
+                    msg.next = null;
+                    if (DEBUG) Log.v(TAG, &quot;Returning message: &quot; + msg);
+                    msg.markInUse();
+                    return msg;
+                }
+            } else {
+                // No more messages.
+                nextPollTimeoutMillis = -1;
+            }
+
+            // Process the quit message now that all pending messages have been handled.
+            if (mQuitting) {
+                dispose();
+                return null;
+            }
+
+            // If first time idle, then get the number of idlers to run.
+            // Idle handles only run if the queue is empty or if the first message
+            // in the queue (possibly a barrier) is due to be handled in the future.
+            if (pendingIdleHandlerCount &lt; 0
+                    &amp;&amp; (mMessages == null || now &lt; mMessages.when)) {
+                pendingIdleHandlerCount = mIdleHandlers.size();
+            }
+            if (pendingIdleHandlerCount &lt;= 0) {
+                // No idle handlers to run.  Loop and wait some more.
+                mBlocked = true;
+                continue;
+            }
+
+            if (mPendingIdleHandlers == null) {
+                // 最大空闲线程
+                mPendingIdleHandlers = new IdleHandler[Math.max(pendingIdleHandlerCount, 4)];
+            }
+            mPendingIdleHandlers = mIdleHandlers.toArray(mPendingIdleHandlers);
+        }
+
+        // Run the idle handlers.
+        // We only ever reach this code block during the first iteration.
+        for (int i = 0; i &lt; pendingIdleHandlerCount; i++) {
+            final IdleHandler idler = mPendingIdleHandlers[i];
+            mPendingIdleHandlers[i] = null; // release the reference to the handler
+
+            boolean keep = false;
+            try {
+                // 调用空闲线程 handler 的 queueIdle
+                keep = idler.queueIdle();
+            } catch (Throwable t) {
+                Log.wtf(TAG, &quot;IdleHandler threw exception&quot;, t);
+            }
+
+            if (!keep) {
+                synchronized (this) {
+                    mIdleHandlers.remove(idler);
+                }
+            }
+        }
+
+        // Reset the idle handler count to 0 so we do not run them again.
+        pendingIdleHandlerCount = 0;
+
+        // While calling an idle handler, a new message could have been delivered
+        // so go back and look again for a pending message without waiting.
+        nextPollTimeoutMillis = 0;
+    }
+}
+</code></pre><p>从上面可以看出，next 优先调用 nativePollOnce 处理 Native 层的消息，其次在获取到 Java 层 MessageQueue 中的消息并返回。</p>
+<h3 id="quit-退出"><a href="#quit-退出" class="headerlink" title="quit 退出"></a>quit 退出</h3><p>MessageQueue 通过 quit 方法，完成 Looper轮训器的退出操作。</p>
+<pre><code>void quit(boolean safe) {
+    if (!mQuitAllowed) {
+        throw new IllegalStateException(&quot;Main thread not allowed to quit.&quot;);
+    }
+
+    synchronized (this) {
+        if (mQuitting) {
+            return;
+        }
+        mQuitting = true;
+
+        if (safe) {
+            removeAllFutureMessagesLocked();
+        } else {
+            removeAllMessagesLocked();
+        }
+
+        // We can assume mPtr != 0 because mQuitting was previously false.
+        nativeWake(mPtr);
+    }
+}
+</code></pre><p>其上层 Looper 通过普通模式和安全模式调用到此，最终通过 nativeWake 指向 Natvie。</p>
+<h3 id="消息以及回调的删除"><a href="#消息以及回调的删除" class="headerlink" title="消息以及回调的删除"></a>消息以及回调的删除</h3><p>首先简单看一下消息的删除，方法涉及多个重载，我们这里只看其中一个，代码如下：</p>
+<pre><code>// 根据 handler，what，以及 object 查找到 msg 并删除
+void removeMessages(Handler h, int what, Object object) {
+    if (h == null) {
+        return;
+    }
+
+    synchronized (this) {
+        // 获取当前消息
+        Message p = mMessages;
+
+        // Remove all messages at front.
+        // 便利找到对应的消息
+        while (p != null &amp;&amp; p.target == h &amp;&amp; p.what == what
+               &amp;&amp; (object == null || p.obj == object)) {
+            Message n = p.next;
+            mMessages = n;
+            p.recycleUnchecked();
+            p = n;
+        }
+
+        // Remove all messages after front.
+        // 删除消息，链接前后消息
+        while (p != null) {
+            Message n = p.next;
+            if (n != null) {
+                if (n.target == h &amp;&amp; n.what == what
+                    &amp;&amp; (object == null || n.obj == object)) {
+                    Message nn = n.next;
+                    n.recycleUnchecked();
+                    p.next = nn;
+                    continue;
+                }
+            }
+            p = n;
+        }
+    }
+}
+</code></pre><p>删除消息回调</p>
+<pre><code>// 根据 handler 以及 object 删除回调
+void removeCallbacksAndMessages(Handler h, Object object) {
+    if (h == null) {
+        return;
+    }
+
+    synchronized (this) {
+        Message p = mMessages;
+
+        // Remove all messages at front.
+        while (p != null &amp;&amp; p.target == h
+                &amp;&amp; (object == null || p.obj == object)) {
+            Message n = p.next;
+            mMessages = n;
+            p.recycleUnchecked();
+            p = n;
+        }
+
+        // Remove all messages after front.
+        while (p != null) {
+            Message n = p.next;
+            if (n != null) {
+                if (n.target == h &amp;&amp; (object == null || n.obj == object)) {
+                    Message nn = n.next;
+                    n.recycleUnchecked();
+                    p.next = nn;
+                    continue;
+                }
+            }
+            p = n;
+        }
+    }
+}
+</code></pre><h1 id="JNI-层分析"><a href="#JNI-层分析" class="headerlink" title="JNI 层分析"></a>JNI 层分析</h1><p>Java 通过 JNI 方式，链接到 Native 层代码 android_os_MessageQueue.cpp，具体代码如下：</p>
+<pre><code>static JNINativeMethod gMessageQueueMethods[] = {
+    /* name, signature, funcPtr */
+    { &quot;nativeInit&quot;, &quot;()J&quot;, (void*)android_os_MessageQueue_nativeInit },
+    { &quot;nativeDestroy&quot;, &quot;(J)V&quot;, (void*)android_os_MessageQueue_nativeDestroy },
+    { &quot;nativePollOnce&quot;, &quot;(JI)V&quot;, (void*)android_os_MessageQueue_nativePollOnce },
+    { &quot;nativeWake&quot;, &quot;(J)V&quot;, (void*)android_os_MessageQueue_nativeWake },
+    { &quot;nativeIsPolling&quot;, &quot;(J)Z&quot;, (void*)android_os_MessageQueue_nativeIsPolling },
+    { &quot;nativeSetFileDescriptorEvents&quot;, &quot;(JII)V&quot;,
+            (void*)android_os_MessageQueue_nativeSetFileDescriptorEvents },
+};
+
+int register_android_os_MessageQueue(JNIEnv* env) {
+    int res = RegisterMethodsOrDie(env, &quot;android/os/MessageQueue&quot;, gMessageQueueMethods,
+                                NELEM(gMessageQueueMethods));
+
+    jclass clazz = FindClassOrDie(env, &quot;android/os/MessageQueue&quot;);
+    gMessageQueueClassInfo.mPtr = GetFieldIDOrDie(env, clazz, &quot;mPtr&quot;, &quot;J&quot;);
+    gMessageQueueClassInfo.dispatchEvents = GetMethodIDOrDie(env, clazz,
+            &quot;dispatchEvents&quot;, &quot;(II)I&quot;);
+
+    return res;
+}
+</code></pre><h2 id="nativeInit"><a href="#nativeInit" class="headerlink" title="nativeInit"></a>nativeInit</h2><p>Java 层的 nativeInit 在 MessageQueue 初始化时调用，代码如下：</p>
+<pre><code>static jlong android_os_MessageQueue_nativeInit(JNIEnv* env, jclass clazz) {
+    // 新建 NativeMessageQueue，对应与 Java 层
+    NativeMessageQueue* nativeMessageQueue = new NativeMessageQueue();
+    if (!nativeMessageQueue) {
+        jniThrowRuntimeException(env, &quot;Unable to allocate native queue&quot;);
+        return 0;
+    }
+
+    nativeMessageQueue-&gt;incStrong(env);
+    return reinterpret_cast&lt;jlong&gt;(nativeMessageQueue);
+}
+</code></pre><p>其对象 NativeMessageQueue 为内部类，其构造函数如下：</p>
+<pre><code>NativeMessageQueue::NativeMessageQueue() :
+        mPollEnv(NULL), mPollObj(NULL), mExceptionObj(NULL) {
+    mLooper = Looper::getForThread();
+    // 创建 Native 层的 Looper 对象
+    if (mLooper == NULL) {
+        mLooper = new Looper(false);
+        Looper::setForThread(mLooper);
+    }
+}
+</code></pre><p>Native 层的 NativeMessageQueue 在构造时候回依赖 Looper 对象，此时回新建 Native 层的 Looper 对象。</p>
+<h2 id="nativeWake"><a href="#nativeWake" class="headerlink" title="nativeWake"></a>nativeWake</h2><p>Java 层通过 enqueueMessage 发消息，quit 退出以及 removeSyncBarrier 方法都会调用到 nativeWake，其指向函数 android_os_MessageQueue_nativeWake，代码如下：</p>
+<pre><code>static void android_os_MessageQueue_nativeWake(JNIEnv* env, jclass clazz, jlong ptr) {
+    NativeMessageQueue* nativeMessageQueue = reinterpret_cast&lt;NativeMessageQueue*&gt;(ptr);
+    nativeMessageQueue-&gt;wake();
+}
+</code></pre><p>同样依赖内部成员 nativeMessageQueue-&gt;wake() 方法，最终指向 mLooper-&gt;wake()。</p>
+<pre><code>void NativeMessageQueue::wake() {
+    mLooper-&gt;wake();
+}
+</code></pre><h2 id="nativePollOnce"><a href="#nativePollOnce" class="headerlink" title="nativePollOnce"></a>nativePollOnce</h2><p>Java 层的 nativePollOnce 调用于 上层 MessageQueue 的 next 方法，用于不断获取数据处理操作，这里是优先处理 Native 的逻辑。在这里指向函数 android_os_MessageQueue_nativePollOnce，，如下：</p>
+<pre><code>static void android_os_MessageQueue_nativePollOnce(JNIEnv* env, jobject obj,
+        jlong ptr, jint timeoutMillis) {
+    NativeMessageQueue* nativeMessageQueue = reinterpret_cast&lt;NativeMessageQueue*&gt;(ptr);
+    nativeMessageQueue-&gt;pollOnce(env, obj, timeoutMillis);
+}
+</code></pre><p>函数最终指向了 nativeMessageQueue-&gt;pollOnce，代码如下：</p>
+<pre><code>void NativeMessageQueue::pollOnce(JNIEnv* env, jobject pollObj, int timeoutMillis) {
+    mPollEnv = env;
+    mPollObj = pollObj;
+    // 调用持有对象 looper 的 pollOnce
+    mLooper-&gt;pollOnce(timeoutMillis);
+    mPollObj = NULL;
+    mPollEnv = NULL;
+
+    if (mExceptionObj) {
+        env-&gt;Throw(mExceptionObj);
+        env-&gt;DeleteLocalRef(mExceptionObj);
+        mExceptionObj = NULL;
+    }
+}
+</code></pre><p>此处通过持有对象 Native 层的 looper，调用到 pollOnce 方法，后面具体分析。</p>
+<p>分析到这里，我们之是大概的分析了其内部调用逻辑，JNI 部分也只是衔接 Java 和 Native 部分，具体的逻辑还是在下面的 Native 层章节具体分析。</p>
+<h1 id="Native-层三巨头"><a href="#Native-层三巨头" class="headerlink" title="Native 层三巨头"></a>Native 层三巨头</h1><p>Java 中存在的三巨头，Native 也同样存在，下面我们来具体分析。</p>
+<h2 id="NativeMessageQueue"><a href="#NativeMessageQueue" class="headerlink" title="NativeMessageQueue"></a>NativeMessageQueue</h2><p>Java 层建议对象 MessageQueue 时，便和 Native 曾建立联系，NativeMessageQueue 声明在 android_os_MessageQueue.h 中，其依赖两个父类，如下：</p>
+<pre><code>class MessageQueue : public virtual RefBase {
+public:
+    inline sp&lt;Looper&gt; getLooper() const {
+        return mLooper;
+    }
+
+    bool raiseAndClearException(JNIEnv* env, const char* msg);
+    virtual void raiseException(JNIEnv* env, const char* msg, jthrowable exceptionObj) = 0;
+
+protected:
+    MessageQueue();
+    virtual ~MessageQueue();
+
+protected:
+    sp&lt;Looper&gt; mLooper;
+};
+
+class LooperCallback : public virtual RefBase {
+protected:
+    virtual ~LooperCallback() { }
+
+public:
+    virtual int handleEvent(int fd, int events, void* data) = 0;
+};
+
+class NativeMessageQueue : public MessageQueue, public LooperCallback {
+public:
+    NativeMessageQueue();
+    virtual ~NativeMessageQueue();
+
+    virtual void raiseException(JNIEnv* env, const char* msg, jthrowable exceptionObj);
+
+    void pollOnce(JNIEnv* env, jobject obj, int timeoutMillis);
+    void wake();
+    void setFileDescriptorEvents(int fd, int events);
+
+    virtual int handleEvent(int fd, int events, void* data);
+
+private:
+    JNIEnv* mPollEnv;
+    jobject mPollObj;
+    jthrowable mExceptionObj;
+};
+</code></pre><p>上面可以看出，父类 MessageQueue 主要提供 raiseAndClearException 和<br> raiseException 方法，同时持有成员变量 mLooper 轮训器。父类 LooperCallback 则更简单，提供一个共有接口 handleEvent。</p>
+<h3 id="NativeMessageQueue-构造函数"><a href="#NativeMessageQueue-构造函数" class="headerlink" title="NativeMessageQueue 构造函数"></a>NativeMessageQueue 构造函数</h3><p>NativeMessageQueue 的构造函数如下：</p>
+<pre><code>NativeMessageQueue::NativeMessageQueue() :
+        mPollEnv(NULL), mPollObj(NULL), mExceptionObj(NULL) {
+    mLooper = Looper::getForThread();
+    if (mLooper == NULL) {
+        mLooper = new Looper(false);
+        Looper::setForThread(mLooper);
+    }
+}
+</code></pre><p>创建 Native 层的 Looper 对象，设置 Looper 线程的 looper 对象。</p>
+<h3 id="wake"><a href="#wake" class="headerlink" title="wake"></a>wake</h3><p>NativeMessageQueue 的 wake 函数相对简单，代码如下：</p>
+<pre><code>void NativeMessageQueue::wake() {
+    mLooper-&gt;wake();
+}
+</code></pre><h3 id="pollOnce"><a href="#pollOnce" class="headerlink" title="pollOnce"></a>pollOnce</h3><p>NativeMessageQueue 的 pollOnce 实现对消息队列的轮训检查，具体代码如下：</p>
+<pre><code>void NativeMessageQueue::pollOnce(JNIEnv* env, jobject pollObj, int timeoutMillis) {
+    mPollEnv = env;
+    mPollObj = pollObj;
+    // 调用持有对象 looper 的 pollOnce
+    mLooper-&gt;pollOnce(timeoutMillis);
+    mPollObj = NULL;
+    mPollEnv = NULL;
+
+    if (mExceptionObj) {
+        env-&gt;Throw(mExceptionObj);
+        env-&gt;DeleteLocalRef(mExceptionObj);
+        mExceptionObj = NULL;
+    }
+}
+</code></pre><p>最终实现方法还是依赖 Looper 的 pollOnce，看来 Native 层的 Looper 才是最终要干活的人啊！</p>
+<h2 id="Looper（Native）"><a href="#Looper（Native）" class="headerlink" title="Looper（Native）"></a>Looper（Native）</h2><p>上面分析，均已 Looper 截断，此处我们具体分析 Looper 的逻辑。</p>
+<h3 id="Looper-的构造函数"><a href="#Looper-的构造函数" class="headerlink" title="Looper 的构造函数"></a>Looper 的构造函数</h3><p>Native 层的 Looper 类相对最复杂，我们首先分析其工作流程，剩下的其他部分后续再补充说明。代码如下：</p>
+<pre><code>Looper::Looper(bool allowNonCallbacks) :
+        mAllowNonCallbacks(allowNonCallbacks), mSendingMessage(false),
+        mPolling(false), mEpollFd(-1), mEpollRebuildRequired(false),
+        mNextRequestSeq(0), mResponseIndex(0), mNextMessageUptime(LLONG_MAX) {
+    // 创建事件对象 mWakeEventFd，不阻塞方式
+    mWakeEventFd = eventfd(0, EFD_NONBLOCK);
+    LOG_ALWAYS_FATAL_IF(mWakeEventFd &lt; 0, &quot;Could not make wake event fd.  errno=%d&quot;, errno);
+
+    AutoMutex _l(mLock);
+    rebuildEpollLocked();
+}
+</code></pre><p>Looper 初始化将创建一个时间对象用于唤醒，eventfd 方式的具体解释，可以参考一下博文</p>
+<p><a href="https://blog.csdn.net/tanswer_/article/details/79008322" target="_blank" rel="noopener">eventfd 事件通知</a></p>
+<p>构造函数最后，调用 rebuildEpollLocked 重新构建 epoll 下文件描述符的监听任务，如下代码：</p>
+<pre><code>void Looper::Request::initEventItem(struct epoll_event* eventItem) const {
+    int epollEvents = 0;
+    if (events &amp; EVENT_INPUT) epollEvents |= EPOLLIN;
+    if (events &amp; EVENT_OUTPUT) epollEvents |= EPOLLOUT;
+
+    memset(eventItem, 0, sizeof(epoll_event)); // zero out unused members of data field union
+    eventItem-&gt;events = epollEvents;
+    eventItem-&gt;data.fd = fd;
+}
+
+void Looper::rebuildEpollLocked() {
+    // Close old epoll instance if we have one.
+    if (mEpollFd &gt;= 0) {
+#if DEBUG_CALLBACKS
+        ALOGD(&quot;%p ~ rebuildEpollLocked - rebuilding epoll set&quot;, this);
+#endif
+        close(mEpollFd);
+    }
+
+    // Allocate the new epoll instance and register the wake pipe.
+    // 创建 epoll 监听文件描述符，监数目 8
+    mEpollFd = epoll_create(EPOLL_SIZE_HINT);
+    LOG_ALWAYS_FATAL_IF(mEpollFd &lt; 0, &quot;Could not create epoll instance.  errno=%d&quot;, errno);
+
+    struct epoll_event eventItem;
+    memset(&amp; eventItem, 0, sizeof(epoll_event)); // zero out unused members of data field union
+    eventItem.events = EPOLLIN;
+    eventItem.data.fd = mWakeEventFd;
+    // 将 mWakeEventFd 文件描述符加入监听列表中
+    int result = epoll_ctl(mEpollFd, EPOLL_CTL_ADD, mWakeEventFd, &amp; eventItem);
+    LOG_ALWAYS_FATAL_IF(result != 0, &quot;Could not add wake event fd to epoll instance.  errno=%d&quot;,
+            errno);
+    // mRequests 为 KeyedVector&lt;int, Request&gt; 类型，通过 index 和 Request 进行绑定，后续进行结构体的具体分析
+    for (size_t i = 0; i &lt; mRequests.size(); i++) {
+        // 获取对应的 Request
+        const Request&amp; request = mRequests.valueAt(i);
+        struct epoll_event eventItem;
+        // 初始化 eventItem
+        request.initEventItem(&amp;eventItem);
+        // 加入监听中
+        int epollResult = epoll_ctl(mEpollFd, EPOLL_CTL_ADD, request.fd, &amp; eventItem);
+        if (epollResult &lt; 0) {
+            ALOGE(&quot;Error adding epoll events for fd %d while rebuilding epoll set, errno=%d&quot;,
+                    request.fd, errno);
+        }
+    }
+}
+</code></pre><p>如此一来，Looper 便完成了相关文件描述符的监听，其中包括事件通知对象 mWakeEventFd。至于 mRequests 内部对象的添加，后续分析。</p>
+<h3 id="wake-1"><a href="#wake-1" class="headerlink" title="wake"></a>wake</h3><p>Looper 的 wake 函数实际上是最终调用的函数，代码如下：</p>
+<pre><code>void Looper::wake() {
+#if DEBUG_POLL_AND_WAKE
+    ALOGD(&quot;%p ~ wake&quot;, this);
+#endif
+
+    uint64_t inc = 1;
+    // 想文件描述符中写入数据，以便唤醒
+    ssize_t nWrite = TEMP_FAILURE_RETRY(write(mWakeEventFd, &amp;inc, sizeof(uint64_t)));
+    if (nWrite != sizeof(uint64_t)) {
+        if (errno != EAGAIN) {
+            ALOGW(&quot;Could not write wake signal, errno=%d&quot;, errno);
+        }
+    }
+}
+</code></pre><p>wake 函数通过向 mWakeEventFd 写入数据，此时发生了数据写入操作，在 pollOnce 中监听便得到响应。</p>
+<h3 id="pollOnce-1"><a href="#pollOnce-1" class="headerlink" title="pollOnce"></a>pollOnce</h3><p>Java 层的 Looper 在无限循环中，通过 next 获取消息并处理，优先处理 Native 的消息，机调用 pollOnce 走到次数，代码如下：</p>
+<pre><code>int Looper::pollOnce(int timeoutMillis, int* outFd, int* outEvents, void** outData) {
+    int result = 0;
+    // 无限循环
+    for (;;) {
+        // 优先处理 response，此处的 mResponses 为一个 Vector&lt;Response&gt; 类型
+        while (mResponseIndex &lt; mResponses.size()) {
+            // 取出对应的 response
+            const Response&amp; response = mResponses.itemAt(mResponseIndex++);
+            int ident = response.request.ident;
+            if (ident &gt;= 0) {
+                int fd = response.request.fd;
+                int events = response.events;
+                void* data = response.request.data;
+#if DEBUG_POLL_AND_WAKE
+                ALOGD(&quot;%p ~ pollOnce - returning signalled identifier %d: &quot;
+                        &quot;fd=%d, events=0x%x, data=%p&quot;,
+                        this, ident, fd, events, data);
+#endif
+                // 赋值
+                if (outFd != NULL) *outFd = fd;
+                if (outEvents != NULL) *outEvents = events;
+                if (outData != NULL) *outData = data;
+                // 直接返回 ident，此时的 ident 为大于 0 的值
+                return ident;
+            }
+        }
+        // 一次轮训结束后，从下面返回的 result
+        if (result != 0) {
+#if DEBUG_POLL_AND_WAKE
+            ALOGD(&quot;%p ~ pollOnce - returning result %d&quot;, this, result);
+#endif
+            if (outFd != NULL) *outFd = 0;
+            if (outEvents != NULL) *outEvents = 0;
+            if (outData != NULL) *outData = NULL;
+            return result;
+        }
+        // 调用 pollInner 再次处理，依然在无限循环内部
+        result = pollInner(timeoutMillis);
+    }
+}
+</code></pre><p>代码逻辑中，优先处理 mResponses 中对应的 Response，存在赋值并直接返回 ident，否则调用 pollInner 进入下层逻辑。代码如下：</p>
+<pre><code>int Looper::pollInner(int timeoutMillis) {
+#if DEBUG_POLL_AND_WAKE
+    ALOGD(&quot;%p ~ pollOnce - waiting: timeoutMillis=%d&quot;, this, timeoutMillis);
+#endif
+
+    // Adjust the timeout based on when the next message is due.
+    if (timeoutMillis != 0 &amp;&amp; mNextMessageUptime != LLONG_MAX) {
+        nsecs_t now = systemTime(SYSTEM_TIME_MONOTONIC);
+        int messageTimeoutMillis = toMillisecondTimeoutDelay(now, mNextMessageUptime);
+        if (messageTimeoutMillis &gt;= 0
+                &amp;&amp; (timeoutMillis &lt; 0 || messageTimeoutMillis &lt; timeoutMillis)) {
+            timeoutMillis = messageTimeoutMillis;
+        }
+#if DEBUG_POLL_AND_WAKE
+        ALOGD(&quot;%p ~ pollOnce - next message in %&quot; PRId64 &quot;ns, adjusted timeout: timeoutMillis=%d&quot;,
+                this, mNextMessageUptime - now, timeoutMillis);
+#endif
+    }
+
+    // Poll.
+    int result = POLL_WAKE;
+    // mResponses 处理完成，清理工作 
+    mResponses.clear();
+    mResponseIndex = 0;
+
+    // We are about to idle.
+    mPolling = true;
+
+    // epoll_event 结构体，容纳 16 个文件描述符事件单位的数组
+    struct epoll_event eventItems[EPOLL_MAX_EVENTS];
+    // epoll_wait 等待在 mEpollFd 文件描述符上发生事件
+    int eventCount = epoll_wait(mEpollFd, eventItems, EPOLL_MAX_EVENTS, timeoutMillis);
+
+    // No longer idling.
+    mPolling = false;
+
+    // Acquire lock.
+    mLock.lock();
+
+    // Rebuild epoll set if needed.
+    // 是否有需要重新构建 epoll 监听列表
+    if (mEpollRebuildRequired) {
+        mEpollRebuildRequired = false;
+        rebuildEpollLocked();
+        goto Done;
+    }
+
+    // Check for poll error.
+    // epoll 监听发生错误
+    if (eventCount &lt; 0) {
+        if (errno == EINTR) {
+            goto Done;
+        }
+        ALOGW(&quot;Poll failed with an unexpected error, errno=%d&quot;, errno);
+        result = POLL_ERROR;
+        goto Done;
+    }
+
+    // Check for poll timeout.
+    // epoll 监听超时
+    if (eventCount == 0) {
+#if DEBUG_POLL_AND_WAKE
+        ALOGD(&quot;%p ~ pollOnce - timeout&quot;, this);
+#endif
+        result = POLL_TIMEOUT;
+        goto Done;
+    }
+
+    // Handle all events.
+#if DEBUG_POLL_AND_WAKE
+    ALOGD(&quot;%p ~ pollOnce - handling events from %d fds&quot;, this, eventCount);
+#endif
+
+    // 处理文件节点发生的事件，eventCount 为监听文件描述符发生事件的个数
+    for (int i = 0; i &lt; eventCount; i++) {
+        // 获取发生事件的具体文件描述符
+        int fd = eventItems[i].data.fd;
+        // 获取对应发生事件类型
+        uint32_t epollEvents = eventItems[i].events;
+        // 唤醒操作，即客户端调用 wake 向 mWakeEventFd 写入数据，追溯上层 Java 层可以调用 nativeWake 引起
+        if (fd == mWakeEventFd) {
+            if (epollEvents &amp; EPOLLIN) {
+                // 唤醒操作
+                awoken();
+            } else {
+                ALOGW(&quot;Ignoring unexpected epoll events 0x%x on wake event fd.&quot;, epollEvents);
+            }
+        } else {
+            // 其他文件描述符使用了 &lt;index，Request&gt; 来存储，这里从 mRequests 中获取获取 index，返回值 requestIndex 大于 0 即为获取成功，存在
+            ssize_t requestIndex = mRequests.indexOfKey(fd);
+            if (requestIndex &gt;= 0) {
+                int events = 0;
+                if (epollEvents &amp; EPOLLIN) events |= EVENT_INPUT;
+                if (epollEvents &amp; EPOLLOUT) events |= EVENT_OUTPUT;
+                if (epollEvents &amp; EPOLLERR) events |= EVENT_ERROR;
+                if (epollEvents &amp; EPOLLHUP) events |= EVENT_HANGUP;
+                // 调用 pushResponse 继续处理，从 mRequests 中 &lt;int，Request&gt; 获取fd对应的 Request，并添加到 mResponses 中
+                pushResponse(events, mRequests.valueAt(requestIndex));
+            } else {
+                ALOGW(&quot;Ignoring unexpected epoll events 0x%x on fd %d that is &quot;
+                        &quot;no longer registered.&quot;, epollEvents, fd);
+            }
+        }
+    }
+Done: ;
+
+    // Invoke pending message callbacks.
+    mNextMessageUptime = LLONG_MAX;
+    while (mMessageEnvelopes.size() != 0) {
+        nsecs_t now = systemTime(SYSTEM_TIME_MONOTONIC);
+        const MessageEnvelope&amp; messageEnvelope = mMessageEnvelopes.itemAt(0);
+        if (messageEnvelope.uptime &lt;= now) {
+            { // obtain handler
+                sp&lt;MessageHandler&gt; handler = messageEnvelope.handler;
+                Message message = messageEnvelope.message;
+                mMessageEnvelopes.removeAt(0);
+                mSendingMessage = true;
+                mLock.unlock();
+
+#if DEBUG_POLL_AND_WAKE || DEBUG_CALLBACKS
+                ALOGD(&quot;%p ~ pollOnce - sending message: handler=%p, what=%d&quot;,
+                        this, handler.get(), message.what);
+#endif
+                // 调用对应的 msg 的 handleMessage 方法，具体分析见后面
+                handler-&gt;handleMessage(message);
+            } // release handler
+
+            mLock.lock();
+            mSendingMessage = false;
+            result = POLL_CALLBACK;
+        } else {
+            // The last message left at the head of the queue determines the next wakeup time.
+            mNextMessageUptime = messageEnvelope.uptime;
+            break;
+        }
+    }
+
+    // Release lock.
+    mLock.unlock();
+
+    // Invoke all response callbacks.
+    // 处理 mResponses 中具体的 response
+    for (size_t i = 0; i &lt; mResponses.size(); i++) {
+        Response&amp; response = mResponses.editItemAt(i);
+        // response 中元素 request.ident 为 POLL_CALLBACK，即含有回调函数
+        if (response.request.ident == POLL_CALLBACK) {
+            int fd = response.request.fd;
+            int events = response.events;
+            void* data = response.request.data;
+#if DEBUG_POLL_AND_WAKE || DEBUG_CALLBACKS
+            ALOGD(&quot;%p ~ pollOnce - invoking fd event callback %p: fd=%d, events=0x%x, data=%p&quot;,
+                    this, response.request.callback.get(), fd, events, data);
+#endif
+
+            // 回调 callback 的 handleEvent 函数
+            int callbackResult = response.request.callback-&gt;handleEvent(fd, events, data);
+            if (callbackResult == 0) {
+                // 成功，移除工作
+                removeFd(fd, response.request.seq);
+            }
+
+            response.request.callback.clear();
+            result = POLL_CALLBACK;
+        }
+    }
+    return result;
+}
+
+void Looper::pushResponse(int events, const Request&amp; request) {
+    Response response;
+    response.events = events;
+    response.request = request;
+    // 再次使用 mResponses 进行处理，调用 push 后，mResponses 中便添加了新元素 response
+    mResponses.push(response);
+}
+</code></pre><p>以上代码众多，主要涉及到了 epoll 机制，如果读者对 epoll 不了解的话，可能需要重新学习一下 epoll 机制了，这里不做过多说明了，有需要请参考之前的博文，这里对上述代码做一个总结：</p>
+<ol>
+<li>pollOnce 中主要对 mResponses 信息进行处理，如果 response.request.ident 大于0，就取出信息直接返回，否则再调用 pollInner 继续处理</li>
+<li>pollInner 中首先针对过期的消息设置超时时间，然后再清理 Responses 数据，因为之前已经处理了 Responses 中的数据，后续要对发生事件的文件描述符进行统计，再次集中记录到 Responses 处理</li>
+<li>接下来便是基本的 epoll 模型，epoll_wait 监听文件描述符事件发生</li>
+<li>分别处理 epoll 监听错误，监听超时等错误</li>
+<li>接下来处理文件节点发生的事件，eventCount 返回发生事件文件描述符个数</li>
+<li>如果 fd 为 mWakeEventFd，即进行唤醒操作，执行 awoken</li>
+<li>对于其他文件描述符，Looper 使用了 &lt;int，Request&gt; 来存储，这里从 mRequests 中获取获取 index，返回值 requestIndex 大于 0 即为获取成功，之后调用 pushResponse 集中添加到 mResponses 中</li>
+<li>遍历完成后，便开始对消息进行处理，优先处理 mMessageEnvelopes 中的消息回调</li>
+<li>再处理 mResponses 中具体的 response，这里的是之前文件描述符发生事件写入的集合列表</li>
+<li>最后执行相应的清理任务并返回执行结果</li>
+</ol>
+<p>上述代码中，需要读者对 epoll 机制有一定的了解，否则真的难以看懂，之前博主已经对 epoll 进行了相关的介绍，请自行查看，这里主要是处在两个数据集合，一个是 mResponses，另一个是 mMessageEnvelopes，下面我们具体分析一下这两个数据集合。</p>
+<h3 id="mResponses-数据分析"><a href="#mResponses-数据分析" class="headerlink" title="mResponses 数据分析"></a>mResponses 数据分析</h3><p>Looper.h 的头文件中声明了 Vector<response> mResponses，其实一个 Vector 容器，类型为 Response，那么 Response 又是什么？</response></p>
+<pre><code>struct Response {
+    int events;
+    Request request;
+};
+</code></pre><p>结构体 Response 内部有两个元素，events 即位事件，那么 Request 又是什么？</p>
+<pre><code>struct Request {
+    int fd;
+    int ident;
+    int events;
+    int seq;
+    sp&lt;LooperCallback&gt; callback;
+    void* data;
+
+    void initEventItem(struct epoll_event* eventItem) const;
+};
+</code></pre><p>到这里就清晰明了了，Request 集中封装了事件发生的文件结构，例如文件描述符，事件类型，事件回调，以及额外数据，同时提供函数指针 initEventItem 用于 Looper 中实现快捷的将 int events 类型转换到 epoll 原型监听文件结构，如下：</p>
+<pre><code>void Looper::Request::initEventItem(struct epoll_event* eventItem) const {
+    int epollEvents = 0;
+    // 根据 events 转换到 epoll 下的事件类型
+    if (events &amp; EVENT_INPUT) epollEvents |= EPOLLIN;
+    if (events &amp; EVENT_OUTPUT) epollEvents |= EPOLLOUT;
+
+    memset(eventItem, 0, sizeof(epoll_event));
+    // 赋值操作
+    eventItem-&gt;events = epollEvents;
+    eventItem-&gt;data.fd = fd;
+}
+</code></pre><p>由上可以看出，mResponses 中存放了 Vector<response> 类型的数据，其每一个元素对应一个需要监听的 epoll 文件描述符，其元素的 Request 节点的 指针函数 initEventItem 便于将数据结构快捷的转换到 epoll 所需的文件结构，实现 epoll 监听。</response></p>
+<h4 id="数据添加"><a href="#数据添加" class="headerlink" title="数据添加"></a>数据添加</h4><p>到这里，数据结构分析完毕了，那么文件监听是如何添加进去的呢？Looper 中有一个函数如下：</p>
+<pre><code>int Looper::addFd(int fd, int ident, int events, Looper_callbackFunc callback, void* data) {
+    return addFd(fd, ident, events, callback ? new SimpleLooperCallback(callback) : NULL, data);
+}
+</code></pre><p>SimpleLooperCallback 继承自 LooperCallback，如下：</p>
+<pre><code>class SimpleLooperCallback : public LooperCallback {
+protected:
+    virtual ~SimpleLooperCallback();
+
+public:
+    SimpleLooperCallback(Looper_callbackFunc callback);
+    virtual int handleEvent(int fd, int events, void* data);
+
+private:
+    Looper_callbackFunc mCallback;
+};
+
+SimpleLooperCallback::SimpleLooperCallback(Looper_callbackFunc callback) :
+    mCallback(callback) {
+}
+
+int SimpleLooperCallback::handleEvent(int fd, int events, void* data
+{
+    return mCallback(fd, events, data);
+}
+</code></pre><p>子实现类 SimpleLooperCallback， 构造函数维持有 Looper_callbackFunc 对象，需要实现 handleEvent 方法，下面继续看 addFd 函数：</p>
+<pre><code>int Looper::addFd(int fd, int ident, int events, const sp&lt;LooperCallback&gt;&amp; callback, void* data) {
+#if DEBUG_CALLBACKS
+    ALOGD(&quot;%p ~ addFd - fd=%d, ident=%d, events=0x%x, callback=%p, data=%p&quot;, this, fd, ident,
+            events, callback.get(), data);
+#endif
+
+    // 存在为空
+    if (!callback.get()) {
+        if (! mAllowNonCallbacks) {
+            ALOGE(&quot;Invalid attempt to set NULL callback but not allowed for this looper.&quot;);
+            return -1;
+        }
+
+        if (ident &lt; 0) {
+            ALOGE(&quot;Invalid attempt to set NULL callback with ident &lt; 0.&quot;);
+            return -1;
+        }
+    } else {
+        ident = POLL_CALLBACK;
+    }
+
+    { // acquire lock
+        AutoMutex _l(mLock);
+        // 使用 Request 结构体承载数据
+        Request request;
+        request.fd = fd;
+        request.ident = ident;
+        request.events = events;
+        request.seq = mNextRequestSeq++;
+        request.callback = callback;
+        request.data = data;
+        if (mNextRequestSeq == -1) mNextRequestSeq = 0; // reserve sequence number -1
+
+        struct epoll_event eventItem;
+        // 将 Request 转化成 epoll 需要的 eventItem 数据结构
+        request.initEventItem(&amp;eventItem);
+
+        ssize_t requestIndex = mRequests.indexOfKey(fd);
+        // 没有添加过，直接添加监听
+        if (requestIndex &lt; 0) {
+            int epollResult = epoll_ctl(mEpollFd, EPOLL_CTL_ADD, fd, &amp; eventItem);
+            if (epollResult &lt; 0) {
+                ALOGE(&quot;Error adding epoll events for fd %d, errno=%d&quot;, fd, errno);
+                return -1;
+            }
+            // mRequests 为一个 KeyedVector&lt;int, Request&gt;，没有记录项，添加
+            mRequests.add(fd, request);
+        } else {
+            // 监听存在，修改属性
+            int epollResult = epoll_ctl(mEpollFd, EPOLL_CTL_MOD, fd, &amp; eventItem);
+            // 添加出错
+            if (epollResult &lt; 0) {
+                if (errno == ENOENT) {
+#if DEBUG_CALLBACKS
+                    ALOGD(&quot;%p ~ addFd - EPOLL_CTL_MOD failed due to file descriptor &quot;
+                            &quot;being recycled, falling back on EPOLL_CTL_ADD, errno=%d&quot;,
+                            this, errno);
+#endif
+                    epollResult = epoll_ctl(mEpollFd, EPOLL_CTL_ADD, fd, &amp; eventItem);
+                    if (epollResult &lt; 0) {
+                        ALOGE(&quot;Error modifying or adding epoll events for fd %d, errno=%d&quot;,
+                                fd, errno);
+                        return -1;
+                    }
+                    scheduleEpollRebuildLocked();
+                } else {
+                    ALOGE(&quot;Error modifying epoll events for fd %d, errno=%d&quot;, fd, errno);
+                    return -1;
+                }
+            }
+            // 替换对应元素
+            mRequests.replaceValueAt(requestIndex, request);
+        }
+    } // release lock
+    return 1;
+}
+</code></pre><p>Native 层提供的 addfd 函数，Java 层通过函数 nativeSetFileDescriptorEvents 连接到 Native，JNI 接口函数如下：</p>
+<pre><code>static void android_os_MessageQueue_nativeSetFileDescriptorEvents(JNIEnv* env, jclass clazz,
+        jlong ptr, jint fd, jint events) {
+    NativeMessageQueue* nativeMessageQueue = reinterpret_cast&lt;NativeMessageQueue*&gt;(ptr);
+    nativeMessageQueue-&gt;setFileDescriptorEvents(fd, events);
+}
+</code></pre><p>至于 Java 层添加等详细流程，后续的分析这里就不展开了。</p>
+<h4 id="数据删除"><a href="#数据删除" class="headerlink" title="数据删除"></a>数据删除</h4><p>既然有了添加，那么肯定有移除操作了，如下；</p>
+<pre><code>int Looper::removeFd(int fd, int seq) {
+#if DEBUG_CALLBACKS
+    ALOGD(&quot;%p ~ removeFd - fd=%d, seq=%d&quot;, this, fd, seq);
+#endif
+
+    { // acquire lock
+        AutoMutex _l(mLock);
+        // 从 mRequests 集合中获取 fd 对应的 index
+        ssize_t requestIndex = mRequests.indexOfKey(fd);
+        if (requestIndex &lt; 0) {
+            return 0;
+        }
+
+        if (seq != -1 &amp;&amp; mRequests.valueAt(requestIndex).seq != seq) {
+#if DEBUG_CALLBACKS
+            ALOGD(&quot;%p ~ removeFd - sequence number mismatch, oldSeq=%d&quot;,
+                    this, mRequests.valueAt(requestIndex).seq);
+#endif
+            return 0;
+        }
+
+        // 移除
+        mRequests.removeItemsAt(requestIndex);
+        // 将 fd 从 epoll 监听节点 mEpollFd 中删除
+        int epollResult = epoll_ctl(mEpollFd, EPOLL_CTL_DEL, fd, NULL);
+        if (epollResult &lt; 0) {
+            if (seq != -1 &amp;&amp; (errno == EBADF || errno == ENOENT)) {
+#if DEBUG_CALLBACKS
+                ALOGD(&quot;%p ~ removeFd - EPOLL_CTL_DEL failed due to file descriptor &quot;
+                        &quot;being closed, errno=%d&quot;, this, errno);
+#endif
+                scheduleEpollRebuildLocked();
+            } else {
+                ALOGE(&quot;Error removing epoll events for fd %d, errno=%d&quot;, fd, errno);
+                scheduleEpollRebuildLocked();
+                return -1;
+            }
+        }
+    } // release lock
+    return 1;
+}
+</code></pre><p>同样，Java 层也可以通过 JNI 进行回调。</p>
+<h4 id="数据回调"><a href="#数据回调" class="headerlink" title="数据回调"></a>数据回调</h4><p>mResponses 中的数据发生改变是如何回调的呢，之前我们在函数 pollInner 中，有如下代码</p>
+<pre><code>for (size_t i = 0; i &lt; mResponses.size(); i++) {
+    Response&amp; response = mResponses.editItemAt(i);
+    // response 中元素 request.ident 为 POLL_CALLBACK，即含有回调函数
+    if (response.request.ident == POLL_CALLBACK) {
+        int fd = response.request.fd;
+        int events = response.events;
+        void* data = response.request.data;
+
+        // 回调 callback 的 handleEvent 函数
+        int callbackResult = response.request.callback-&gt;handleEvent(fd, events, data);
+        if (callbackResult == 0) {
+            // 成功，移除工作
+            removeFd(fd, response.request.seq);
+        }
+        response.request.callback.clear();
+        result = POLL_CALLBACK;
+    }
+}
+</code></pre><p>具体对应的函数如下：</p>
+<pre><code>int NativeMessageQueue::handleEvent(int fd, int looperEvents, void* data) {
+    int events = 0;
+    // 事件类型转换
+    if (looperEvents &amp; Looper::EVENT_INPUT) {
+        events |= CALLBACK_EVENT_INPUT;
+    }
+    if (looperEvents &amp; Looper::EVENT_OUTPUT) {
+        events |= CALLBACK_EVENT_OUTPUT;
+    }
+    if (looperEvents &amp; (Looper::EVENT_ERROR | Looper::EVENT_HANGUP | Looper::EVENT_INVALID)) {
+        events |= CALLBACK_EVENT_ERROR;
+    }
+    int oldWatchedEvents = reinterpret_cast&lt;intptr_t&gt;(data);
+    // 反过来回调 Java 层的 dispatchEvents 方法
+    int newWatchedEvents = mPollEnv-&gt;CallIntMethod(mPollObj,
+            gMessageQueueClassInfo.dispatchEvents, fd, events);
+    if (!newWatchedEvents) {
+        return 0; // unregister the fd
+    }
+    if (newWatchedEvents != oldWatchedEvents) {
+        // 更改 Native 层的 fd
+        setFileDescriptorEvents(fd, newWatchedEvents);
+    }
+    return 1;
+}
+
+void NativeMessageQueue::setFileDescriptorEvents(int fd, int events) {
+    if (events) {
+        int looperEvents = 0;
+        if (events &amp; CALLBACK_EVENT_INPUT) {
+            looperEvents |= Looper::EVENT_INPUT;
+        }
+        if (events &amp; CALLBACK_EVENT_OUTPUT) {
+            looperEvents |= Looper::EVENT_OUTPUT;
+        }
+        mLooper-&gt;addFd(fd, Looper::POLL_CALLBACK, looperEvents, this,
+                reinterpret_cast&lt;void*&gt;(events));
+    } else {
+        mLooper-&gt;removeFd(fd);
+    }
+}
+</code></pre><p>函数中 mPollEnv-&gt;CallIntMethod(mPollObj,gMessageQueueClassInfo.dispatchEvents, fd, events) 中指明了函数的出处，此处通过 JNI 指向了 Java 层接口回调，如下：</p>
+<pre><code>private int dispatchEvents(int fd, int events) {
+    // Get the file descriptor record and any state that might change.
+    final FileDescriptorRecord record;
+    final int oldWatchedEvents;
+    final OnFileDescriptorEventListener listener;
+    final int seq;
+    synchronized (this) {
+        record = mFileDescriptorRecords.get(fd);
+        if (record == null) {
+            return 0; // spurious, no listener registered
+        }
+
+        oldWatchedEvents = record.mEvents;
+        events &amp;= oldWatchedEvents; // filter events based on current watched set
+        if (events == 0) {
+            return oldWatchedEvents; // spurious, watched events changed
+        }
+
+        listener = record.mListener;
+        seq = record.mSeq;
+    }
+
+    // Invoke the listener outside of the lock.
+    // 通过 listener 监听接口，回调函数 onFileDescriptorEvents
+    int newWatchedEvents = listener.onFileDescriptorEvents(
+            record.mDescriptor, events);
+    if (newWatchedEvents != 0) {
+        newWatchedEvents |= OnFileDescriptorEventListener.EVENT_ERROR;
+    }
+
+    if (newWatchedEvents != oldWatchedEvents) {
+        synchronized (this) {
+            int index = mFileDescriptorRecords.indexOfKey(fd);
+            if (index &gt;= 0 &amp;&amp; mFileDescriptorRecords.valueAt(index) == record
+                    &amp;&amp; record.mSeq == seq) {
+                record.mEvents = newWatchedEvents;
+                if (newWatchedEvents == 0) {
+                    mFileDescriptorRecords.removeAt(index);
+                }
+            }
+        }
+    }
+
+    return newWatchedEvents;
+}
+</code></pre><p>至此，基本分析完了 mResponses 中的数据结构，包括数据的添加，回调以及删除，下面我们来看 mMessageEnvelopes 数据结构。</p>
+<h3 id="mMessageEnvelopes-数据分析"><a href="#mMessageEnvelopes-数据分析" class="headerlink" title="mMessageEnvelopes 数据分析"></a>mMessageEnvelopes 数据分析</h3><p>首先来看其声明部分，如下：</p>
+<pre><code>Vector&lt;MessageEnvelope&gt; mMessageEnvelopes; 
+
+// 承载消息队列的信封
+struct MessageEnvelope {
+    MessageEnvelope() : uptime(0) { }
+
+    MessageEnvelope(nsecs_t uptime, const sp&lt;MessageHandler&gt; handler,
+            const Message&amp; message) : uptime(uptime), handler(handler), message(message) {
+    }
+
+    nsecs_t uptime;
+    sp&lt;MessageHandler&gt; handler;
+    Message message;
+};
+</code></pre><p>mMessageEnvelopes 为元素为 MessageEnvelope 类型的 Vector 容器，容器内每一个元素都代表着一个 消息 msg，MessageEnvelope 通过 sp 强引用与 handler 建立链接，每封信封封装了消息的信息，事件，handler接受人等。</p>
+<h4 id="MessageEnvelope-的发送"><a href="#MessageEnvelope-的发送" class="headerlink" title="MessageEnvelope 的发送"></a>MessageEnvelope 的发送</h4><p>Native 层通过 send*Message 接口发送消息，最终走向 sendMessageAtTime 如下代码：</p>
+<pre><code>void Looper::sendMessageAtTime(nsecs_t uptime, const sp&lt;MessageHandler&gt;&amp; handler,
+        const Message&amp; message) {
+#if DEBUG_CALLBACKS
+    ALOGD(&quot;%p ~ sendMessageAtTime - uptime=%&quot; PRId64 &quot;, handler=%p, what=%d&quot;,
+            this, uptime, handler.get(), message.what);
+#endif
+
+    size_t i = 0;
+    { // acquire lock
+        AutoMutex _l(mLock);
+        // 获取 mMessageEnvelopes 的大小
+        size_t messageCount = mMessageEnvelopes.size();
+        // 根据时间，找到合适位置进行插入
+        while (i &lt; messageCount &amp;&amp; uptime &gt;= mMessageEnvelopes.itemAt(i).uptime) {
+            i += 1;
+        }
+
+        // 新建信封单位 messageEnvelope 并加入到 mMessageEnvelopes
+        MessageEnvelope messageEnvelope(uptime, handler, message);
+        mMessageEnvelopes.insertAt(messageEnvelope, i, 1);
+
+        if (mSendingMessage) {
+            return;
+        }
+    } // release lock
+
+    // 信封没有信件，进入 wake 状态
+    if (i == 0) {
+        wake();
+    }
+}
+</code></pre><p>代码注释很详细，下面来看信封中信息的删除。</p>
+<h4 id="MessageEnvelope-的删除"><a href="#MessageEnvelope-的删除" class="headerlink" title="MessageEnvelope 的删除"></a>MessageEnvelope 的删除</h4><p>Looper 中的函数 removeMessages 有多个重载，逻辑差不太多，我们直接看其中一个的一个，根据 handler 与 what 类型进行删除</p>
+<pre><code>void Looper::removeMessages(const sp&lt;MessageHandler&gt;&amp; handler, int what) {
+#if DEBUG_CALLBACKS
+    ALOGD(&quot;%p ~ removeMessages - handler=%p, what=%d&quot;, this, handler.get(), what);
+#endif
+
+    { // acquire lock
+        AutoMutex _l(mLock);
+        // 遍历 mMessageEnvelopes 数据结构，找到对应的并删除
+        for (size_t i = mMessageEnvelopes.size(); i != 0; ) {
+            const MessageEnvelope&amp; messageEnvelope = mMessageEnvelopes.itemAt(--i);
+            if (messageEnvelope.handler == handler
+                    &amp;&amp; messageEnvelope.message.what == what) {
+                mMessageEnvelopes.removeAt(i);
+            }
+        }
+    } // release lock
+}
+</code></pre><h4 id="MessageEnvelope-的回调"><a href="#MessageEnvelope-的回调" class="headerlink" title="MessageEnvelope 的回调"></a>MessageEnvelope 的回调</h4><p>对于 MessageEnvelope 的添加和删除操作，同样，在函数 pollOnce 的子函数 pollInner 中，有如下代码实现了信息的回调：</p>
+<pre><code>while (mMessageEnvelopes.size() != 0) {
+    nsecs_t now = systemTime(SYSTEM_TIME_MONOTONIC);
+    const MessageEnvelope&amp; messageEnvelope = mMessageEnvelopes.itemAt(0);
+    if (messageEnvelope.uptime &lt;= now) {
+        { // obtain handler
+            sp&lt;MessageHandler&gt; handler = messageEnvelope.handler;
+            Message message = messageEnvelope.message;
+            mMessageEnvelopes.removeAt(0);
+            mSendingMessage = true;
+            mLock.unlock();
+
+            // 调用对应的 msg 的 handleMessage 方法
+            handler-&gt;handleMessage(message);
+        } // release handler
+
+        mLock.lock();
+        mSendingMessage = false;
+        result = POLL_CALLBACK;
+    } else {
+        mNextMessageUptime = messageEnvelope.uptime;
+        break;
+    }
+}
+</code></pre><p>通览 pollOnce 函数，可以看出，MessageEnvelope 的信息处理优先级高于 Response 类型的 mResponses 回调。对于 MessageHandler 到下一节中介绍。</p>
+<h2 id="MessageHandler"><a href="#MessageHandler" class="headerlink" title="MessageHandler"></a>MessageHandler</h2><p>Native 层的 Handler 对应于 MessageHandler，其在 Looper 中声明如下：</p>
+<pre><code>class MessageHandler : public virtual RefBase {
+protected:
+    virtual ~MessageHandler() { }
+
+public:
+    /**
+    * Handles a message.
+    */
+    virtual void handleMessage(const Message&amp; message) = 0;
+};
+</code></pre><p>基类 MessageHandler 只声明了 handleMessage 接口，而实际上实现的确实子类 WeakMessageHandler，如下：</p>
+<pre><code>class WeakMessageHandler : public MessageHandler {
+protected:
+    virtual ~WeakMessageHandler();
+
+public:
+    WeakMessageHandler(const wp&lt;MessageHandler&gt;&amp; handler);
+    virtual void handleMessage(const Message&amp; message);
+
+private:
+    wp&lt;MessageHandler&gt; mHandler;
+};
+
+WeakMessageHandler::WeakMessageHandler(const wp&lt;MessageHandler&gt;&amp; handler) :
+        mHandler(handler) {
+}
+
+WeakMessageHandler::~WeakMessageHandler() {
+}
+</code></pre><p>子类 WeakMessageHandler 通过弱引用方式维持了 MessageHandler 类型的 handler 对象，其 handleMessage 方法如下：</p>
+<pre><code>void WeakMessageHandler::handleMessage(const Message&amp; message) {
+    sp&lt;MessageHandler&gt; handler = mHandler.promote();
+    if (handler != NULL) {
+        handler-&gt;handleMessage(message);
+    }
+}
+</code></pre><p>代码中并未直接处理 handleMessage，因为弱饮用的关系，可能饮用对象不存在，需要尝试升级到强引用 mHandler.promote，然后再处理 handleMessage。关于智能指针的引用计数，有需要请参考之前的博文。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>通过以上内容的介绍，相信读者对安卓中的 Handler 通信机制有更深的了解。本文通过源码分析的方式，从 Java 到 JNI 到 Native，分别分析了 Handler、Looper、MessageQueue三者的关系，网上很多博主对其进行了总结，感觉也十分出众，这里本人也画了一幅小图来总结一下其之间的关系，如下：</p>
+<img src="/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png" class="Handler模型">
+<p>在分析 MessageQueue 的过程中，本人使用 Xmind 思维导图将函数之间的调用关系进行了相关的汇总，图片如下：</p>
+<img src="/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/MessageQueue.png" class="MessageQueue关系思维导图">
+<p>文章内容涉及 epoll 模型，强烈推荐读者了解一下 select，poll，epoll等高并发模型，在后续代码分析中将会如鱼得水。</p>
+<p><a href="https://891904833.gitee.io/fuckingcode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/#more">高并发模型推荐</a></p>
+<p>文件从邓凡平前辈的相关博文中汲取灵感，推荐博文如下：</p>
+<p><a href="https://blog.csdn.net/Innost/article/details/47252865" target="_blank" rel="noopener">参考链接</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/Handler/" rel="tag"># Handler</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/23/Linux系统编程之多路IO转接服务器/" rel="next" title="Linux系统编程之多路IO转接服务器">
+                <i class="fa fa-chevron-left"></i> Linux系统编程之多路IO转接服务器
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Java-层的三巨头"><span class="nav-number">1.</span> <span class="nav-text">Java 层的三巨头</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Handler"><span class="nav-number">1.1.</span> <span class="nav-text">Handler</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Handler-与-Looper-的绑定"><span class="nav-number">1.1.1.</span> <span class="nav-text">Handler 与 Looper 的绑定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Handler-实例化"><span class="nav-number">1.1.2.</span> <span class="nav-text">Handler 实例化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Handler-获取消息"><span class="nav-number">1.1.3.</span> <span class="nav-text">Handler 获取消息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Handler-发送消息、Runnable以及取消"><span class="nav-number">1.1.4.</span> <span class="nav-text">Handler 发送消息、Runnable以及取消</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Handler-处理消息"><span class="nav-number">1.1.5.</span> <span class="nav-text">Handler 处理消息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Looper"><span class="nav-number">1.2.</span> <span class="nav-text">Looper</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Looper-的使用"><span class="nav-number">1.2.1.</span> <span class="nav-text">Looper 的使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Looper-构造"><span class="nav-number">1.2.2.</span> <span class="nav-text">Looper 构造</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#prepare"><span class="nav-number">1.2.3.</span> <span class="nav-text">prepare</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#loop"><span class="nav-number">1.2.4.</span> <span class="nav-text">loop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#quit"><span class="nav-number">1.2.5.</span> <span class="nav-text">quit</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MessageQueue"><span class="nav-number">1.3.</span> <span class="nav-text">MessageQueue</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MessageQueue-的初始化"><span class="nav-number">1.3.1.</span> <span class="nav-text">MessageQueue 的初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#enqueueMessage-发送消息"><span class="nav-number">1.3.2.</span> <span class="nav-text">enqueueMessage 发送消息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#next-获取消息"><span class="nav-number">1.3.3.</span> <span class="nav-text">next 获取消息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#quit-退出"><span class="nav-number">1.3.4.</span> <span class="nav-text">quit 退出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#消息以及回调的删除"><span class="nav-number">1.3.5.</span> <span class="nav-text">消息以及回调的删除</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JNI-层分析"><span class="nav-number">2.</span> <span class="nav-text">JNI 层分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#nativeInit"><span class="nav-number">2.1.</span> <span class="nav-text">nativeInit</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nativeWake"><span class="nav-number">2.2.</span> <span class="nav-text">nativeWake</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nativePollOnce"><span class="nav-number">2.3.</span> <span class="nav-text">nativePollOnce</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Native-层三巨头"><span class="nav-number">3.</span> <span class="nav-text">Native 层三巨头</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#NativeMessageQueue"><span class="nav-number">3.1.</span> <span class="nav-text">NativeMessageQueue</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NativeMessageQueue-构造函数"><span class="nav-number">3.1.1.</span> <span class="nav-text">NativeMessageQueue 构造函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wake"><span class="nav-number">3.1.2.</span> <span class="nav-text">wake</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pollOnce"><span class="nav-number">3.1.3.</span> <span class="nav-text">pollOnce</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Looper（Native）"><span class="nav-number">3.2.</span> <span class="nav-text">Looper（Native）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Looper-的构造函数"><span class="nav-number">3.2.1.</span> <span class="nav-text">Looper 的构造函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wake-1"><span class="nav-number">3.2.2.</span> <span class="nav-text">wake</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pollOnce-1"><span class="nav-number">3.2.3.</span> <span class="nav-text">pollOnce</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mResponses-数据分析"><span class="nav-number">3.2.4.</span> <span class="nav-text">mResponses 数据分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#数据添加"><span class="nav-number">3.2.4.1.</span> <span class="nav-text">数据添加</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数据删除"><span class="nav-number">3.2.4.2.</span> <span class="nav-text">数据删除</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数据回调"><span class="nav-number">3.2.4.3.</span> <span class="nav-text">数据回调</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mMessageEnvelopes-数据分析"><span class="nav-number">3.2.5.</span> <span class="nav-text">mMessageEnvelopes 数据分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#MessageEnvelope-的发送"><span class="nav-number">3.2.5.1.</span> <span class="nav-text">MessageEnvelope 的发送</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#MessageEnvelope-的删除"><span class="nav-number">3.2.5.2.</span> <span class="nav-text">MessageEnvelope 的删除</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#MessageEnvelope-的回调"><span class="nav-number">3.2.5.3.</span> <span class="nav-text">MessageEnvelope 的回调</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MessageHandler"><span class="nav-number">3.3.</span> <span class="nav-text">MessageHandler</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

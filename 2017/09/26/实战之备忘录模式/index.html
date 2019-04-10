@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="设计模式,备忘录,实战,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="备忘录模式实战 前面文章依次介绍了Java设计模式中的备忘录模式以及其在Android源码中的实现，相信很多人和我一样，知其然但不知其所以然。俗话说时间是检验真理的唯一标准。现在就跟我来进行实战分析吧！ 本次采用一个简单的记事本案例，通过记事本的撤销，重做，保存等逻辑，使用备忘录模式对其代码重构。先看一下人人都会写的部分吧：   &amp;lt;LinearLayout android:layout_wi">
+<meta name="keywords" content="设计模式,备忘录,实战">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实战之备忘录模式">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2017/09/26/实战之备忘录模式/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="备忘录模式实战 前面文章依次介绍了Java设计模式中的备忘录模式以及其在Android源码中的实现，相信很多人和我一样，知其然但不知其所以然。俗话说时间是检验真理的唯一标准。现在就跟我来进行实战分析吧！ 本次采用一个简单的记事本案例，通过记事本的撤销，重做，保存等逻辑，使用备忘录模式对其代码重构。先看一下人人都会写的部分吧：   &amp;lt;LinearLayout android:layout_wi">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-06-21T01:33:18.439Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实战之备忘录模式">
+<meta name="twitter:description" content="备忘录模式实战 前面文章依次介绍了Java设计模式中的备忘录模式以及其在Android源码中的实现，相信很多人和我一样，知其然但不知其所以然。俗话说时间是检验真理的唯一标准。现在就跟我来进行实战分析吧！ 本次采用一个简单的记事本案例，通过记事本的撤销，重做，保存等逻辑，使用备忘录模式对其代码重构。先看一下人人都会写的部分吧：   &amp;lt;LinearLayout android:layout_wi">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2017/09/26/实战之备忘录模式/">
+
+
+
+
+
+  <title>实战之备忘录模式 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2017/09/26/实战之备忘录模式/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">实战之备忘录模式</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-26T16:53:46+08:00">
+                2017-09-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/设计模式/" itemprop="url" rel="index">
+                    <span itemprop="name">设计模式</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2017/09/26/实战之备忘录模式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2017/09/26/实战之备忘录模式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="备忘录模式实战"><a href="#备忘录模式实战" class="headerlink" title="备忘录模式实战"></a>备忘录模式实战</h3><ul>
+<li>前面文章依次介绍了Java设计模式中的<a href="https://juejin.im/post/59c8eb6951882564c5164c5f" target="_blank" rel="noopener">备忘录模式</a>以及其在<a href="https://juejin.im/post/59c9a976f265da06434b9a08" target="_blank" rel="noopener">Android源码中的实现</a>，相信很多人和我一样，知其然但不知其所以然。俗话说时间是检验真理的唯一标准。现在就跟我来进行实战分析吧！</li>
+<li><p>本次采用一个简单的记事本案例，通过记事本的撤销，重做，保存等逻辑，使用备忘录模式对其代码重构。先看一下人人都会写的部分吧：<br>   &lt;LinearLayout</p>
+<pre><code>android:layout_width=&quot;368dp&quot;
+android:layout_height=&quot;495dp&quot;
+android:orientation=&quot;vertical&quot;
+tools:layout_editor_absoluteX=&quot;8dp&quot;
+tools:layout_editor_absoluteY=&quot;8dp&quot;&gt;
+&lt;EditText
+    android:id=&quot;@+id/edit_text&quot;
+    android:layout_width=&quot;match_parent&quot;
+    android:layout_height=&quot;0dp&quot;
+    android:layout_weight=&quot;1&quot;
+    android:gravity=&quot;left&quot; /&gt;
+&lt;RelativeLayout
+    android:layout_margin=&quot;12dp&quot;
+    android:layout_width=&quot;match_parent&quot;
+    android:layout_height=&quot;wrap_content&quot;
+    android:layout_marginBottom=&quot;10dp&quot;&gt;
+    &lt;TextView
+        android:id=&quot;@+id/tv_save&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;
+        android:layout_centerInParent=&quot;true&quot;
+        android:layout_margin=&quot;12dp&quot;
+        android:text=&quot;保存&quot; /&gt;
+    &lt;TextView
+        android:id=&quot;@+id/tv_pre&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;
+        android:layout_margin=&quot;12dp&quot;
+        android:layout_toLeftOf=&quot;@id/tv_save&quot;
+        android:text=&quot;撤销&quot; /&gt;
+        &lt;TextView
+            android:id=&quot;@+id/tv_next&quot;
+            android:layout_width=&quot;wrap_content&quot;
+            android:layout_height=&quot;wrap_content&quot;
+            android:layout_margin=&quot;12dp&quot;
+            android:layout_toRightOf=&quot;@id/tv_save&quot;
+            android:text=&quot;重做&quot; /&gt;
+
+    &lt;/RelativeLayout&gt;
+
+&lt;/LinearLayout&gt;
+</code></pre><p>xml布局代码，主要有三个逻辑（撤销、保存、重做）以及一个edittext空间进行数据的编辑。</p>
+</li>
+<li><p>Activity中主要进行控件初始化，点击事件的监听，代码如下：</p>
+<pre><code>public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private TextView tvPre;//撤销
+    private TextView tvSave;//保存
+    private TextView tvNext;//重做
+    private EditText etText;//编辑器
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        initViews();
+        setOnClick();
+    }
+
+    private void initViews() {
+        tvPre = (TextView) findViewById(R.id.tv_pre);
+        tvSave = (TextView) findViewById(R.id.tv_save);
+        tvNext = (TextView) findViewById(R.id.tv_next);
+        etText = (EditText) findViewById(R.id.edit_text);
+    }
+
+    private void setOnClick() {
+        tvPre.setOnClickListener(this);
+        tvSave.setOnClickListener(this);
+        tvNext.setOnClickListener(this);
+    }
+</code></pre></li>
+<li><p>撤销、保存、重做逻辑的具体实现（CareTaker作用）：</p>
+<pre><code>@Override
+public void onClick(View view) {
+    int id = view.getId();
+    switch (id) {
+        case R.id.tv_pre:
+            //获取前一个存档信息（撤销）
+            restoreeditText(getPreMemoto());
+            makeToast(&quot;撤销：&quot;);
+            break;
+        case R.id.tv_save:
+            //保存记录信息
+            saveMemoto(createMemotoForEditText());
+            makeToast(&quot;保存：&quot;);
+            break;
+        case R.id.tv_next:
+            //获取下一条记录（重做）
+            restoreeditText(getNextMemoto());
+            makeToast(&quot;重做：&quot;);
+            break;
+    }
+}
+
+private void makeToast(String msg) {
+    Toast.makeText(this, msg + etText.getText() +
+                    &quot;光标位置&quot; + etText.getSelectionStart(),
+            Toast.LENGTH_SHORT).show();
+    System.out.println(msg + etText.getText() +
+            &quot;光标位置&quot; + etText.getSelectionStart());
+}
+</code></pre></li>
+<li><p>备忘录的数据操作部分，可以保存30次操作记录，主要包括初始化、获取前一个存放信息、获取后一个存档信息以及恢复数据等逻辑。相当于Originator作用。</p>
+<pre><code>//最大存储数量
+private static final int MAX = 30;
+//存储30条记录
+List&lt;Memoto&gt; mMemoto = new ArrayList&lt;Memoto&gt;(MAX);
+int mIndex = 0;
+
+/**
+ * 保存备忘录
+ */
+public void saveMemoto(Memoto memoto) {
+    if (mMemoto.size() &gt; MAX) {
+        mMemoto.remove(0);
+    }
+    mMemoto.add(memoto);
+    mIndex = mMemoto.size() - 1;
+}
+/**
+ * 获取前一个存档，相当于撤销
+ *
+ * @return
+ */
+public Memoto getPreMemoto() {
+    mIndex = mIndex &gt; 0 ? --mIndex : mIndex;
+    return mMemoto.get(mIndex);
+}
+/**
+ * 获取下一个存档，相当于重做
+ *
+ * @return
+ */
+public Memoto getNextMemoto() {
+    mIndex = mIndex &lt; mMemoto.size() - 1 ? ++mIndex : mIndex;
+    return mMemoto.get(mIndex);
+}
+/**
+ * 为编辑器创建Memoto对象
+ *
+ * @return
+ */
+private Memoto createMemotoForEditText() {
+    Memoto memoto = new Memoto();
+    memoto.cursor = etText.getSelectionStart();
+    memoto.text = etText.getText().toString();
+    return memoto;
+}
+/**
+ * 恢复编辑器状态
+ *
+ * @param memoto
+ */
+private void restoreeditText(Memoto memoto) {
+    etText.setText(memoto.text);
+    etText.setSelection(memoto.cursor);
+}
+</code></pre></li>
+<li><p>Memot备忘录数据，其中记录数据的字符以及游标信息</p>
+<pre><code>/**
+ * Created by allies on 17-9-26.
+ * 存储edittext的光标和内容
+ */
+
+public class Memoto {
+    //字符数据
+    public String text;
+    //游标信息
+    public int cursor;
+}
+</code></pre></li>
+</ul>
+<p>*由上面可以看出，记事本的基本数据编辑、保存，以及特有的撤销操作和重做逻辑都已经实现。相信很多人上面的代码都可以不假思索的信手拈来，但是既然我们学习了备忘录模式，就要对其代码进行重构，学以致用方能行以千里。</p>
+<hr>
+<p><strong>以上代码的缺点：</strong></p>
+<p><em>Activity内逻辑众多，既要负责View的操作逻辑，还要管理记事本的记录、修改编辑器的状态，也就是Originator与CareTaker功能耦合在一起，造成类型膨胀，后续难以维护。我们需要优化的是将Activity中的保存数据的逻辑、职责分离出去，使每个类的职责都分工明确，降低代码之间的耦合度。</em></p>
+<ul>
+<li>优化步骤：</li>
+</ul>
+<ol>
+<li><p>将Activity中的CareTaker部分抽取出来，明确Originator与CreaTaker的功能。新建一个NoteCareTaker类，负责管理Memoto对象，包括撤销、保存、重做部分的逻辑（注意不对元数据进行修改操作）。</p>
+<pre><code>/**
+ * Created by allies on 17-9-26.
+ * 备忘录CareTaker部分逻辑
+ */
+public class NoteCareTaker {
+    //最大存储数量
+    private static final int MAX = 30;
+    //存储30条记录
+    List&lt;Memoto&gt; mMemoto = new ArrayList&lt;Memoto&gt;(MAX);
+    int mIndex = 0;
+    /**
+     * 保存备忘录
+     */
+    public void saveMemoto(Memoto memoto) {
+        if (mMemoto.size() &gt; MAX) {
+            mMemoto.remove(0);
+        }
+        mMemoto.add(memoto);
+        mIndex = mMemoto.size() - 1;
+    }
+    /**
+     * 获取前一个存档，相当于撤销
+     *
+     * @return
+     */
+    public Memoto getPreMemoto() {
+        mIndex = mIndex &gt; 0 ? --mIndex : mIndex;
+        return mMemoto.get(mIndex);
+    }
+    /**
+     * 获取下一个存档，相当于重做
+     *
+     * @return
+     */
+    public Memoto getNextMemoto() {
+        mIndex = mIndex &lt; mMemoto.size() - 1 ? ++mIndex : mIndex;
+        return mMemoto.get(mIndex);
+    }
+}
+</code></pre><p><em>NoteCareTaker中会维护一个备忘录列表，使用mIndex标识编辑器当前的记录点，可以通过相应的方法获取数据的前一个、后一个记录信息以及保存记录信息。</em></p>
+</li>
+<li><p>下面就是对Originator作用的代码重构。我们先来分析一下Originator的作用是什么？在第一篇中我们明确指出Originator作用是负责创建一个备忘录，可以记录、恢复自身的内部状态。这里我们可以看出，其可以直接操作元数据信息，也就是和数据信息耦合度最高的部分，其自身需要直接访问Memoto信息，以便通过这些信息存储和恢复数据等操作。此外最重要的是可以创建备忘录，也就是createMemoto的操作在这里执行。</p>
+<pre><code>public class NoteEditText extends EditText {
+    public NoteEditText(Context context) {
+        this(context,null);
+    }
+    public NoteEditText(Context context, AttributeSet attrs) {
+        this(context, attrs,0);
+    }
+    public NoteEditText(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+    }
+    /**
+     * 创建备忘录对象，存储元数据信息
+     * @return
+     */
+    public Memoto createMemoto(){
+        Memoto memoto = new Memoto();
+        memoto.text = getText().toString();
+        memoto.cursor = getSelectionStart();
+        return  memoto;
+    }
+    /**
+     * 从备忘录恢复数据
+     * @param memoto
+     */
+    public void restoreMemoto(Memoto memoto){
+        setText(memoto.text);
+        setSelection(memoto.cursor);
+    }
+}
+</code></pre><p><em>从上面分析我们知道和数据接触最深的就是EditText了，我们这里直接覆写一个NoteEditTExt继承EditText，在其内部组织负责备忘录的创建以及恢复操作。这里也就突出了Originator的创建以及恢复状态的作用。</em></p>
+</li>
+<li><p>之后便是Activity中的具体操作逻辑，其直接通过自定义的NoteEditText空间创建Memoto备忘录，然后其撤销、保存、重做等逻辑不在Activity内部实现，而是转交给了CareTaker来实现。代码如下：</p>
+<pre><code>public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private TextView tvPre;//撤销
+    private TextView tvSave;//保存
+    private TextView tvNext;//重做
+    private NoteEditText etText;//自定义的编辑器
+    //新建Caretaker对象，负责备忘录的撤销，恢复以及保存等操作
+    NoteCareTaker mCareTaker = new NoteCareTaker();
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        initViews();
+        setOnClick();
+    }
+    private void initViews() {
+        tvPre = (TextView) findViewById(R.id.tv_pre);
+        tvSave = (TextView) findViewById(R.id.tv_save);
+        tvNext = (TextView) findViewById(R.id.tv_next);
+        etText = (NoteEditText) findViewById(R.id.edit_text);
+    }
+    private void setOnClick() {
+        tvPre.setOnClickListener(this);
+        tvSave.setOnClickListener(this);
+        tvNext.setOnClickListener(this);
+    }
+    @Override
+    public void onClick(View view) {
+        int id = view.getId();
+        switch (id) {
+            case R.id.tv_pre:
+                etText.restoreMemoto(mCareTaker.getPreMemoto());
+                makeToast(&quot;撤销：&quot;);
+                break;
+            case R.id.tv_save:
+                //1.首先创建备忘录对象,创建时候就已经记录了元数据信息
+                Memoto mMemoto = etText.createMemoto();
+                //通过caretaker，保存备忘录信息
+                mCareTaker.saveMemoto(mMemoto);
+                makeToast(&quot;保存：&quot;);
+                break;
+            case R.id.tv_next:
+                //重做
+                etText.restoreMemoto(mCareTaker.getNextMemoto());
+                makeToast(&quot;重做：&quot;);
+                break;
+        }
+    }
+    private void makeToast(String msg) {
+        Toast.makeText(this, msg + etText.getText() +
+                        &quot;光标位置&quot; + etText.getSelectionStart(),
+                Toast.LENGTH_SHORT).show();
+        System.out.println(msg + etText.getText() +
+                &quot;光标位置&quot; + etText.getSelectionStart());
+    } 
+}
+</code></pre><p><em>从上面可以看出：Activity中的逻辑简单化了不止一点两点，各个类的职责更加单一、明确。界面相关的类型和业务处理逻辑的类型隔离开来，避免类型膨胀，逻辑混乱等问题。在优化代码前一定要着重思考各个类的主要职责，明确他们之间的关系和功能，使得各个类各司其职，不可越过雷池半步。往往在这个时候，就要多看看这个设计模式中，各个角色所担任的职责，找准切入点在进一步优化重构代码。</em></p>
+</li>
+</ol>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ul>
+<li>优点</li>
+</ul>
+<ol>
+<li>给用户提供一种可以恢复状态的机制，能够使用户方便的恢复到某个历史状态</li>
+<li>实现数据信息的封装，使得用户不用关心其状态的保存细节</li>
+</ol>
+<ul>
+<li>缺点<br>消耗资源，如果类的成员变多，势必会占用较大的资源，而且每一次保存都会消耗一定的内存（降低耦合导致类增多，各个类分工明确单一的后果）</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/设计模式/" rel="tag"># 设计模式</a>
+          
+            <a href="/fuckingcode/tags/备忘录/" rel="tag"># 备忘录</a>
+          
+            <a href="/fuckingcode/tags/实战/" rel="tag"># 实战</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2017/09/26/Android源码分析之备忘录模式/" rel="next" title="Android源码分析之备忘录模式">
+                <i class="fa fa-chevron-left"></i> Android源码分析之备忘录模式
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2017/09/27/设计模式之Builder模式/" rel="prev" title="设计模式之Builder模式">
+                设计模式之Builder模式 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#备忘录模式实战"><span class="nav-number">1.</span> <span class="nav-text">备忘录模式实战</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">1.1.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

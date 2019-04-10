@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="HAL驱动,项目实战,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="Android系统HAL层驱动实现原理是基于谷歌提供的框架来展开，从而更好的规避因底层使用linux内核开源核心代码的要求，同时因为其安卓本身遵循Apache Lincence协议，允许厂商修改而不必公开修改的源代码。本文章就其HAL层（硬件抽象层），主要介绍此框架的组成部分、原理框架以及调用流程，为后续的HAL驱动具体实现提供相关的理论基础。">
+<meta name="keywords" content="HAL驱动,项目实战">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统HAL层驱动基础总结">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/08/18/Android系统HAL层驱动分析/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="Android系统HAL层驱动实现原理是基于谷歌提供的框架来展开，从而更好的规避因底层使用linux内核开源核心代码的要求，同时因为其安卓本身遵循Apache Lincence协议，允许厂商修改而不必公开修改的源代码。本文章就其HAL层（硬件抽象层），主要介绍此框架的组成部分、原理框架以及调用流程，为后续的HAL驱动具体实现提供相关的理论基础。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/08/18/Android系统HAL层驱动分析/hal_jiagou.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/08/18/Android系统HAL层驱动分析/hal_liucheng.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/08/18/Android系统HAL层驱动分析/hal_zongjie.png">
+<meta property="og:updated_time" content="2018-08-22T06:16:38.662Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android系统HAL层驱动基础总结">
+<meta name="twitter:description" content="Android系统HAL层驱动实现原理是基于谷歌提供的框架来展开，从而更好的规避因底层使用linux内核开源核心代码的要求，同时因为其安卓本身遵循Apache Lincence协议，允许厂商修改而不必公开修改的源代码。本文章就其HAL层（硬件抽象层），主要介绍此框架的组成部分、原理框架以及调用流程，为后续的HAL驱动具体实现提供相关的理论基础。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/08/18/Android系统HAL层驱动分析/hal_jiagou.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/08/18/Android系统HAL层驱动分析/">
+
+
+
+
+
+  <title>Android系统HAL层驱动基础总结 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/08/18/Android系统HAL层驱动分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android系统HAL层驱动基础总结</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-18T10:03:04+08:00">
+                2018-08-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/HAL驱动/" itemprop="url" rel="index">
+                    <span itemprop="name">HAL驱动</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/HAL驱动/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/08/18/Android系统HAL层驱动分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/08/18/Android系统HAL层驱动分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>Android系统HAL层驱动实现原理是基于谷歌提供的框架来展开，从而更好的规避因底层使用linux内核开源核心代码的要求，同时因为其安卓本身遵循Apache Lincence协议，允许厂商修改而不必公开修改的源代码。本文章就其HAL层（硬件抽象层），主要介绍此框架的组成部分、原理框架以及调用流程，为后续的HAL驱动具体实现提供相关的理论基础。</strong></p>
+<a id="more"></a>
+<h3 id="开胃菜-两种开源协议"><a href="#开胃菜-两种开源协议" class="headerlink" title="开胃菜-两种开源协议"></a>开胃菜-两种开源协议</h3><h4 id="GPL协议"><a href="#GPL协议" class="headerlink" title="GPL协议"></a>GPL协议</h4><ul>
+<li>GPL，是GNU General Public License的缩写，是GNU通用公共授权非正式的中文翻译。它并非由自由软件基金会所发表，亦非使用GNU通用公共授权的软件的法定发布条款─只有GNU通用公共授权英文原文的版本始具有此等效力。</li>
+<li>Linux内核源代码遵循的是GPL协议，即对内核源代码进行修改必须将其公开。这带来的问题是如果将驱动的实现细节封装在内核中，就必须公开源代码，这无疑是大大的损坏了众多驱动厂商的经济利益。</li>
+</ul>
+<h4 id="Apache-Licence-协议"><a href="#Apache-Licence-协议" class="headerlink" title="Apache Licence 协议"></a>Apache Licence 协议</h4><ul>
+<li>apache licence（Apache许可证），是Apache软件基金会发布的一个自由软件许可证。</li>
+<li>安卓系统源代码遵循此协议，允许厂商自由修改源代码而不必公开实现的细节。如果可以讲相关的驱动实现细节放到源代码中（及不在内核空间实现），使驱动上移到用户空间中，就能很好的规避这个问题，既维护了第三方厂商的利益，而且还有助于商业的快速推广。</li>
+</ul>
+<h3 id="HAL层驱动总体概括"><a href="#HAL层驱动总体概括" class="headerlink" title="HAL层驱动总体概括"></a>HAL层驱动总体概括</h3><h4 id="基础架构概括"><a href="#基础架构概括" class="headerlink" title="基础架构概括"></a>基础架构概括</h4><p>由于安卓本身基于Linux系统，与硬件直接打交道的驱动实现必须实现在内核空间中。但是由于Linxu协议问题，要求必须公示修改的源代码。最好的方法就是将驱动分别实现于内核空间和用户空间。</p>
+<ol>
+<li>内核空间：以硬件驱动模块形式支持，但是只是简单的提供硬件的访问通道。</li>
+<li>用户空间：以硬件抽象层模块形式支持，封装硬件的实现细节和参数。</li>
+</ol>
+<p>这样，通过上面的分析可以看出，这种折中的方式很好的规避协议带来的问题。驱动开发者只需要在内核中实现相关驱动的硬件硬件接口，将具体驱动的实现细节上升到HAl层实现即可，完全可以将自己的商业利益最大化。</p>
+<h4 id="HAL架构"><a href="#HAL架构" class="headerlink" title="HAL架构"></a>HAL架构</h4><p>HAL层中重要的三个结构体如下图所示，所有的驱动开发厂商都依照这个框架进行实现自己的驱动程序。</p>
+<img src="/fuckingcode/2018/08/18/Android系统HAL层驱动分析/hal_jiagou.png" class="HAL层架构示意图">
+<h5 id="函数指针"><a href="#函数指针" class="headerlink" title="函数指针"></a>函数指针</h5><p>由于驱动层的开发基本都使用c/c++实现，但是由于c没有类似面向对象的类概念，但是有结构体可以代替。但是结构体又不能直接存储函数实现，就必须依照指针声明函数来实现，在结构体声明完毕后，需要将结构体的指针进行赋值即可实现类似面向对象的功能。</p>
+<h5 id="三个重要的结构体"><a href="#三个重要的结构体" class="headerlink" title="三个重要的结构体"></a>三个重要的结构体</h5><ol>
+<li>struct hw_device_t： 硬件抽象层的设备基类，所有的具体设备驱动必须实现此基类，其内部函数指针others由用户自行定义，扩充自己的驱动实现。</li>
+<li>struct hw_module_t： 硬件抽象层的模块基类，一个模块中可以包含多个设备，驱动开发者同样要对这个基类实现自己的驱动模块。内部含有一个重要的成员methods，其对应结构体hw_module_methods_t，在驱动的实现中就静态的实现函数的指向，方便后续的打开操作。其内部others为用户扩充驱动实现。</li>
+<li>struct hw_module_methods_t： 硬件抽象层的函数表定义。其内部只有一个重要的指针函数 open()，其具体功能是协助模块打开设备并完成结构体中函数指针的赋值等重要操作。</li>
+</ol>
+<h5 id="模块导出符号HMI"><a href="#模块导出符号HMI" class="headerlink" title="模块导出符号HMI"></a>模块导出符号HMI</h5><p>在谷歌硬件抽象层模块的编写规范中，其硬件抽象层的每一个模块都必须存在一个符号 <strong><em>HAL_MODULE_INFO_SYM</em></strong>，此符号宏定义于框架中，值为“HMI”。其指向一个自定义的硬件抽象层模块结构体，方便系统加载*.so时辩之为对应的硬件抽象层驱动模块，在后面的模版代码中会详细介绍。</p>
+<h5 id="驱动的命名"><a href="#驱动的命名" class="headerlink" title="驱动的命名"></a>驱动的命名</h5><p>HAL模块驱动以*.so文件存在于 /system/lib/hw 和 /system/lib64/hw 下，其拥有独特的命名方式，具体参考可在 hardware/libandroid/hardware.c 中。</p>
+<pre><code>/**
+ * There are a set of variant filename for modules. The form of the filename
+ * is &quot;&lt;MODULE_ID&gt;.variant.so&quot; so for the led module the Dream variants
+ * of base &quot;ro.product.board&quot;, &quot;ro.board.platform&quot; and &quot;ro.arch&quot; would be:
+ *
+ * led.trout.so
+ * led.msm7k.so
+ * led.ARMV6.so
+ * led.default.so
+ */
+</code></pre><ol>
+<li>硬件抽象层模块文件的命名规范为“&lt;MODULE_ID&gt;.variant.so”,</li>
+<li>其中，MODULE_ID代表模块的ID，variant表示四个系统属性 ro.hardware, ro.pproduct.board, ro.board.platform, ro.arch 之一。</li>
+<li>系统在加载硬件抽象层模块是会依次取出其值，根据对应值到文件名称，检查文件是否存在。存在便找到了加载的硬件抽象层模块，否则便继续查找下一个属性。</li>
+<li>如果四个属性对应的文件都不存在，便使用“&lt;MODULE_ID&gt;.defaule.so”作为加载的硬件抽象层模块文件。</li>
+</ol>
+<h5 id="驱动的调用"><a href="#驱动的调用" class="headerlink" title="驱动的调用"></a>驱动的调用</h5><p>HAL框架提供了一个公用的函数 hw_get_module 实现一键加载hal驱动。其大致调用流程如下：</p>
+<ol>
+<li>传入模块id，根据module_id去查找注册在当前系统中与id对应的硬件对象</li>
+<li>然后载入(load)其相应的HAL层驱动模块的 *so 文件</li>
+<li>从*.so里查找”HMI”这个符号，如果在so 代码里有定义的函数名或变量名为HMI，返回其地址</li>
+</ol>
+<p>图示如下：</p>
+  <img src="/fuckingcode/2018/08/18/Android系统HAL层驱动分析/hal_liucheng.png" class="hal驱动调用图示一览">
+<h3 id="HAL模版代码"><a href="#HAL模版代码" class="headerlink" title="HAL模版代码"></a>HAL模版代码</h3><h4 id="头文件"><a href="#头文件" class="headerlink" title="头文件"></a>头文件</h4><p>HAL层头文件路径一般位于<strong>/hardware/libhardware/include/hardware/*</strong>下。头文件除了在编写中还需要#include &lt;hardware/hardware.h&gt;这个HAL层关键的头文件，其文件定于本路径的上级include同级目录下。</p>
+<p>头文件模版代码如下：</p>
+<pre><code>#ifndef ANDROID_LED_INTERFACE_H
+#define ANDROID_LED_INTERFACE_H
+#include &lt;hardware/hardware.h&gt;
+
+__BEGIN_DECLS
+
+#define LED_HARDWARE_MODULE_ID &quot;led&quot;
+#define LED_HARDWARE_DEVICE_ID &quot;led&quot;
+
+typedef struct led_module_t {
+    struct hw_module_t common;
+} led_module_t;
+
+typedef struct led_device_t {
+    struct hw_device_t common;
+    others (void*);
+} led_device_t;
+
+static inline int led_device_open(const struct hw_module_t* module,
+    led_device_t** dev){
+    return module-&gt;methods-&gt;open(module,LED_HARDWARE_DEVICE_ID,
+        (struct hw_device_t**) dev);
+}
+
+static inline int led_device_close(led_device_t* dev){
+    return dev-&gt;common.close(&amp;dev-&gt;common);
+}
+
+__END_DECLS
+
+#endif
+</code></pre><ol>
+<li>模版代码中，宏定义模块及设备id，方便c层文件导包导入so模块。</li>
+<li>结构体 struct led_module_t 是用户扩充框架中的 struct hw_module_t 结构体，其内部成员commom必须放在第一个位置，保证led_module_t的地址和hw_module_t相一致。此模版为源码中约定俗成的固定写法，用户实现参考即可。</li>
+<li>结构体 struct led_device_t 扩充框架中的 struct hw_device_t 结构体。其为设备的具体信息，包括tag，version，id等等。后年的赋值操作会涉及到。</li>
+<li>typedef 用于提前声明变量，便于在后续导包开发中避免多次声明指定的结构体变量。</li>
+<li>两个静态inline内联函数，方便模块设备的打开以及关闭。其也可不必放在头文件中。这里参考源码中的形式放于此处。</li>
+</ol>
+<h4 id="驱动本体实现"><a href="#驱动本体实现" class="headerlink" title="驱动本体实现"></a>驱动本体实现</h4><p>驱动的本体实现代码路径位于 <strong>/hardware/libhardware/modules/led/*</strong>下，其中的最后的led为实际模块的名称文件夹。其同级文件下还有一个mk编译文件，方便生成指定的动态链接库。</p>
+<p>具体实现参考代码如下：</p>
+<pre><code>#define LOG_TAG &quot;LedHALStub&quot;
+
+#include &lt;hardware/hardware.h&gt;
+#include &lt;hardware/led.h&gt;
+#include &lt;cutils/log.h&gt;
+#include &lt;malloc.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;math.h&gt;
+#include &lt;memory.h&gt;
+
+#define MODULE_NAME &quot;Led&quot;
+#define MODULE_AUTHOR &quot;891904833@qq.com&quot;
+
+static int led_set_on(led_device_t* dev) {...}
+
+static int led_set_off(led_device_t* dev) {...}
+
+static int led_getCount(led_device_t* device) {...}
+
+static int led_close(hw_device_t* device) {
+  if(device){
+    free(device);
+  }
+  return 0;
+}
+
+static int led_open(const hw_module_t* module, const char* id,
+    hw_device_t** device) {
+
+        led_device_t *dev = (led_device_t *)calloc(1, sizeof(led_device_t));
+
+        if(!dev) {
+            ALOGE(&quot;Failed to alloc space for led_device_t.&quot;);
+            return -EFAULT;
+        }
+
+        memset(dev, 0, sizeof(struct led_device_t));
+
+        dev-&gt;common.tag = HARDWARE_DEVICE_TAG;
+        dev-&gt;common.version = 0;
+        dev-&gt;common.module = (struct hw_module_t*)module;
+        dev-&gt;common.close = led_close;
+
+        dev-&gt;set_on = led_set_on;
+        dev-&gt;set_off = led_set_off;
+        dev-&gt;getCount = led_getCount;
+
+        *device = &amp;dev-&gt;common;
+
+        ALOGI(&quot;Open led_device successfully!&quot;);
+        return 0;
+}
+
+static struct hw_module_methods_t my_methods = {
+    .open = led_open,
+};
+
+struct led_module_t HAL_MODULE_INFO_SYM = {
+    .common = {
+        .tag = HARDWARE_MODULE_TAG,
+        .version_major = 1,
+        .version_minor = 0,
+        .id = LED_HARDWARE_MODULE_ID,
+        .name = MODULE_NAME,
+        .author = MODULE_AUTHOR,
+        .methods = &amp;my_methods,
+    },
+};
+</code></pre><ol>
+<li>首先代码最后声明结构体 led_module_t HAL_MODULE_INFO_SYM ，方便系统根据模块id导入合适的库文件，其第一个成员变量的类型必须为 hw_module_t，从中我们可以看出common即为指定的结构体变量。其次是common中的第一成员id，必须指定为HARDWARE_MODULE_TAG。方便用户调用 hw_get_module 传入模块名称找到对应的模块设备。同时此模块的另些属性也在此期间进行赋值。</li>
+<li>struct hw_module_methods_t 为模版结构体中重要的函数指针映射。其来源于导库操作中的最后一个成员的赋值 .methods = &amp;my_methods，通过函数指针其最终指向led_open这个方法，协助设备的打开操作。</li>
+<li>led_open 方法具体为设备的打开过程。通过 calloc 操作分配内存，memset 实现内存的初始化。其中需要注意设备的 close 方法属于 dev-&gt;common.close 内。通过指针赋值，预先将结构体中相关的函数指针填充，为后续调用做基础。</li>
+<li>最上面的static int（void）** 方法为用户自定义驱动具体实现，这里省略。</li>
+<li>在头文件中涉及到设备的打开，具体是通过框架提供的 hw_module_t 结构体中的 methods 方法 open 函数实现，  即 module-&gt;methods-&gt;open(module,LED_HARDWARE_DEVICE_ID,<br>(struct hw_device_t**) dev)；</li>
+<li>同样设备的关闭操作通过 struct hw_device_t 的 close 方法实现，即 dev-&gt;common.close(&amp;dev-&gt;common)；</li>
+</ol>
+<h4 id="打开驱动设备代码预览"><a href="#打开驱动设备代码预览" class="headerlink" title="打开驱动设备代码预览"></a>打开驱动设备代码预览</h4><p>驱动本体实现完成后，通过mk文件打包成 *.so 文件,生成于 /system/lib/hw 和 /system/lib64/hw 下。通过上层c文件实现驱动的打开调用，基本参考代码流程如下：</p>
+<pre><code>static jint led_init(JNIEnv *env, jobject instance){
+
+     led_module_t* module;
+
+     ALOGI(&quot;led_init start ...&quot;);
+
+     if (hw_get_module(LED_HARDWARE_MODULE_ID, (hw_module_t const**)&amp;module) == 0) {
+
+         ALOGI(&quot;Device led found...&quot;);
+
+         if (led_device_open(&amp;(module-&gt;common), &amp;mLedDevice ) == 0) {
+
+             ALOGI(&quot;led_init success!!!&quot;);           
+             return 0;
+         }
+
+         ALOGE(&quot;led_init error!!!&quot;);
+     }
+
+     ALOGI(&quot;hw_get_module function call error!!!&quot;);
+
+     return -1;
+ }
+</code></pre><ol>
+<li>通过 hw_get_module 方法，传入模块id，找到指定模块。</li>
+<li>通过 led_device_open 方法，打开设备，将设备实例放于变量 mLedDevice 中。</li>
+<li>通过获取到的设备实例 mLedDevice ，直接调用其具体驱动方法即可。</li>
+</ol>
+<h3 id="HAL层驱动调用总结"><a href="#HAL层驱动调用总结" class="headerlink" title="HAL层驱动调用总结"></a>HAL层驱动调用总结</h3><p>根据HAL层驱动框架的介绍，分析出驱动模块的具体流程,首先来看一下代码的总体结构，如下图：</p>
+<img src="/fuckingcode/2018/08/18/Android系统HAL层驱动分析/hal_zongjie.png" class="HAL驱动调用流程">
+<h4 id="找到-hw-get-module"><a href="#找到-hw-get-module" class="headerlink" title="找到 hw_get_module"></a>找到 hw_get_module</h4><p>根据HAL框架提供的公有函数 hw_get_module ，传入模块设备名称，在导入的so库文件中根据 HAL_MODULE_INFO_SYM 识别出驱动模块后，找到对应的具体 id 驱动模块，并在运行时完成结构体中相关指针函数的赋值。其中涉及到open方法的映射，方便设备的进一步打开。</p>
+<h4 id="open-打开设备分配内存"><a href="#open-打开设备分配内存" class="headerlink" title="open 打开设备分配内存"></a>open 打开设备分配内存</h4><p>在上述流程走完之后，相关结构体中的函数指针均已经赋值完成，继而调用框架提供的 hw_module_t 结构体中的 methods 方法 open 函数实现设备的打开，设备打开过程中，便实现了用户自有驱动实现方法函数指针的赋值过程，此流程走完之后，便可以通过自定的 结构体（扩充 hw_device_t 实现的）调用自有驱动逻辑。</p>
+<h4 id="获取自有设备驱动实例"><a href="#获取自有设备驱动实例" class="headerlink" title="获取自有设备驱动实例"></a>获取自有设备驱动实例</h4><p>在open方法调用后，完成了设备实例结构体内具体函数指针的赋值，此时用户便可以通过获取的设备实例直接调用自有结构体内的指针函数，实现驱动的具体调用。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>通过上面的介绍分析，总体知晓了安卓硬件抽象层的工作流程，后续会针对此部分来一篇实战博客进一步加强。谷歌通过硬件抽象层框架，成功将驱动分别实现在内核和用户空间，通过内核空间和用户空间的配合，实现驱动的无缝链接。此举一方面维护了众多厂商的商业利益，另一方面也遵循了GPL协议和Apache Licence协议，真可谓一举两的。在这里不由得赞叹谷歌架构师的超高水平。</p>
+<h4 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h4><p>参考书籍文章如下：</p>
+<blockquote>
+<p>高焕堂架构师系列视频</p>
+</blockquote>
+<blockquote>
+<p>Android系统源代码情景分析</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/HAL驱动/" rel="tag"># HAL驱动</a>
+          
+            <a href="/fuckingcode/tags/项目实战/" rel="tag"># 项目实战</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/07/30/Binder系统分析之SM大管家的获取流程/" rel="next" title="Binder系统分析之SM大管家的获取流程">
+                <i class="fa fa-chevron-left"></i> Binder系统分析之SM大管家的获取流程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/" rel="prev" title="Android系统HAL层驱动开发实战">
+                Android系统HAL层驱动开发实战 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#开胃菜-两种开源协议"><span class="nav-number">1.</span> <span class="nav-text">开胃菜-两种开源协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#GPL协议"><span class="nav-number">1.1.</span> <span class="nav-text">GPL协议</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Apache-Licence-协议"><span class="nav-number">1.2.</span> <span class="nav-text">Apache Licence 协议</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HAL层驱动总体概括"><span class="nav-number">2.</span> <span class="nav-text">HAL层驱动总体概括</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#基础架构概括"><span class="nav-number">2.1.</span> <span class="nav-text">基础架构概括</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HAL架构"><span class="nav-number">2.2.</span> <span class="nav-text">HAL架构</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#函数指针"><span class="nav-number">2.2.1.</span> <span class="nav-text">函数指针</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#三个重要的结构体"><span class="nav-number">2.2.2.</span> <span class="nav-text">三个重要的结构体</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#模块导出符号HMI"><span class="nav-number">2.2.3.</span> <span class="nav-text">模块导出符号HMI</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#驱动的命名"><span class="nav-number">2.2.4.</span> <span class="nav-text">驱动的命名</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#驱动的调用"><span class="nav-number">2.2.5.</span> <span class="nav-text">驱动的调用</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HAL模版代码"><span class="nav-number">3.</span> <span class="nav-text">HAL模版代码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#头文件"><span class="nav-number">3.1.</span> <span class="nav-text">头文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#驱动本体实现"><span class="nav-number">3.2.</span> <span class="nav-text">驱动本体实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#打开驱动设备代码预览"><span class="nav-number">3.3.</span> <span class="nav-text">打开驱动设备代码预览</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HAL层驱动调用总结"><span class="nav-number">4.</span> <span class="nav-text">HAL层驱动调用总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#找到-hw-get-module"><span class="nav-number">4.1.</span> <span class="nav-text">找到 hw_get_module</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#open-打开设备分配内存"><span class="nav-number">4.2.</span> <span class="nav-text">open 打开设备分配内存</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#获取自有设备驱动实例"><span class="nav-number">4.3.</span> <span class="nav-text">获取自有设备驱动实例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#其他"><span class="nav-number">5.1.</span> <span class="nav-text">其他</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

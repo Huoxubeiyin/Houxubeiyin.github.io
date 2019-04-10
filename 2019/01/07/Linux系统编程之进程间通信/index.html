@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="pipe fifo 内存共享">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="之前文件介绍了Linux下进程的创建，执行以及回收，此章节就进程间通信进行详细介绍。Linux提供了多种进程间通信机制，本文会分别介绍匿名管道pipe，有名管道fifo，内存共享映射机制以及Socket套接字等。通过其中任意一种机制，都能够方便两个进程间进行通信操作，极大方便开发者的开发效率。">
+<meta name="keywords" content="pipe fifo 内存共享">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程之进程间通信">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/07/Linux系统编程之进程间通信/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="之前文件介绍了Linux下进程的创建，执行以及回收，此章节就进程间通信进行详细介绍。Linux提供了多种进程间通信机制，本文会分别介绍匿名管道pipe，有名管道fifo，内存共享映射机制以及Socket套接字等。通过其中任意一种机制，都能够方便两个进程间进行通信操作，极大方便开发者的开发效率。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-01-07T07:17:02.120Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux系统编程之进程间通信">
+<meta name="twitter:description" content="之前文件介绍了Linux下进程的创建，执行以及回收，此章节就进程间通信进行详细介绍。Linux提供了多种进程间通信机制，本文会分别介绍匿名管道pipe，有名管道fifo，内存共享映射机制以及Socket套接字等。通过其中任意一种机制，都能够方便两个进程间进行通信操作，极大方便开发者的开发效率。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/07/Linux系统编程之进程间通信/">
+
+
+
+
+
+  <title>Linux系统编程之进程间通信 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/07/Linux系统编程之进程间通信/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux系统编程之进程间通信</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-07T11:42:31+08:00">
+                2019-01-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2019/01/07/Linux系统编程之进程间通信/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2019/01/07/Linux系统编程之进程间通信/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>之前文件介绍了Linux下进程的创建，执行以及回收，此章节就进程间通信进行详细介绍。Linux提供了多种进程间通信机制，本文会分别介绍匿名管道pipe，有名管道fifo，内存共享映射机制以及Socket套接字等。通过其中任意一种机制，都能够方便两个进程间进行通信操作，极大方便开发者的开发效率。</strong><br><a id="more"></a></p>
+<h3 id="进程间通信"><a href="#进程间通信" class="headerlink" title="进程间通信"></a>进程间通信</h3><p>在Linux中，每个进程各自有不同的用户地址空间，任何一个进程的全局变量在另一个进程中都看不 到，所以进程之间要交换数据必须通过内核，在内核中开辟一块缓冲区，进程1把数据从用 户空间拷到内核缓冲区，进程2再从内核缓冲区把数据读走，内核提供的这种机制称为进程 间通信(IPC，InterProcess Communication)。</p>
+<p>Linux多进程间通信有多种方式，最简单的就是父子间的管道通信（父子进程共享文件描述符），然后是升级版的有名管道（指定管道描述符），其次是高效的内存共享映射和基于网络的Socket套接字。</p>
+<h4 id="pipe管道"><a href="#pipe管道" class="headerlink" title="pipe管道"></a>pipe管道</h4><p>管道pipe提供了父子间进行通信的简单方式，使用起来也是相反方便。管道作用于有血缘关系的进程之间,通过fork来传递。</p>
+<h5 id="原型"><a href="#原型" class="headerlink" title="原型"></a>原型</h5><pre><code>#include &lt;unistd.h&gt;
+int pipe(int filedes[2]);
+</code></pre><h5 id="参数解释"><a href="#参数解释" class="headerlink" title="参数解释"></a>参数解释</h5><p>filedes[2]:  整型数组2个大小，一个为读端，一个为写端。pipe的单条管道只能实现单工通信，如果要实现双向通信，需要创建两条pipe管道。</p>
+<h5 id="相关说明"><a href="#相关说明" class="headerlink" title="相关说明"></a>相关说明</h5><p>先调用pipe函数时在内核中开辟一块缓冲区(称为管道)用于通信，它有一个读端一个写端，然后通过filedes参数传出给用户程序两个文件描述符，filedes[0]指向管道的读端，filedes[1]指向管道的写端。之后通过fork得到子进程，共享之前创建的文件描述符实现父子血缘进程之间通信。</p>
+<p>编程流程：</p>
+<ol>
+<li>父进程调用pipe开辟管道，得到两个文件描述符指向管道的两端。 </li>
+<li>父进程调用fork创建子进程，那么子进程也有两个文件描述符指向同一管道。 </li>
+<li>父进程关闭管道读端，子进程关闭管道写端。父进程可以往管道里写，子进程可以从管道里读，管道是用环形队列实现的，数据从写端流入从读端流出，这样就实现了进程间通信。</li>
+</ol>
+<p>使用限制：</p>
+<ol>
+<li>只支持单向数据流；</li>
+<li>只能用于具有亲缘关系的进程之间；</li>
+<li>没有名字；</li>
+<li>管道的缓冲区是有限的（管道制存在于内存中，在管道创建时，为缓冲区分配一个页面大小）；</li>
+<li>管道所传送的是无格式字节流，这就要求管道的读出方和写入方必须事先约定好数据的格式，比如多少字节算作一个消息（或命令、或记录）等等；</li>
+</ol>
+<p>4种特殊情况(假设都是阻塞I/O操作，没有设置O_NONBLOCK标志):</p>
+<ol>
+<li>所有指向管道写端的文件描述符都关闭了(管道写端的引用计数等于0)，而仍然有进程从管道的读端读数据，那么管道中剩余的数据都被读取后，再次read会返回0，就像读到文件末尾一样。</li>
+<li>存在指向管道写端的文件描述符没关闭(管道写端的引用计数大于0)，而持有管道写端的进程也没有向管道中写数据，这时有进程从管道读端读数据，那么管道中剩余的数据都被读取后，再次read会阻塞，直到管道中有数据可读了才读取数据并返回。</li>
+<li>所有指向管道读端的文件描述符都关闭了(管道读端的引用计数等于0)，这时有进程向管道的写端write，那么该进程会收到信号SIGPIPE，通常会导致进程异常终止。</li>
+<li>存在指向管道读端的文件描述符没关闭(管道读端的引用计数大于0)，而持有管道读端的进程也没有从管道中读数据，这时有进程向管道写端写数据，那么在管道被写满时再次write会阻塞，直到管道中有空位置了才写入数据并返回。</li>
+</ol>
+<h5 id="示例代码"><a href="#示例代码" class="headerlink" title="示例代码"></a>示例代码</h5><p>阻塞式通信</p>
+<pre><code>#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;wait.h&gt;
+
+#define SIZE 64
+
+int main()
+{
+    int pipeFd[2];
+    char str[] = &quot;This is test pipe content!\n&quot;;
+    char red[SIZE];
+
+    // 创建管道
+    int ret = pipe(pipeFd);
+    if(ret &lt; 0)
+    {
+        perror(&quot;pipe error!&quot;);
+        exit(1);
+    }
+
+    pid_t pid = fork();
+    if(pid &gt;0){
+        // 父进程，父写子读，关闭父读接口
+        close(pipeFd[0]);
+        sleep(3);
+        write(pipeFd[1],str,strlen(str));
+        // 阻塞等待子进程退出
+        wait(NULL);
+    }
+    else if(pid == 0)
+    {
+        // 子进程，父写子读，关闭子写接口
+        close(pipeFd[1]);
+        int len = read(pipeFd[0],red,sizeof(red));
+        write(STDOUT_FILENO,red,len);
+    }
+    return 0;
+}
+</code></pre><p>非阻塞式通信</p>
+<pre><code>#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;wait.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;errno.h&gt;
+
+#define SIZE 64
+
+int main()
+{
+
+    int pipeFd[2];
+    char str[] = &quot;This is test pipe content!\n&quot;;
+    char msg[] = &quot;Try again!\n&quot;;
+    char red[SIZE];
+
+    // 创建管道
+    int ret = pipe(pipeFd);
+    if(ret &lt; 0)
+    {
+        perror(&quot;pipe error!&quot;);
+        exit(1);
+    }
+
+    pid_t pid = fork();
+    if(pid &gt;0){
+        // 父进程，父写子读，关闭父读接口
+        close(pipeFd[0]);
+        sleep(5);
+        write(pipeFd[1],str,strlen(str));
+        close(pipeFd[1]);
+        // 阻塞等待子进程退出
+        wait(NULL);
+    }
+    else if(pid == 0)
+    {
+        // 子进程，父写子读，关闭子写接口
+        close(pipeFd[1]);
+        int flag, len;
+        // 设置管道为非阻塞状态
+        flag = fcntl(pipeFd[0],F_GETFL);
+        flag |= O_NONBLOCK;
+        fcntl(pipeFd[0],F_SETFL, flag);
+
+try_again: 
+
+        len = read(pipeFd[0],red,sizeof(red));
+        if(len == -1){
+            if(errno == EAGAIN){
+                write(STDOUT_FILENO,msg,sizeof(msg));
+                sleep(1);
+                goto try_again;
+            }
+            else
+            {
+                perror(&quot;read error!&quot;);
+                exit(1);
+            }
+        }
+        write(STDOUT_FILENO,red,len);
+        close(pipeFd[0]);
+    }
+    return 0;
+}
+</code></pre><h4 id="fifo有名管道"><a href="#fifo有名管道" class="headerlink" title="fifo有名管道"></a>fifo有名管道</h4><p>管道应用的一个重大限制是它没有名字，因此，只能用于具有亲缘关系的进程间通信，在有名管道（named pipe或FIFO）提出后，该限制得到了克服。FIFO不同于管道之处在于它提供一个路径名与之关联，以FIFO的文件形式存在于文件系统中。这样，即使与FIFO的创建进程不存在亲缘关系的进程，只要可以访问该路径，就能够彼此通过FIFO相互通信（能够访问该路径的进程以及FIFO的创建进程之间），因此，通过FIFO不相关的进程也能交换数据。值得注意的是，FIFO严格遵循先进先出（first in first out），对管道及FIFO的读总是从开始处返回数据，对它们的写则把数据添加到末尾。它们不支持诸如lseek()等文件定位操作。</p>
+<h5 id="函数原型"><a href="#函数原型" class="headerlink" title="函数原型"></a>函数原型</h5><pre><code>#include &lt;sys/types.h&gt; 
+#include &lt;sys/stat.h&gt;
+
+int mkfifo(const char *pathname, mode_t mode);
+</code></pre><h5 id="参数解释-1"><a href="#参数解释-1" class="headerlink" title="参数解释"></a>参数解释</h5><p>pathname: 事先规定的节点名称，多个进程间知晓<br>mode: 节点工作方式，可读可写等</p>
+<p>注意：</p>
+<ol>
+<li>当只写打开FIFO管道时，如果没有FIFO没有读端打开，则open写打开会阻塞。</li>
+<li>FIFO内核实现时可以支持双向通信。(pipe单向通信，因为父子进程共享同一个file<br>结构体)</li>
+<li>FIFO可以一个读端，多个写端;也可以一个写端，多个读端。</li>
+<li>FIFO读端和写端需要协同工作，同时打开读写，阻塞式通信。</li>
+<li>FIFO内部数据结构采用严格的先进先出规则。</li>
+<li>其由内核在内核中分配空间，再在磁盘中生成相应的节点，此节点内无任何数据（大小为0），只作为节点凭证。</li>
+</ol>
+<h5 id="相关说明-1"><a href="#相关说明-1" class="headerlink" title="相关说明"></a>相关说明</h5><p>FIFO的打开规则：</p>
+<ol>
+<li><p>如果当前打开操作是为读而打开FIFO时，若已经有相应进程为写而打开该FIFO，则当前打开操作将成功返回；否则，可能阻塞直到有相应进程为写而打开该FIFO（当前打开操作设置了阻塞标志）；或者，成功返回（当前打开操作没有设置阻塞标志）。</p>
+</li>
+<li><p>如果当前打开操作是为写而打开FIFO时，如果已经有相应进程为读而打开该FIFO，则当前打开操作将成功返回；否则，可能阻塞直到有相应进程为读而打开该FIFO（当前打开操作设置了阻塞标志）；或者，返回ENXIO错误（当前打开操作没有设置阻塞标志）。</p>
+</li>
+</ol>
+<p>从FIFO中读取数据：</p>
+<p>约定：如果一个进程为了从FIFO中读取数据而阻塞打开FIFO，那么称该进程内的读操作为设置了阻塞标志的读操作。</p>
+<ol>
+<li>如果有进程写打开FIFO，且当前FIFO内没有数据，则对于设置了阻塞标志的读操作来说，将一直阻塞。对于没有设置阻塞标志读操作来说则返回-1，当前errno值为EAGAIN，提醒以后再试。</li>
+<li><p>对于设置了阻塞标志的读操作说，造成阻塞的原因有两种：</p>
+<ul>
+<li><p>当前FIFO内有数据，但有其它进程在读这些数据；</p>
+</li>
+<li><p>另外就是FIFO内没有数据。解阻塞的原因则是FIFO中有新的数据写入，不论信写入数据量的大小，也不论读操作请求多少数据量。</p>
+</li>
+</ul>
+</li>
+<li><p>读打开的阻塞标志只对本进程第一个读操作施加作用，如果本进程内有多个读操作序列，则在第一个读操作被唤醒并完成读操作后，其它将要执行的读操作将不再阻塞，即使在执行读操作时，FIFO中没有数据也一样（此时，读操作返回0）。</p>
+</li>
+<li><p>如果没有进程写打开FIFO，则设置了阻塞标志的读操作会阻塞。</p>
+</li>
+<li>如果FIFO中有数据，则设置了阻塞标志的读操作不会因为FIFO中的字节数小于请求读的字节数而阻塞，此时，读操作会返回FIFO中现有的数据量。</li>
+</ol>
+<p>向FIFO中写入数据：</p>
+<p>约定：如果一个进程为了向FIFO中写入数据而阻塞打开FIFO，那么称该进程内的写操作为设置了阻塞标志的写操作。</p>
+<ul>
+<li><p>对于设置了阻塞标志的写操作：</p>
+<ol>
+<li><p>当要写入的数据量不大于PIPE_BUF时，linux将保证写入的原子性。如果此时管道空闲缓冲区不足以容纳要写入的字节数，则进入睡眠，直到当缓冲区中能够容纳要写入的字节数时，才开始进行一次性写操作。</p>
+</li>
+<li><p>当要写入的数据量大于PIPE_BUF时，linux将不再保证写入的原子性。FIFO缓冲区一有空闲区域，写进程就会试图向管道写入数据，写操作在写完所有请求写的数据后返回。</p>
+</li>
+</ol>
+</li>
+<li><p>对于没有设置阻塞标志的写操作：</p>
+<ol>
+<li><p>当要写入的数据量大于PIPE_BUF时，linux将不再保证写入的原子性。在写满所有FIFO空闲缓冲区后，写操作返回。</p>
+</li>
+<li><p>当要写入的数据量不大于PIPE_BUF时，linux将保证写入的原子性。如果当前FIFO空闲缓冲区能够容纳请求写入的字节数，写完后成功返回；如果当前FIFO空闲缓冲区不能够容纳请求写入的字节数，则返回EAGAIN错误，提醒以后再写。</p>
+</li>
+</ol>
+</li>
+</ul>
+<p><a href="http://blog.chinaunix.net/uid-25365622-id-3059840.html" target="_blank" rel="noopener">参考链接</a></p>
+<h5 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h5><p>头文件</p>
+<pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+
+#define FIFO_NAME  &quot;fifo&quot;
+
+char str[] = &quot;Test fifo file...\n&quot;;
+</code></pre><p>写端</p>
+<pre><code>#include &quot;fifo.h&quot;
+
+int main(void)
+{
+    // fifo文件存在检测
+    if(access(FIFO_NAME, F_OK)){
+        // 不存在文件，直接创建
+        int ret = mkfifo(FIFO_NAME,0644);
+        if (ret != 0)
+        {
+            /* code */
+            perror(&quot;mkfifo error!&quot;);
+            exit(1);
+        }
+    }
+
+    // 存在fifo文件，打开
+    int fd = open(FIFO_NAME,O_RDWR);
+    if (fd &lt; 0)
+    {
+        /* code */
+        perror(&quot;open fifo error!&quot;);
+        exit(1);
+    }
+    write(fd, str, strlen(str));
+    printf(&quot;write fifo ok! \n&quot;);
+    close(fd);
+    return 0;
+}
+</code></pre><p>读端</p>
+<pre><code>#include &quot;fifo.h&quot;
+
+int main(void)
+{
+    char buf[64];
+
+    // fifo文件存在检测
+    if(access(FIFO_NAME, F_OK)){
+        perror(&quot;fifo file is  not exist!&quot;);
+        exit(1);
+    }
+
+    // 存在fifo文件，打开
+    int fd = open(FIFO_NAME,O_RDONLY);
+    if (fd &lt; 0)
+    {
+        /* code */
+        perror(&quot;open fifo error!&quot;);
+        exit(1);
+    }
+    int len = read(fd, buf, sizeof(buf));
+    write(STDOUT_FILENO,buf,len);
+    close(fd);
+    return 0;
+}
+</code></pre><h4 id="内存共享映射"><a href="#内存共享映射" class="headerlink" title="内存共享映射"></a>内存共享映射</h4><p>介于所有的程序都是从磁盘读取到内存，然后由CPU在内存中进行读取修改等。因此，内存共享映射可以提供一个地址即可实现通信功能。mmap可以把磁盘文件的一部分直接映射到内存，这样文件中的位置直接就有对应的内存地址，对文件的读写可以直接用指针来做而不需read/write函数。</p>
+<h5 id="函数原型-1"><a href="#函数原型-1" class="headerlink" title="函数原型"></a>函数原型</h5><pre><code>#include &lt;sys/mman.h&gt;
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset); 
+int munmap(void *addr, size_t length);
+</code></pre><h5 id="参数解释-2"><a href="#参数解释-2" class="headerlink" title="参数解释"></a>参数解释</h5><p>addr: 如果addr参数为NULL，内核会自己在进程地址空间中选择合适的地址建立映射。如果 addr不是NULL，则给内核一个提示，应该从什么地址开始映射，内核会选择addr之上的某个 合适的地址开始映射。建立映射后，真正的映射首地址通过返回值可以得到。</p>
+<p>length: 需要映射的那一部分文件的长度。</p>
+<p>offset: 从文件的什么位置开始映射，必须是页大小的整数倍(在32位体系统结构上通常是4K)。</p>
+<p>filedes: 代表映射文件的描述符。</p>
+<p>prot: 参数有四种取值</p>
+<pre><code>1. PROT_EXEC表示映射的这一段可执行，例如映射共享库
+2. PROT_READ表示映射的这一段可读
+3. PROT_WRITE表示映射的这一段可写
+4. PROT_NONE表示映射的这一段不可访问
+</code></pre><p>flag: 参数有很多种取值，这里只讲两种，其它取值可查看mmap(2)</p>
+<pre><code>1. MAP_SHARED多个进程对同一个文件的映射是共享的，一个进程对映射的内存做了修 改，另一个进程也会看到这种变化。
+2. MAP_PRIVATE多个进程对同一个文件的映射不是共享的，一个进程对映射的内存做了修 改，另一个进程并不会看到这种变化，也不会真的写到文件中去。
+</code></pre><p>如果mmap成功则返回映射首地址，如果出错则返回常数MAP_FAILED，errno被设置。当进程终止时，该进程 的映射内存会自动解除，也可以调用munmap解除映射。munmap成功返回0，出错返回-1。</p>
+<pre><code>EACCES：访问出错
+EAGAIN：文件已被锁定，或者太多的内存已被锁定
+EBADF：fd不是有效的文件描述词
+EINVAL：一个或者多个参数无效
+ENFILE：已达到系统对打开文件的限制
+ENOMEM：内存不足，或者进程已超出最大内存映射数量
+SIGSEGV：试着向只读区写入
+具体查看 Man Page
+</code></pre><h5 id="示例代码-1"><a href="#示例代码-1" class="headerlink" title="示例代码"></a>示例代码</h5><pre><code>#include &lt;sys/mman.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;string.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+
+#define MMAP_FILE &quot;hello&quot;
+
+int main(void)
+{
+    char buf[] = &quot;HELLOWORLD&quot;;
+    // mmap文件存在检测
+    if(access(MMAP_FILE, F_OK)){
+        perror(&quot;mmap file is  not exist!&quot;);
+        exit(1);
+    }
+    // 存在mmap文件，打开
+    int fd = open(MMAP_FILE,O_RDWR);
+    if (fd &lt; 0)
+    {
+        /* code */
+        perror(&quot;open mmap file error!&quot;);
+        exit(1);
+    }
+    // 获取文件大小
+    int length = lseek(fd,0,SEEK_END);
+
+    int *addr = mmap(NULL, length, PROT_WRITE, MAP_SHARED, fd, 0);
+    // 修改内存数据，查看是否同步到文件
+    memcpy(addr,buf,length &gt;= sizeof(buf)?sizeof(buf):length);
+    // 关闭文件
+    close(fd);
+    // 解除内存映射
+    munmap(addr,length);
+    return 0;
+}
+</code></pre><p>测试代码中，可以事先向hello文件中写入一部分数据，之后调用该程序进行内存映射修改文件数据，之后打开文件查看内容。如果原数据小于写入buf数据，原文件替换成新数据，数据大小增加，如果写入数据buf小于源文件数据，那么只替换原数据中前面需要替换的字节，文件大小不变。</p>
+<p>在内存映射文件时候，可以使用lseek实现对文件读写指针的修改，控制读取写入数据的位置。后续实现多进程或多线程数据拷贝中可以使用到。</p>
+<h4 id="Socket"><a href="#Socket" class="headerlink" title="Socket"></a>Socket</h4><p>Linux下的Socket套接字需要很大的篇章来介绍，这里险先立个flag，后续会着重介绍。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Linux下进程间通信通用的七种方式：</p>
+<p>第一类：传统的unix通信机制：</p>
+<ol>
+<li>管道( pipe )：管道是一种半双工的通信方式，数据只能单向流动，而且只能在具有亲缘关系的进程间使用。进程的亲缘关系通常是指父子进程关系。</li>
+<li>有名管道 (named pipe) ： 有名管道也是半双工的通信方式，但是它允许无亲缘关系进程间的通信。</li>
+<li>信号 ( sinal ) ： 信号是一种比较复杂的通信方式，用于通知接收进程某个事件已经发生。</li>
+</ol>
+<p>第二类：System V IPC： </p>
+<ol start="4">
+<li>信号量( semophore ) ： 信号量是一个计数器，可以用来控制多个进程对共享资源的访问。它常作为一种锁机制，防止某进程正在访问共享资源时，其他进程也访问该资源。因此，主要作为进程间以及同一进程内不同线程之间的同步手段。</li>
+<li>消息队列( message queue ) ： 消息队列是由消息的链表，存放在内核中并由消息队列标识符标识。消息队列克服了信号传递信息少、管道只能承载无格式字节流以及缓冲区大小受限等缺点。</li>
+<li>共享内存( shared memory ) ：共享内存就是映射一段能被其他进程所访问的内存，这段共享内存由一个进程创建，但多个进程都可以访问。共享内存是最快的 IPC 方式，它是针对其他进程间通信方式运行效率低而专门设计的。它往往与其他通信机制，如信号两，配合使用，来实现进程间的同步和通信。</li>
+</ol>
+<p>第三类：BSD 套接字：</p>
+<ol start="7">
+<li>套接字( socket ) ： 套解字也是一种进程间通信机制，与其他通信机制不同的是，它可用于不同及其间的进程通信。</li>
+</ol>
+<p><a href="http://blog.chinaunix.net/uid-25365622-id-3059840.html" target="_blank" rel="noopener">参考链接</a></p>
+<blockquote>
+<p>邢文鹏Linux教学资料</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/跨进程通信/" rel="tag"># 跨进程通信</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/05/Linux系统编程之进程/" rel="next" title="Linux系统编程之进程">
+                <i class="fa fa-chevron-left"></i> Linux系统编程之进程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/07/Linux系统编程之静态-动态库生成实战/" rel="prev" title="Linux系统编程之静态/动态库生成实战">
+                Linux系统编程之静态/动态库生成实战 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#进程间通信"><span class="nav-number">1.</span> <span class="nav-text">进程间通信</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#pipe管道"><span class="nav-number">1.1.</span> <span class="nav-text">pipe管道</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#原型"><span class="nav-number">1.1.1.</span> <span class="nav-text">原型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#参数解释"><span class="nav-number">1.1.2.</span> <span class="nav-text">参数解释</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#相关说明"><span class="nav-number">1.1.3.</span> <span class="nav-text">相关说明</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例代码"><span class="nav-number">1.1.4.</span> <span class="nav-text">示例代码</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#fifo有名管道"><span class="nav-number">1.2.</span> <span class="nav-text">fifo有名管道</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#函数原型"><span class="nav-number">1.2.1.</span> <span class="nav-text">函数原型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#参数解释-1"><span class="nav-number">1.2.2.</span> <span class="nav-text">参数解释</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#相关说明-1"><span class="nav-number">1.2.3.</span> <span class="nav-text">相关说明</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#代码示例"><span class="nav-number">1.2.4.</span> <span class="nav-text">代码示例</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内存共享映射"><span class="nav-number">1.3.</span> <span class="nav-text">内存共享映射</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#函数原型-1"><span class="nav-number">1.3.1.</span> <span class="nav-text">函数原型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#参数解释-2"><span class="nav-number">1.3.2.</span> <span class="nav-text">参数解释</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例代码-1"><span class="nav-number">1.3.3.</span> <span class="nav-text">示例代码</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Socket"><span class="nav-number">1.4.</span> <span class="nav-text">Socket</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

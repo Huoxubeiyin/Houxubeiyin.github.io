@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Binder分析,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="上篇文章中，我们详细的了解了AIDL的使用流程。其关键点在于对系统编译生成的AIDL生成中间文件中Binder类以及IBinder接口的实现。系统提供的这两个类很关键，下面我们分别从Native层以及framework实现一下自定义的Binder程序。">
+<meta name="keywords" content="Binder分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Binder系统分析之Native层、framework层使用">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/07/16/Binder系统分析之Native层、framework层使用/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="上篇文章中，我们详细的了解了AIDL的使用流程。其关键点在于对系统编译生成的AIDL生成中间文件中Binder类以及IBinder接口的实现。系统提供的这两个类很关键，下面我们分别从Native层以及framework实现一下自定义的Binder程序。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-07-16T09:25:02.778Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Binder系统分析之Native层、framework层使用">
+<meta name="twitter:description" content="上篇文章中，我们详细的了解了AIDL的使用流程。其关键点在于对系统编译生成的AIDL生成中间文件中Binder类以及IBinder接口的实现。系统提供的这两个类很关键，下面我们分别从Native层以及framework实现一下自定义的Binder程序。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/07/16/Binder系统分析之Native层、framework层使用/">
+
+
+
+
+
+  <title>Binder系统分析之Native层、framework层使用 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/07/16/Binder系统分析之Native层、framework层使用/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Binder系统分析之Native层、framework层使用</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-07-16T13:59:58+08:00">
+                2018-07-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Binder分析/" itemprop="url" rel="index">
+                    <span itemprop="name">Binder分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/07/16/Binder系统分析之Native层、framework层使用/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/07/16/Binder系统分析之Native层、framework层使用/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>上篇文章中，我们详细的了解了AIDL的使用流程。其关键点在于对系统编译生成的AIDL生成中间文件中Binder类以及IBinder接口的实现。系统提供的这两个类很关键，下面我们分别从Native层以及framework实现一下自定义的Binder程序。</strong></p>
+<a id="more"></a>
+<h3 id="在Native层实现Binder"><a href="#在Native层实现Binder" class="headerlink" title="在Native层实现Binder"></a>在Native层实现Binder</h3><p>Binder基于C/S架构，在这里，我们需要分别实现Server端和Client端，提取出公共的接口文件IService。同时还要注意几个关键类，他们在Binder实现中起到了关键作用，下面会具体介绍。源码程序参考罗升阳博客内的代码，删减了其内部打开设备，获取寄存器值等相关逻辑，还是很有参考性的。</p>
+<h4 id="项目基本文件结构"><a href="#项目基本文件结构" class="headerlink" title="项目基本文件结构"></a>项目基本文件结构</h4><p>由源码目录层级展示如下：</p>
+<ul>
+<li><p>公共接口文件</p>
+<pre><code>/external/binder/common
+    IFregService.h
+    IFregService.cpp
+</code></pre></li>
+<li><p>服务端程序</p>
+<pre><code>/external/binder/server
+    FregService.cpp
+    Android.mk
+</code></pre></li>
+<li><p>客户端程序</p>
+<pre><code>/external/binder/client
+    FregClient.cpp
+    Android.mk
+</code></pre></li>
+</ul>
+<h4 id="Server端实现"><a href="#Server端实现" class="headerlink" title="Server端实现"></a>Server端实现</h4><h5 id="FregServer-cpp"><a href="#FregServer-cpp" class="headerlink" title="FregServer.cpp"></a>FregServer.cpp</h5><pre><code>#define LOG_TAG &quot;FregServer&quot;
+#include &lt;stdlib.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;utils/Log.h&gt;
+#include &lt;binder/IServiceManager.h&gt;
+#include &lt;binder/IPCThreadState.h&gt;
+#include &quot;../common/IFregService.h&quot;
+#define FREG_DEVICE_NAME &quot;/dev/freg&quot;
+
+// 实现Binder的本地对象FregService的具体实现，实现了IFregService接口
+// 具体的Server端模块实现
+class FregService : public BnFregService
+{
+public:
+    // 构造函数实现
+    FregService(){
+    }
+
+    // 析构函数
+    virtual ~FregService(){
+    }
+
+public:
+    // 讲台初始化函数
+    static void instantiate()
+    {
+        // 获取ServiceManager，注册Server端服务FREG_SERVICE（shy.luo.FregService）
+        defaultServiceManager()-&gt;addService(String16(FREG_SERVICE), new FregService());
+    }
+
+    // 方法的具体实现，由IFregService中父类传递调用，读取寄存器值
+    int32_t getVal(){
+        return mVal;
+    }
+
+    // 同上方法，设置寄存器值
+    void setVal(int32_t val){
+            mVal = val;
+    }
+
+private:
+    int mVal = 100;
+};
+
+// 主程序
+int main(int argc, char** argv)
+{
+    // 初始化
+    FregService::instantiate();
+    // 获取进程，开启Binder线程池
+    ProcessState::self()-&gt;startThreadPool();
+    // 获取线程，加入到Binder线程池中
+    IPCThreadState::self()-&gt;joinThreadPool();
+    return 0;
+}
+</code></pre><p>程序相关说明如下：</p>
+<ol>
+<li>FregService继承于BnFregService，BnFregService会在后面接口文件中涉及</li>
+<li>defaultServiceManager()用来获取系统服务关系程序ServiceManager，其是Binder架构中的上下文管理者，任何服务都要先在其中注册，然后再从中获取到对应服务的代理对象，完成相应逻辑</li>
+<li>addService()向SM注册服务，传入服务的描述名和服务对象，以便SM为其分配代理对象等</li>
+<li>ProcessState::self()用于获取本地进程，内部使用单例模式，返回本地进程</li>
+<li>startThreadPool开启本进程的线程池服务，用于等待客户端请求通知</li>
+<li>IPCThreadState::self()获取进程对应的当前线程，joinThreadPool则是将当前线程加入到线程池中进行处理</li>
+</ol>
+<h5 id="Android-mk"><a href="#Android-mk" class="headerlink" title="Android.mk"></a>Android.mk</h5><pre><code>LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := ../common/IFregService.cpp \
+    FregServer.cpp
+
+LOCAL_SHARED_LIBRARIES:= libcutils libutils libbinder
+
+LOCAL_MODULE := FregServer
+
+include $(BUILD_EXECUTABLE)
+</code></pre><p>编译文件内容，使用的共享库有三个，在要是在代码中使用了几个关键的类，编译为可执行程序。其他的这里不做过多介绍了。</p>
+<h4 id="Client端实现"><a href="#Client端实现" class="headerlink" title="Client端实现"></a>Client端实现</h4><h5 id="FregClient-cpp"><a href="#FregClient-cpp" class="headerlink" title="FregClient.cpp"></a>FregClient.cpp</h5><p>客户端实现基于服务端，需要从SM中获取在使用其提供的服务方法，具体代码如下：</p>
+<pre><code>#define LOG_TAG &quot;FregClient&quot;
+#include &lt;utils/Log.h&gt;
+#include &lt;binder/IServiceManager.h&gt;
+#include &quot;../common/IFregService.h&quot;
+
+// Client端模块
+// 主程序
+int main()
+{
+    // 由Servcer端注册的服务，这里通过ServiceManager获取相应服务
+    sp&lt;IBinder&gt; binder = defaultServiceManager()-&gt;getService(String16(FREG_SERVICE));
+    if(binder == NULL) {
+        ALOGE(&quot;Failed to get freg service: %s.\n&quot;, FREG_SERVICE);
+        return -1;
+    }
+
+    // 获取binder是实现了IFergService接口的对象，这里可以直接转
+    sp&lt;IFregService&gt; service = IFregService::asInterface(binder);
+    if(service == NULL) {
+        ALOGE(&quot;Failed to get freg service interface.\n&quot;);
+        return -2;
+    }
+
+    printf(&quot;Read original value from FregService:\n&quot;);
+
+    // 通过代理对象，调用其getVal方法获取寄存器值
+    int32_t val = service-&gt;getVal();
+    printf(&quot; %d.\n&quot;, val);
+
+    printf(&quot;Add value 9 to FregService.\n&quot;);    
+    val += 9;
+    // 通过代理对象，调用setVal设置寄存器值
+    service-&gt;setVal(val);
+
+    printf(&quot;Read the value from FregService again:\n&quot;);
+
+    // 在此读取寄存器值
+    val = service-&gt;getVal();
+        printf(&quot; %d.\n&quot;, val); 
+
+    return 0;
+}
+</code></pre><p>代码相关说明：</p>
+<ol>
+<li>defaultServiceManager()-&gt;getService()同样通过SM上下文管理者获取指定传入服务</li>
+<li>获取到的服务统一以接口IBinder类型返回，有强引用sp维护生命周期</li>
+<li>IFregService::asInterface()用于将获取的接口实例转换成需要的服务实例，具体在下面接口文件中分析</li>
+<li>service-&gt;getVal(),setVal()根绝获取服务，调用其服务方法</li>
+</ol>
+<p>从这里，不免可以看出之前AIDL文章中分析到的中间文件内容，在下面的接口文件分析中将更加清晰。</p>
+<h5 id="Android-mk-1"><a href="#Android-mk-1" class="headerlink" title="Android.mk"></a>Android.mk</h5><pre><code>LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := ../common/IFregService.cpp \
+    FregClient.cpp
+
+LOCAL_SHARED_LIBRARIES:= libcutils libutils libbinder
+
+LOCAL_MODULE := FregClient
+
+include $(BUILD_EXECUTABLE)
+</code></pre><p>和上面的编译文件基本相似，最后同样生成可执行程序。</p>
+<h4 id="IFregService接口文件实现"><a href="#IFregService接口文件实现" class="headerlink" title="IFregService接口文件实现"></a>IFregService接口文件实现</h4><h5 id="IFregService-h"><a href="#IFregService-h" class="headerlink" title="IFregService.h"></a>IFregService.h</h5><pre><code>#ifndef IFREGSERVICE_H_
+#define IFREGSERVICE_H_
+
+#include &lt;utils/RefBase.h&gt;
+#include &lt;binder/IInterface.h&gt;
+#include &lt;binder/Parcel.h&gt;
+
+#define FREG_SERVICE &quot;shy.luo.FregService&quot;
+
+using namespace android;
+
+// 接口声明
+class IFregService: public IInterface
+{
+public:
+    // 特定宏，声明IFregService的元接口
+    DECLARE_META_INTERFACE(FregService);
+    // 两个虚方法，子类实现
+    virtual int32_t getVal() = 0;
+    virtual void setVal(int32_t val) = 0;
+};
+
+// 本地（Binder）FregService对象
+class BnFregService: public BnInterface&lt;IFregService&gt;
+{
+public:
+    // 模板类BnInterface的成员函数onTransact
+    virtual status_t onTransact(uint32_t code, const Parcel&amp; data, Parcel* reply, uint32_t flags = 0);
+};
+
+#endif
+</code></pre><p>代码说明集中如下：</p>
+<ol>
+<li>导包中有&lt;binder/IInterface.h&gt;，其为底层Binder为上层提供跨进程通信的函数模版，具体内容等待介绍</li>
+<li>导包中有&lt;binder/Parcel.h&gt;，Parcel类为数据在Binder机制中传输的媒介，任何数据进行传输都要进行封包Parcel，然后再拆包</li>
+<li>FREG_SERVICE为服务唯一描述符，注册，获取均要使用它</li>
+<li>IFregService继承于IInterface，这里可以看出AIDL中自定义的接口也是继承IInterface</li>
+<li>DECLARE_META_INTERFACE，为IInterface模版函数提供的元接口，后续讲到</li>
+<li>BnFregService为本地服务Binder服务，相同的Bp…则是远程，其继承BnInterface，范型<br>为IFregService，其代表服务端收到请求处理onTransact方法</li>
+</ol>
+<p>由上，引出来一个重要的文件IInterface.h，下面我们集中分析它。</p>
+<h5 id="IFregService-cpp"><a href="#IFregService-cpp" class="headerlink" title="IFregService.cpp"></a>IFregService.cpp</h5><p>头文件已经分析完了，下面来看看IFregService.cpp文件具体内容</p>
+<pre><code>#define LOG_TAG &quot;IFregService&quot;
+#include &lt;utils/Log.h&gt;
+#include &quot;IFregService.h&quot;
+
+using namespace android;
+// 枚举，对应通信两个方法
+enum {
+    GET_VAL = IBinder::FIRST_CALL_TRANSACTION,
+    SET_VAL
+};
+
+// 模板类BpInterface的实现类，Binder远程代理实现
+class BpFregService: public BpInterface&lt;IFregService&gt;{
+public:
+    // 构造函数
+    BpFregService(const sp&lt;IBinder&gt;&amp; impl) 
+        : BpInterface&lt;IFregService&gt;(impl){
+    }
+
+public:
+    //代理对象，具体实现
+    int32_t getVal(){
+        Parcel data;
+        data.writeInterfaceToken(IFregService::getInterfaceDescriptor());
+        Parcel reply;
+        // remote（）函数来获取BpBinder代理对象
+        // 调用代理对象的transact请求运行在Server进程的一个Binder对象执行GET_VAL方法
+        remote()-&gt;transact(GET_VAL, data, &amp;reply);
+        int32_t val = reply.readInt32();
+        return val;
+    }
+
+    void setVal(int32_t val){
+        Parcel data;
+        data.writeInterfaceToken(IFregService::getInterfaceDescriptor());
+        data.writeInt32(val);
+        Parcel reply;
+        // remote（）函数来获取BpBinder代理对象
+        // 调用代理对象的transact请求运行在Server进程的一个Binder对象执行SET_VAL方法
+        remote()-&gt;transact(SET_VAL, data, &amp;reply);
+    }
+};
+
+// 特定宏，实现IFregService类的元接口，有头文件DECLARE_META_INTERFACE相对应
+IMPLEMENT_META_INTERFACE(FregService, &quot;shy.luo.IFregService&quot;);
+
+// 模板类BnInterface实现类BnFregService的成员函数onTransact的实现
+// 将具体方法分发给实现其的子类FregService处理，这里只是分发，不具体实现
+status_t BnFregService::onTransact(uint32_t code, const Parcel&amp; data, Parcel* reply, uint32_t flags)
+{
+    switch(code)
+    {
+        case GET_VAL:{
+            CHECK_INTERFACE(IFregService, data, reply);
+            int32_t val = getVal();
+            reply-&gt;writeInt32(val);
+            return NO_ERROR;
+        }
+        case SET_VAL:{
+            CHECK_INTERFACE(IFregService, data, reply);
+            int32_t val = data.readInt32();
+            setVal(val);
+            return NO_ERROR;
+        }
+        default:{
+            return BBinder::onTransact(code, data, reply, flags);
+        }
+    }
+}
+</code></pre><p>代码相关说明：</p>
+<ol>
+<li>enum用于声明两个方法，Binder底层通信会使用到后面的IBinder::FIRST_CALL_TRANSACTION，用于区分服务的不同请求</li>
+<li>BpFregService为远程代理服务实现，依旧是由模版类中的BpInterface提供支持。其构造函数传递对象为IBinder类型，由强引用sp维持</li>
+<li>BpFregService中方法getVal和setVal，有客户端通过SM获取到远程代理对象，调用代理对象服务方法会走此流程，remote()函数来获取BpBinder代理对象，之后进入Binder驱动中，从数据封装到了Parcel中可以看出</li>
+<li>IMPLEMENT_META_INTERFACE，特定宏，实现IFregService类的元接口，IInterface中会介绍</li>
+<li>BnFregService为Server端得到Binder驱动传入的请求消息，响应走onTransact方法。其最终调用实现类FregService的具体的方法，FregService继承了BnFregService</li>
+</ol>
+<h4 id="IInterface-h"><a href="#IInterface-h" class="headerlink" title="IInterface.h"></a>IInterface.h</h4><p>前面文件分析中，多次提到这个文件，下面我们来具体分析一下。</p>
+<pre><code>#ifndef ANDROID_IINTERFACE_H
+#define ANDROID_IINTERFACE_H
+
+#include &lt;binder/Binder.h&gt;
+namespace android {
+// ----------------------------------------------------------------------
+class IInterface : public virtual RefBase
+{
+public:
+            IInterface();
+            static sp&lt;IBinder&gt;  asBinder(const IInterface*);
+            static sp&lt;IBinder&gt;  asBinder(const sp&lt;IInterface&gt;&amp;);
+protected:
+    virtual                     ~IInterface();
+    virtual IBinder*            onAsBinder() = 0;
+};
+// ----------------------------------------------------------------------
+
+//模板函数
+//interface_cast(const sp&lt;IServiceManager&gt;) == IServiceManager::asInterface()
+template&lt;typename INTERFACE&gt;
+inline sp&lt;INTERFACE&gt; interface_cast(const sp&lt;IBinder&gt;&amp; obj)
+{
+    return INTERFACE::asInterface(obj);
+}
+
+// ----------------------------------------------------------------------
+
+template&lt;typename INTERFACE&gt;
+class BnInterface : public INTERFACE, public BBinder
+{
+public:
+    virtual sp&lt;IInterface&gt;      queryLocalInterface(const String16&amp; _descriptor);
+    virtual const String16&amp;     getInterfaceDescriptor() const;
+
+protected:
+    virtual IBinder*            onAsBinder();
+};
+
+// ----------------------------------------------------------------------
+
+template&lt;typename INTERFACE&gt;
+class BpInterface : public INTERFACE, public BpRefBase
+{
+public:
+                                BpInterface(const sp&lt;IBinder&gt;&amp; remote);
+
+protected:
+    virtual IBinder*            onAsBinder();
+};
+
+// ----------------------------------------------------------------------
+//主要声明asInterface(),getInterfaceDescriptor()方法
+#define DECLARE_META_INTERFACE(INTERFACE)                               \
+    static const android::String16 descriptor;                          \
+    static android::sp&lt;I##INTERFACE&gt; asInterface(                       \
+            const android::sp&lt;android::IBinder&gt;&amp; obj);                  \
+    virtual const android::String16&amp; getInterfaceDescriptor() const;    \
+    I##INTERFACE();                                                     \
+    virtual ~I##INTERFACE();                                            \
+
+
+#define IMPLEMENT_META_INTERFACE(INTERFACE, NAME)                       \
+    const android::String16 I##INTERFACE::descriptor(NAME);             \
+    const android::String16&amp;                                            \
+            I##INTERFACE::getInterfaceDescriptor() const {              \
+        return I##INTERFACE::descriptor;                                \
+    }                                                                   \
+    android::sp&lt;I##INTERFACE&gt; I##INTERFACE::asInterface(                \
+            const android::sp&lt;android::IBinder&gt;&amp; obj)                   \
+    {                                                                   \
+        android::sp&lt;I##INTERFACE&gt; intr;                                 \
+        if (obj != NULL) {                                              \
+            intr = static_cast&lt;I##INTERFACE*&gt;(                          \
+                obj-&gt;queryLocalInterface(                               \
+                        I##INTERFACE::descriptor).get());               \
+            if (intr == NULL) {                                         \
+                intr = new Bp##INTERFACE(obj);                          \
+            }                                                           \
+        }                                                               \
+        return intr;                                                    \
+    }                                                                   \
+    I##INTERFACE::I##INTERFACE() { }                                    \
+    I##INTERFACE::~I##INTERFACE() { }                                   \
+
+
+#define CHECK_INTERFACE(interface, data, reply)                         \
+    if (!data.checkInterface(this)) { return PERMISSION_DENIED; }       \
+
+
+// ----------------------------------------------------------------------
+// No user-serviceable parts after this...
+
+template&lt;typename INTERFACE&gt;
+inline sp&lt;IInterface&gt; BnInterface&lt;INTERFACE&gt;::queryLocalInterface(
+        const String16&amp; _descriptor)
+{
+    if (_descriptor == INTERFACE::descriptor) return this;
+    return NULL;
+}
+
+template&lt;typename INTERFACE&gt;
+inline const String16&amp; BnInterface&lt;INTERFACE&gt;::getInterfaceDescriptor() const
+{
+    return INTERFACE::getInterfaceDescriptor();
+}
+
+template&lt;typename INTERFACE&gt;
+IBinder* BnInterface&lt;INTERFACE&gt;::onAsBinder()
+{
+    return this;
+}
+
+template&lt;typename INTERFACE&gt;
+inline BpInterface&lt;INTERFACE&gt;::BpInterface(const sp&lt;IBinder&gt;&amp; remote)
+    //先初始化BpRefBase()
+    : BpRefBase(remote)
+{
+}
+
+template&lt;typename INTERFACE&gt;
+inline IBinder* BpInterface&lt;INTERFACE&gt;::onAsBinder()
+{
+    return remote();
+}
+
+// ----------------------------------------------------------------------
+
+}; // namespace android
+
+#endif // ANDROID_IINTERFACE_H
+</code></pre><p>内容比较多，我们根据代码一一分析：</p>
+<h5 id="DECLARE-META-INTERFACE（…）"><a href="#DECLARE-META-INTERFACE（…）" class="headerlink" title="DECLARE_META_INTERFACE（…）"></a>DECLARE_META_INTERFACE（…）</h5><p>在头文件中使用到宏指令DECLARE_META_INTERFACE，其目的是方便在C层声明asInterface等方法，具体传入参数为FregService，根据代码展开如下：</p>
+<pre><code>static const android::String16 descriptor;                          
+static android::sp&lt;IFregService&gt; asInterface(                       
+        const android::sp&lt;android::IBinder&gt;&amp; obj);                  
+virtual const android::String16&amp; getInterfaceDescriptor() const;    
+IFregService();                                                     
+virtual ~IFregService();                                            
+</code></pre><p>C层头文件通过一条宏指令，便可以完成Binder通信架构的声明，下面便是具体实现宏IMPLEMENT_META_INTERFACE。</p>
+<h5 id="IMPLEMENT-META-INTERFACE-…"><a href="#IMPLEMENT-META-INTERFACE-…" class="headerlink" title="IMPLEMENT_META_INTERFACE(…)"></a>IMPLEMENT_META_INTERFACE(…)</h5><p>其是一条宏，传入参数为(INTERFACE, NAME),这里INTERFACE对应FregService；NAME对应于 “shy.luo.IFregService”。根据宏内容展开如下：</p>
+<pre><code>const android::String16 FregService::descriptor(shy.luo.IFregService);             
+const android::String16&amp;                                            
+        FregService::getInterfaceDescriptor() const {              
+    return FregService::descriptor;                                
+}                                                                   
+android::sp&lt;FregService&gt; FregService::asInterface(                
+        const android::sp&lt;android::IBinder&gt;&amp; obj)                   
+{                                                                  
+    android::sp&lt;FregService&gt; intr;                                 
+    if (obj != NULL) {                                              
+        intr = static_cast&lt;FregService*&gt;(                          
+            obj-&gt;queryLocalInterface(                               
+                    FregService::descriptor).get());               
+        if (intr == NULL) {                                         
+            intr = new Bp##INTERFACE(obj);                          
+        }                                                           
+    }                                                               
+    return intr;                                                    
+}                                                                   
+FregService::FregService() { }                                    
+FregService::~FregService() { }     
+</code></pre><ol>
+<li>其根据宏，声明了FregService的descriptor，getInterfaceDescriptor，asInterface，构造函数和析构函数</li>
+<li>其中descriptor描述为shy.luo.IFregService，asInterface传入的参数是范型为IBinder常引用</li>
+<li>其内部逻辑是首先通过BInder对象的queryLocalInterface方法，根据descriptor查看本地是否存在，（同一个进程，直接返回），不存在就其自身新建Bp##INTERFACE(obj)</li>
+</ol>
+<p>分析到这里，基本的函数模版就清晰可见了。IInterface.h头文件，通过两条特定的宏，完成了C层代码实现基于系统提供的Binder跨进程通信的架构规范，而其最终结果便是生成远程代理对象Bp##INTERFACE，方便Client端调用。</p>
+<h5 id="BpFregService实例化"><a href="#BpFregService实例化" class="headerlink" title="BpFregService实例化"></a>BpFregService实例化</h5><ol>
+<li><p>BpFregService创建过程，首先实例化父类</p>
+<pre><code>--&gt; IFregService.cpp
+
+BpFregService(const sp&lt;IBinder&gt;&amp; impl) 
+        : BpInterface&lt;IFregService&gt;(impl){
+    }
+</code></pre></li>
+<li><p>BpInterface初始化，会先初始化BpRefBase</p>
+<pre><code>--&gt; IInterface.h
+
+inline BpInterface&lt;INTERFACE&gt;::BpInterface(const sp&lt;IBinder&gt;&amp; remote)
+    //先初始化化BpRefBase()
+    : BpRefBase(remote){
+}
+</code></pre></li>
+<li><p>BpRefBase初始化，建立引用关系</p>
+<pre><code>--&gt; Binder.cpp
+
+BpRefBase::BpRefBase(const sp&lt;IBinder&gt;&amp; o)
+    : mRemote(o.get()), mRefs(NULL), mState(0)
+{
+    extendObjectLifetime(OBJECT_LIFETIME_WEAK);
+
+    if (mRemote) {
+        mRemote-&gt;incStrong(this);
+        mRefs = mRemote-&gt;createWeak(this);
+    }
+}
+</code></pre></li>
+</ol>
+<p>BpFregService在初始化过程中，经过层层调用，进入到Binder驱动程序中，通过传入的IBinder，为其建立引用关系，增加其对应的强弱引用值等。</p>
+<ul>
+<li><p>以上部分参考Gityuan博客相关内容，有兴趣读者可以自行查看，链接如下：</p>
+<p>  <a href="http://gityuan.com/2015/11/08/binder-get-sm/" target="_blank" rel="noopener">戳我</a></p>
+</li>
+</ul>
+<h5 id="其他注意点"><a href="#其他注意点" class="headerlink" title="其他注意点"></a>其他注意点</h5><p>在理解这部分时，我们不妨这样理解，采用分层的形式来理解，具体如下：</p>
+<ol>
+<li>BpInterface 对应远程代理对象，持有对象为IBinder类型的remote，由Client端直接持有，存在于底层Binder中</li>
+<li>BnInterface 对应本地对象，由sp强引用维持生命周期，继承自BBinder，此处由BnFregService持有，存在于底层Binder中</li>
+<li>Client端从SM中获取的IBinder类型对象obj，其是底层Binder对应Server端分配为其分配的BpInterface远程代理对象</li>
+<li>底层Binder接受Client传递的跨进程消息，首先传递到对应的BnInterface本地对象，然后在传递给其子类BnFregService的onTransact中处理，而FregService正是继承自BnFregService，实现了onTransact中的具体方法</li>
+</ol>
+<p>由上解释了跨进程通信的具体流程，其中分层的意思就是Binder底层自动的为Client和Server端都建立了链接关系，通过BpInterface和BnInterface在底层实现跨进程交互。</p>
+<h4 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h4><h5 id="编译获取文件"><a href="#编译获取文件" class="headerlink" title="编译获取文件"></a>编译获取文件</h5><pre><code>// 编译完成得到FregServer
+mmm external/binder/server/
+
+// 编译得到FregClient
+mmm external/binder/client
+</code></pre><h5 id="放置程序，提权"><a href="#放置程序，提权" class="headerlink" title="放置程序，提权"></a>放置程序，提权</h5><pre><code>adb connect ...
+// push文件到sdcard下
+adb push FregServer FregClient /sdcard/
+
+adb shell
+su
+// 重挂在分区读写
+mount -o remount,rw /system
+cp /sdcard/Freg* /system/bin
+// 读权
+chmod 755 Freg*
+</code></pre><h5 id="运行，查看结果"><a href="#运行，查看结果" class="headerlink" title="运行，查看结果"></a>运行，查看结果</h5><pre><code>// 后台运行
+/system/bin/FregServer &amp;
+/system/bin/FregClient
+</code></pre><p>log日志如下：</p>
+<pre><code>root@makena:/system # /system/bin/FregClient                                   
+Read original value from FregService:
+ 100.
+Add value 9 to FregService.
+Read the value from FregService again:
+ 109.
+</code></pre><h3 id="在framework层实现Binder通信"><a href="#在framework层实现Binder通信" class="headerlink" title="在framework层实现Binder通信"></a>在framework层实现Binder通信</h3><p>以上介绍了Native层Binder通信的实现，至于framework层实现也基本相似，这里就不详细说明了。其大概流程就是像之前AIDL分析章节中提到的编译中间接口文件那样，使用其中几个重要类和方法，基于底层Binder实现好的框架，实现跨进程通信。如果有读者想尝试，可以参考Gityuan博客中的代码自己实现测试一下即可。</p>
+<p><a href="http://gityuan.com/2015/11/22/binder-use/" target="_blank" rel="noopener">戳我</a></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本章节详细的介绍了Binder通信在Native层具体实现。其本质还是基于底层Binder驱动实现好框架，借助于IInterface.h中提供的几个重要方法，按照一定的规范实现，便可以轻松的实现跨进程通信。</p>
+<p>本着前篇的AIDL的介绍和本章节的Binder在Native层实现，相信读者基本了解了Binder跨进程通信机制的原理，至于更多更深层次的介绍，可能会更多的集中在C层和驱动层，后续章节会针对这些方面再具体分析。</p>
+<p>基本上层的Binder实现到此就结束了。下面章节再介绍Binder就会从C层乃至驱动层进行分析。读者本人刚开始学习也是一脸懵逼，咬牙坚持，耐着性子看了两三遍才稍微有点想法。世上无难事，只怕有心人。Jsut do it！</p>
+<p>共勉：Fucking source code！！！</p>
+<h4 id="相关推荐"><a href="#相关推荐" class="headerlink" title="相关推荐"></a>相关推荐</h4><blockquote>
+<p>参考代码： Android系统源代码情景分析</p>
+</blockquote>
+<blockquote>
+<p><a href="http://gityuan.com/2015/11/22/binder-use/" target="_blank" rel="noopener">Gityuan博客</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/Binder分析/" rel="tag"># Binder分析</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/" rel="next" title="Binder系统分析之应用层AIDL的具体实现">
+                <i class="fa fa-chevron-left"></i> Binder系统分析之应用层AIDL的具体实现
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/07/30/Binder系统分析之SM大管家的获取流程/" rel="prev" title="Binder系统分析之SM大管家的获取流程">
+                Binder系统分析之SM大管家的获取流程 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#在Native层实现Binder"><span class="nav-number">1.</span> <span class="nav-text">在Native层实现Binder</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#项目基本文件结构"><span class="nav-number">1.1.</span> <span class="nav-text">项目基本文件结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Server端实现"><span class="nav-number">1.2.</span> <span class="nav-text">Server端实现</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#FregServer-cpp"><span class="nav-number">1.2.1.</span> <span class="nav-text">FregServer.cpp</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Android-mk"><span class="nav-number">1.2.2.</span> <span class="nav-text">Android.mk</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Client端实现"><span class="nav-number">1.3.</span> <span class="nav-text">Client端实现</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#FregClient-cpp"><span class="nav-number">1.3.1.</span> <span class="nav-text">FregClient.cpp</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Android-mk-1"><span class="nav-number">1.3.2.</span> <span class="nav-text">Android.mk</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IFregService接口文件实现"><span class="nav-number">1.4.</span> <span class="nav-text">IFregService接口文件实现</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#IFregService-h"><span class="nav-number">1.4.1.</span> <span class="nav-text">IFregService.h</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#IFregService-cpp"><span class="nav-number">1.4.2.</span> <span class="nav-text">IFregService.cpp</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IInterface-h"><span class="nav-number">1.5.</span> <span class="nav-text">IInterface.h</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#DECLARE-META-INTERFACE（…）"><span class="nav-number">1.5.1.</span> <span class="nav-text">DECLARE_META_INTERFACE（…）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#IMPLEMENT-META-INTERFACE-…"><span class="nav-number">1.5.2.</span> <span class="nav-text">IMPLEMENT_META_INTERFACE(…)</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#BpFregService实例化"><span class="nav-number">1.5.3.</span> <span class="nav-text">BpFregService实例化</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#其他注意点"><span class="nav-number">1.5.4.</span> <span class="nav-text">其他注意点</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#运行结果"><span class="nav-number">1.6.</span> <span class="nav-text">运行结果</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#编译获取文件"><span class="nav-number">1.6.1.</span> <span class="nav-text">编译获取文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#放置程序，提权"><span class="nav-number">1.6.2.</span> <span class="nav-text">放置程序，提权</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#运行，查看结果"><span class="nav-number">1.6.3.</span> <span class="nav-text">运行，查看结果</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在framework层实现Binder通信"><span class="nav-number">2.</span> <span class="nav-text">在framework层实现Binder通信</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#相关推荐"><span class="nav-number">3.1.</span> <span class="nav-text">相关推荐</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

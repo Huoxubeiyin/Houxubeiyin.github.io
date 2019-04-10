@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Zygote,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="安卓中的Zygote进程，为万物进程的始祖进程。所有的应用创建都是基于此进程进行开辟的，其本名为受精卵，这里不免称其为进程孵化器。此篇文章就着重介绍Zygote的创建流程，继而分析后续安卓系统中进程的创建原理。">
+<meta name="keywords" content="Zygote">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析之Zygote启动流程">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="安卓中的Zygote进程，为万物进程的始祖进程。所有的应用创建都是基于此进程进行开辟的，其本名为受精卵，这里不免称其为进程孵化器。此篇文章就着重介绍Zygote的创建流程，继而分析后续安卓系统中进程的创建原理。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_init.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_liucheng.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/dalvik.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_fenxi.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_ctreate.png">
+<meta property="og:updated_time" content="2019-02-21T04:06:27.575Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="源码分析之Zygote启动流程">
+<meta name="twitter:description" content="安卓中的Zygote进程，为万物进程的始祖进程。所有的应用创建都是基于此进程进行开辟的，其本名为受精卵，这里不免称其为进程孵化器。此篇文章就着重介绍Zygote的创建流程，继而分析后续安卓系统中进程的创建原理。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_init.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/06/源码分析之Zygote启动流程/">
+
+
+
+
+
+  <title>源码分析之Zygote启动流程 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/06/源码分析之Zygote启动流程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">源码分析之Zygote启动流程</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-06T18:37:26+08:00">
+                2018-06-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>安卓中的Zygote进程，为万物进程的始祖进程。所有的应用创建都是基于此进程进行开辟的，其本名为受精卵，这里不免称其为进程孵化器。此篇文章就着重介绍Zygote的创建流程，继而分析后续安卓系统中进程的创建原理。</strong></p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>init进程解析完成rc脚本文件后，便进入Zygote的启动过程。</p>
+<pre><code>service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server
+    class main  //伴随着main class的启动而启动
+    socket zygote stream 660 root system    //创建socket
+    onrestart write /sys/android_power/request_state wake
+    onrestart write /sys/power/state on
+    onrestart restart media //zygote重启，则会重启media
+    onrestart restart netd  //zygote重启，则会重启netd
+</code></pre><p>脚本文件指明服务名称 zygote，服务路径/system/bin/app_process,启动参数-Xzygote /system/bin –zygote –start-system-server</p>
+<p>关于init.rc脚本分析<a href="https://891904833.gitee.io/fuckingcode/2018/05/22/init-rc%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90/">请戳这里</a></p>
+<p>关于init进程启动分析<a href="https://891904833.gitee.io/fuckingcode/2018/06/04/init%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">请戳这里</a></p>
+<h1 id="启动流程分析"><a href="#启动流程分析" class="headerlink" title="启动流程分析"></a>启动流程分析</h1><p>上面rc的脚本可以看出，zygote进程开启的服务进程为app_process，程序路径位于 /system/bin/app_process， 以启动参数 -Xzygote /system/bin –zygote 执行。 –start-system-server</p>
+<h2 id="app-process启动流程"><a href="#app-process启动流程" class="headerlink" title="app_process启动流程"></a>app_process启动流程</h2><p>app_process 进程的启动流程可以用下图来描述。</p>
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_init.png" title="zygote_init.png">
+<p>–&gt;frameworks/base/cmds/app_process/app_main.cpp</p>
+<pre><code>// init.cpp解析init.rc文件，fork（）子进程执行到此
+int main(int argc, char* const argv[])
+{
+
+    ...
+
+    // 传递的参数为argv“-Xzygote /system/bin --zygote --start-system-server”
+    AppRuntime runtime(argv[0], computeArgBlockSize(argc, argv));
+
+    argc--; // 忽略第一个参数
+    argv++;
+
+    int i;
+    for (i = 0; i &lt; argc; i++) {
+        if (argv[i][0] != &apos;-&apos;) {
+            break;
+        }
+        if (argv[i][1] == &apos;-&apos; &amp;&amp; argv[i][2] == 0) {
+            ++i; // Skip --.
+            break;
+        }
+        runtime.addOption(strdup(argv[i]));
+    }
+
+    // 参数解析
+    bool zygote = false;
+    bool startSystemServer = false;
+    bool application = false;
+    String8 niceName;
+    String8 className;
+
+    ++i;  // Skip unused &quot;parent dir&quot; argument.
+    while (i &lt; argc) {
+        const char* arg = argv[i++];
+        if (strcmp(arg, &quot;--zygote&quot;) == 0) {
+            zygote = true;
+            // 对于64系统nice_name为zygote64;32位系统为zygote
+            niceName = ZYGOTE_NICE_NAME;
+        } else if (strcmp(arg, &quot;--start-system-server&quot;) == 0) {
+            startSystemServer = true;
+        } else if (strcmp(arg, &quot;--application&quot;) == 0) {
+            application = true;
+        } else if (strncmp(arg, &quot;--nice-name=&quot;, 12) == 0) {
+            niceName.setTo(arg + 12);
+        } else if (strncmp(arg, &quot;--&quot;, 2) != 0) {
+            className.setTo(arg);
+            break;
+        } else {
+            --i;
+            break;
+        }
+    }
+
+    Vector&lt;String8&gt; args;
+    if (!className.isEmpty()) {
+        // 运行application或tool程序
+        args.add(application ? String8(&quot;application&quot;) : String8(&quot;tool&quot;));
+        runtime.setClassNameAndArgs(className, argc - i, argv + i);
+    } else {
+
+        // 进入zygote模式，创建/data/dalvik-cache路径
+        maybeCreateDalvikCache();
+
+        if (startSystemServer) {
+            args.add(String8(&quot;start-system-server&quot;));
+        }
+
+        char prop[PROP_VALUE_MAX];
+        if (property_get(ABI_LIST_PROPERTY, prop, NULL) == 0) {
+            LOG_ALWAYS_FATAL(&quot;app_process: Unable to determine ABI list from property %s.&quot;,
+                ABI_LIST_PROPERTY);
+            return 11;
+        }
+
+        String8 abiFlag(&quot;--abi-list=&quot;);
+        abiFlag.append(prop);
+        args.add(abiFlag);
+
+        // In zygote mode, pass all remaining arguments to the zygote
+        // main() method.
+        for (; i &lt; argc; ++i) {
+            args.add(String8(argv[i]));
+        }
+    }
+
+    // 设置进程名
+    if (!niceName.isEmpty()) {
+        runtime.setArgv0(niceName.string());
+        set_process_name(niceName.string());
+    }
+
+    if (zygote) {
+        // 启动AppRuntime
+        // framework/base/core/jni/AndroidRuntime.cpp
+        runtime.start(&quot;com.android.internal.os.ZygoteInit&quot;, args, zygote);
+    } else if (className) {
+        runtime.start(&quot;com.android.internal.os.RuntimeInit&quot;, args, zygote);
+    } else {
+        fprintf(stderr, &quot;Error: no class name or --zygote supplied.\n&quot;);
+        app_usage();
+        LOG_ALWAYS_FATAL(&quot;app_process: no class name or --zygote supplied.&quot;);
+        return 10;
+    }
+}
+</code></pre><p>上述代码执行的任务，主要可以总结以下：</p>
+<ol>
+<li>程序首先对传入的参数进行解析，获取其启动是的相关参数</li>
+<li>创建虚拟机缓存 maybeCreateDalvikCache()</li>
+<li>收集其他启动参数</li>
+<li>设置进程名</li>
+<li>启动AppRuntime.start()启动ZygoteInit首次进入Java世界</li>
+</ol>
+<h2 id="AppRuntime-start"><a href="#AppRuntime-start" class="headerlink" title="AppRuntime.start()"></a>AppRuntime.start()</h2><p>AppRuntime.start主要流程如下图所示：</p>
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_liucheng.png" title="zygote_liucheng.png">
+<p>AppRuntime继承自AndroidRuntime，其父类实现了start方法，如下</p>
+<p>–&gt; framework/base/core/jni/AndroidRuntime.cpp</p>
+<pre><code>// runtime.start(&quot;com.android.internal.os.ZygoteInit&quot;, args, zygote);
+void AndroidRuntime::start(const char* className, const Vector&lt;String8&gt;&amp; options, bool zygote)
+{
+    ...
+    // 虚拟机创建
+    if (startVm(&amp;mJavaVM, &amp;env, zygote) != 0) {
+        return;
+    }
+
+    // 方法回调
+    onVmCreated(env);
+
+    // JNI方法注册
+    if (startReg(env) &lt; 0) {
+        ALOGE(&quot;Unable to register all android natives\n&quot;);
+        return;
+    }
+
+    ...
+
+    // 等价strArray = new String[options.size() + 1]
+    stringClass = env-&gt;FindClass(&quot;java/lang/String&quot;);
+    assert(stringClass != NULL);
+    strArray = env-&gt;NewObjectArray(options.size() + 1, stringClass, NULL);
+    assert(strArray != NULL);
+
+    // 等价strArry[0] = &quot;com.android.internal.os.ZygoteInit&quot;
+    classNameStr = env-&gt;NewStringUTF(className);
+    assert(classNameStr != NULL);
+    env-&gt;SetObjectArrayElement(strArray, 0, classNameStr);
+
+    // 等价 strArry[1] = &quot;start-system-server&quot;;
+    // 等价 strArry[2] = &quot;--abi-list=xxx&quot;;
+    // 其中xxx为系统响应的cpu架构类型，比如arm64-v8a
+    for (size_t i = 0; i &lt; options.size(); ++i) {
+        jstring optionsStr = env-&gt;NewStringUTF(options.itemAt(i).string());
+        assert(optionsStr != NULL);
+        env-&gt;SetObjectArrayElement(strArray, i + 1, optionsStr);
+    }
+
+   // 将“com.android.internal.os.ZygoteInit”转换为“com/android/internal/os/ZygoteInit”
+    char* slashClassName = toSlashClassName(className);
+    jclass startClass = env-&gt;FindClass(slashClassName);
+    if (startClass == NULL) {
+        ALOGE(&quot;JavaVM unable to locate class &apos;%s&apos;\n&quot;, slashClassName);
+        /* keep going */
+    } else {
+        jmethodID startMeth = env-&gt;GetStaticMethodID(startClass, &quot;main&quot;,
+            &quot;([Ljava/lang/String;)V&quot;);
+        if (startMeth == NULL) {
+            ALOGE(&quot;JavaVM unable to find main() in &apos;%s&apos;\n&quot;, className);
+            /* keep going */
+        } else {
+            // 通过jni调用ZygoyeInit.main()方法,首次进入Java世界
+            // framework/base/core/java/com/android/internal/os/ZygoteInit.java
+            env-&gt;CallStaticVoidMethod(startClass, startMeth, strArray);
+
+#if 0
+            if (env-&gt;ExceptionCheck())
+                threadExitUncaughtException(env);
+#endif
+        }
+    }
+    // 释放相应对象的内存空间
+    free(slashClassName);
+
+    ...
+
+}    
+</code></pre><p>AndroidRuntime的start函数中，其主要有以下几个重要步骤：</p>
+<ol>
+<li>startVm()    创建虚拟机</li>
+<li>startReg()    注册系统JNI方法</li>
+<li>CallStaticVoidMethod()    反射调用初始化ZygoteInit进入Java世界</li>
+<li>释放内存操作</li>
+</ol>
+<h3 id="startVm-初始化虚拟机"><a href="#startVm-初始化虚拟机" class="headerlink" title="startVm()初始化虚拟机"></a>startVm()初始化虚拟机</h3><p>虚拟机的简要介绍如下：</p>
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/dalvik.png" title="dalvik.png">
+<pre><code>int AndroidRuntime::startVm(JavaVM** pJavaVM, JNIEnv** pEnv, bool zygote)
+{
+    // JNI检测功能，用于native层调用jni函数时进行常规检测，比较弱字符串格式是否符合要求，资源是否正确释放。该功能一般用于早期系统调试或手机Eng版，对于User版往往不会开启，引用该功能比较消耗系统CPU资源，降低系统性能。
+    bool checkJni = false;
+    property_get(&quot;dalvik.vm.checkjni&quot;, propBuf, &quot;&quot;);
+    if (strcmp(propBuf, &quot;true&quot;) == 0) {
+        checkJni = true;
+    } else if (strcmp(propBuf, &quot;false&quot;) != 0) {
+        property_get(&quot;ro.kernel.android.checkjni&quot;, propBuf, &quot;&quot;);
+        if (propBuf[0] == &apos;1&apos;) {
+            checkJni = true;
+        }
+    }
+    if (checkJni) {
+        addOption(&quot;-Xcheck:jni&quot;);
+    }
+
+    //虚拟机产生的trace文件，主要用于分析系统问题，路径默认为/data/anr/traces.txt
+    parseRuntimeOption(&quot;dalvik.vm.stack-trace-file&quot;, stackTraceFileBuf, &quot;-Xstacktracefile:&quot;);
+
+    //对于不同的软硬件环境，这些参数往往需要调整、优化，从而使系统达到最佳性能
+    parseRuntimeOption(&quot;dalvik.vm.heapstartsize&quot;, heapstartsizeOptsBuf, &quot;-Xms&quot;, &quot;4m&quot;);
+    parseRuntimeOption(&quot;dalvik.vm.heapsize&quot;, heapsizeOptsBuf, &quot;-Xmx&quot;, &quot;16m&quot;);
+    parseRuntimeOption(&quot;dalvik.vm.heapgrowthlimit&quot;, heapgrowthlimitOptsBuf, &quot;-XX:HeapGrowthLimit=&quot;);
+    parseRuntimeOption(&quot;dalvik.vm.heapminfree&quot;, heapminfreeOptsBuf, &quot;-XX:HeapMinFree=&quot;);
+    parseRuntimeOption(&quot;dalvik.vm.heapmaxfree&quot;, heapmaxfreeOptsBuf, &quot;-XX:HeapMaxFree=&quot;);
+    parseRuntimeOption(&quot;dalvik.vm.heaptargetutilization&quot;,
+                       heaptargetutilizationOptsBuf, &quot;-XX:HeapTargetUtilization=&quot;);
+    ...
+
+    //preloaded-classes文件内容是由WritePreloadedClassFile.java生成的，
+    //在ZygoteInit类中会预加载工作将其中的classes提前加载到内存，以提高系统性能
+    if (!hasFile(&quot;/system/etc/preloaded-classes&quot;)) {
+        return -1;
+    }
+
+    //初始化虚拟机
+    if (JNI_CreateJavaVM(pJavaVM, pEnv, &amp;initArgs) &lt; 0) {
+        ALOGE(&quot;JNI_CreateJavaVM failed\n&quot;);
+        return -1;
+    }
+}
+</code></pre><p>此部分代码太多，此部分不做过多的说明。</p>
+<h3 id="startReg"><a href="#startReg" class="headerlink" title="startReg()"></a>startReg()</h3><p>注册系统JNI接口</p>
+<pre><code>/*
+ * Register android native functions with the VM.
+ * 注册JNI方法，其中gRegJNI是一个数组，记录所有需要注册的jni方法，
+ * 其中有一项便是REG_JNI(register_android_os_Binder)
+ */
+/*static*/ int AndroidRuntime::startReg(JNIEnv* env)
+{
+     // 设置线程创建方法为javaCreateThreadEtc
+    androidSetCreateThreadFunc((android_create_thread_fn) javaCreateThreadEtc);
+
+    env-&gt;PushLocalFrame(200);
+    // 进程JNI方法的注册
+    // 内部循环调用gRegJNI数组成员所对应的方法
+    if (register_jni_procs(gRegJNI, NELEM(gRegJNI), env) &lt; 0) {
+        env-&gt;PopLocalFrame(NULL);
+        return -1;
+    }
+    env-&gt;PopLocalFrame(NULL);
+
+    //createJavaThread(&quot;fubar&quot;, quickTest, (void*) &quot;hello&quot;);
+
+    return 0;
+}
+</code></pre><p>内部循环调用gRegJNI数组成员所对应的方法</p>
+<pre><code>static int register_jni_procs(const RegJNIRec array[], size_t count, JNIEnv* env)
+{
+    for (size_t i = 0; i &lt; count; i++) {
+        if (array[i].mProc(env) &lt; 0) {
+#ifndef NDEBUG
+            ALOGD(&quot;----------!!! %s failed to load\n&quot;, array[i].mName);
+#endif
+            return -1;
+        }
+    }
+    return 0;
+}
+</code></pre><p>REG_JNI是一个宏定义，作用就是调用相应的方法</p>
+<pre><code>// 该数组的每个成员都代表一个类文件的jni映射
+static const RegJNIRec gRegJNI[] = {
+    REG_JNI(register_com_android_internal_os_RuntimeInit),
+    REG_JNI(register_android_os_SystemClock),
+    REG_JNI(register_android_util_EventLog),
+    ...
+    // Binder-jni定义
+    REG_JNI(register_android_os_Binder),
+    REG_JNI(register_android_os_Parcel),
+
+    // 注册MessageQueue的native层jni实现
+    REG_JNI(register_android_os_MessageQueue),
+    REG_JNI(register_android_os_SELinux),
+    REG_JNI(register_android_os_Trace),
+    ...
+}
+</code></pre><p>array[i]是指gRegJNI数组, 该数组有100多个成员。其中每一项成员都是通过REG_JNI宏定义的</p>
+<pre><code>#define REG_JNI(name)      { name, #name }
+struct RegJNIRec {
+    int (*mProc)(JNIEnv*);
+    const char* mName;
+};
+</code></pre><p>由此可见，调用mProc，就等价于调用其参数名所指向的函数。 </p>
+<p>例如REG_JNI(register_com_android_internal_os_RuntimeInit).mProc也就是指进入register_com_android_internal_os_RuntimeInit方法，接下来就继续以此为例来说明</p>
+<pre><code>int register_com_android_internal_os_RuntimeInit(JNIEnv* env) {
+    return jniRegisterNativeMethods(env, &quot;com/android/internal/os/RuntimeInit&quot;,
+        gMethods, NELEM(gMethods));
+}
+
+//gMethods：java层方法名与jni层的方法的一一映射关系
+static JNINativeMethod gMethods[] = {
+    { &quot;nativeFinishInit&quot;, &quot;()V&quot;,
+        (void*) com_android_internal_os_RuntimeInit_nativeFinishInit },
+    { &quot;nativeZygoteInit&quot;, &quot;()V&quot;,
+        (void*) com_android_internal_os_RuntimeInit_nativeZygoteInit },
+    { &quot;nativeSetExitWithoutCleanup&quot;, &quot;(Z)V&quot;,
+        (void*) com_android_internal_os_RuntimeInit_nativeSetExitWithoutCleanup },
+};
+</code></pre><h2 id="ZygoteInit-main-执行"><a href="#ZygoteInit-main-执行" class="headerlink" title="ZygoteInit.main()执行"></a>ZygoteInit.main()执行</h2><p>AndroidRuntime最终调用CallStaticVoidMethod()，通过jni反射调用到ZygoteInit.java的main方法,首次进入Java世界，如下图：</p>
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_fenxi.png" title="zygote_fenxi.png">
+<pre><code>--&gt; framework/base/core/java/com/android/internal/os/ZygoteInit.java
+
+    public static void main(String argv[]) {
+        try {
+            ...
+
+            // 为Zygote注册socket
+            registerZygoteSocket(socketName);
+
+            EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
+                SystemClock.uptimeMillis());
+
+            // 预加载类和资源
+            preload();
+            gcAndFinalize(); //GC操作
+            Trace.setTracingEnabled(false);
+
+            // 启动system_server
+            if (startSystemServer) {
+                startSystemServer(abiList, socketName);
+            }
+
+            // 进入循环模式，等待AMS请求创建新应用进程
+            runSelectLoop(abiList);
+
+            closeServerSocket();
+        } catch (MethodAndArgsCaller caller) {
+            caller.run();   //启动system_server
+        } catch (RuntimeException ex) {
+            Log.e(TAG, &quot;Zygote died with exception&quot;, ex);
+            closeServerSocket();
+            throw ex;
+        }
+    }
+</code></pre><p>ZygoteInit的main方法主要有以下几个重要方法：</p>
+<ol>
+<li>为zygote注册socket</li>
+<li>预加载类和资源</li>
+<li>启动system_server服务</li>
+<li>进入循环，等待AMS请求创建新的应用进程</li>
+</ol>
+<h3 id="registerZygoteSocket"><a href="#registerZygoteSocket" class="headerlink" title="registerZygoteSocket"></a>registerZygoteSocket</h3><p>注册socket，负责其他进程与其进行通信</p>
+<pre><code>// 注册zygote端socket
+private static void registerZygoteSocket(String socketName) {
+    if (sServerSocket == null) {
+        int fileDesc;
+        // socket文件名
+        final String fullSocketName = ANDROID_SOCKET_PREFIX + socketName;
+        // 安全性检查
+        try {
+            String env = System.getenv(fullSocketName);
+            fileDesc = Integer.parseInt(env);
+        } catch (RuntimeException ex) {
+            throw new RuntimeException(fullSocketName + &quot; unset or invalid&quot;, ex);
+        }
+
+        try {
+            // 创建文件描述符
+            FileDescriptor fd = new FileDescriptor();
+            // 设置文件描述符
+            fd.setInt$(fileDesc);
+            // 创建Socket的本地服务端，静态保存
+            sServerSocket = new LocalServerSocket(fd);
+        } catch (IOException ex) {
+            throw new RuntimeException(
+                    &quot;Error binding to local socket &apos;&quot; + fileDesc + &quot;&apos;&quot;, ex);
+        }
+    }
+}
+</code></pre><h3 id="preload"><a href="#preload" class="headerlink" title="preload"></a>preload</h3><p>Zygote进程中，预先加载一些必要的资源和共享库，后续创建进程直接fork，效率非常高。</p>
+<pre><code>static void preload() {
+
+    // 预加载位于/system/etc/preloaded-classes文件中的类
+    preloadClasses();
+    // 预加载资源，包含drawable和color资源
+    preloadResources();
+    // 预加载OpenGL
+    preloadOpenGL();
+
+    // 通过System.loadLibrary()方法
+    // 预加载&quot;android&quot;,&quot;compiler_rt&quot;,&quot;jnigraphics&quot;这3个共享库
+    preloadSharedLibraries();
+
+    // MStar Android Patch Begin
+    // preloadTextResources();  //  预加载文本连接符资源
+    // MStar Android Patch End
+
+    // 仅用于zygote进程，用于内存共享的进程
+    WebViewFactory.prepareWebViewInZygote();
+    Log.d(TAG, &quot;end preload&quot;);
+}
+</code></pre><h3 id="startSystemServer"><a href="#startSystemServer" class="headerlink" title="startSystemServer"></a>startSystemServer</h3><p>Zygote通过fork子进程，启动system_server服务</p>
+<pre><code>private static boolean startSystemServer(String abiList, String socketName)
+        throws MethodAndArgsCaller, RuntimeException {
+    long capabilities = posixCapabilitiesAsBits(
+        OsConstants.CAP_BLOCK_SUSPEND,
+        OsConstants.CAP_KILL,
+        OsConstants.CAP_NET_ADMIN,
+        OsConstants.CAP_NET_BIND_SERVICE,
+        OsConstants.CAP_NET_BROADCAST,
+        OsConstants.CAP_NET_RAW,
+        OsConstants.CAP_SYS_MODULE,
+        OsConstants.CAP_SYS_NICE,
+        OsConstants.CAP_SYS_RESOURCE,
+        OsConstants.CAP_SYS_TIME,
+        OsConstants.CAP_SYS_TTY_CONFIG
+    );
+    /* Hardcoded command line to start the system server */
+
+    // 参数准备
+    String args[] = {
+        &quot;--setuid=1000&quot;,
+        &quot;--setgid=1000&quot;,
+        &quot;--setgroups=1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1018,1021,1032,3001,3002,3003,3006,3007&quot;,
+        &quot;--capabilities=&quot; + capabilities + &quot;,&quot; + capabilities,
+        &quot;--nice-name=system_server&quot;,
+        &quot;--runtime-args&quot;,
+        &quot;com.android.server.SystemServer&quot;,
+    };
+    ZygoteConnection.Arguments parsedArgs = null;
+
+    int pid;
+
+    try {
+        // 用于解析参数，用于运行system_server
+        parsedArgs = new ZygoteConnection.Arguments(args);
+        ZygoteConnection.applyDebuggerSystemProperty(parsedArgs);
+        ZygoteConnection.applyInvokeWithSystemProperty(parsedArgs);
+
+        /* Request to fork the system server process */
+        // 直接在zygote基础上fork子进程，用于运行system_server
+        pid = Zygote.forkSystemServer(
+                parsedArgs.uid, parsedArgs.gid,
+                parsedArgs.gids,
+                parsedArgs.debugFlags,
+                null,
+                parsedArgs.permittedCapabilities,
+                parsedArgs.effectiveCapabilities);
+    } catch (IllegalArgumentException ex) {
+        throw new RuntimeException(ex);
+    }
+
+    /* For child process */
+    // 子线程system_server返回0，进入子线程
+    if (pid == 0) {
+        if (hasSecondZygote(abiList)) {
+            waitForSecondaryZygote(socketName);
+        }
+        // 完成system_server进程剩余工作，启动System进程
+        handleSystemServerProcess(parsedArgs);
+    }
+    return true;
+}
+</code></pre><h3 id="runSelectLoop"><a href="#runSelectLoop" class="headerlink" title="runSelectLoop"></a>runSelectLoop</h3><p>Zygote进入循环模式，等待AMS请求创建新应用进程</p>
+<pre><code>private static void runSelectLoop(String abiList) throws MethodAndArgsCaller {
+    ArrayList&lt;FileDescriptor&gt; fds = new ArrayList&lt;FileDescriptor&gt;();
+    ArrayList&lt;ZygoteConnection&gt; peers = new ArrayList&lt;ZygoteConnection&gt;();
+
+    // sServerSocket是socket通信中的服务端，即zygote进程server，保存到fds[0]
+    fds.add(sServerSocket.getFileDescriptor());
+    peers.add(null);
+
+    // 不断循环等待AMS的请求
+    while (true) {
+        // 同步刷新socket文件描述符的链接事件驱动进行重新监听（I/O多路复用机制）
+        StructPollfd[] pollFds = new StructPollfd[fds.size()];
+        for (int i = 0; i &lt; pollFds.length; ++i) {
+            pollFds[i] = new StructPollfd();
+            pollFds[i].fd = fds.get(i);
+            pollFds[i].events = (short) POLLIN;
+        }
+        try {
+            // 采用poll机制，处理轮询状态，当pollFds有事件到来，则往下执行，否则会阻塞在这里
+            Os.poll(pollFds, -1);
+        } catch (ErrnoException ex) {
+            throw new RuntimeException(&quot;poll failed&quot;, ex);
+        }
+        for (int i = pollFds.length - 1; i &gt;= 0; --i) {
+            // 采用I/O多路复用机制，当收到客户端发出的连接请求或者数据处理请求，则往下执行
+            // 否则跳出本次循环
+            if ((pollFds[i].revents &amp; POLLIN) == 0) {
+                continue;
+            }
+            if (i == 0) {
+                // fds[0]，代表的是sServerSocket，则意味着客户端链接请求
+                // 创建ZygoteConnection对象，添加到链接列表peers，并添加fds
+                ZygoteConnection newPeer = acceptCommandPeer(abiList);
+                peers.add(newPeer);
+                fds.add(newPeer.getFileDesciptor());
+                // 解释开头刷新监听文件描述符的原因
+            } else {
+                //i &gt; 0,则代表通过socket接受来自对客户端的数据请求，并执行相应操作，创建新的应用进程
+                boolean done = peers.get(i).runOnce();
+                if (done) {
+                    // 处理完成，移除监听文件描述符集
+                    peers.remove(i);
+                    fds.remove(i); //处理完则从fds中移除该文件描述符
+                }
+            }
+        }
+    }
+}
+</code></pre><p>Zygote采用高效的I/O多路复用机制，保证在没有客户端连接请求或数据处理时休眠，否则响应客户端的请求，此处采用的poll机制，具体原理可以参考以下链接<br><a href="https://891904833.gitee.io/fuckingcode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/#more">戳我</a></p>
+<ol>
+<li>客户端通过openZygoteSocketIfNeeded()来跟zygote进程建立连接</li>
+<li>zygote接收到客户端连接请求后执行accept()</li>
+<li>然后创建ZygoteConnection对象，并添加fds数组列表</li>
+<li>建立连接后，可以跟客户端进行通信，进入runOnce()方法来接收客户端数据，并执行进程创建工作</li>
+</ol>
+<h3 id="runOnce"><a href="#runOnce" class="headerlink" title="runOnce"></a>runOnce</h3><p>Zygote处理客户端链接创建进程的处理</p>
+<p>–&gt; frameworks/base/core/java/com/android/internal/os/ZygoteConnection.java</p>
+<pre><code>boolean runOnce() throws ZygoteInit.MethodAndArgsCaller {
+    ...
+
+    try {
+        //读取socket客户端发送过来的参数列表
+        args = readArgumentList();
+        descriptors = mSocket.getAncillaryFileDescriptors();
+    } catch (IOException ex) {
+        ...
+        return true;
+    }
+    ...
+
+    try {
+        // 将binder客户端传递过来的参数，解析成Arguments对象格式
+        parsedArgs = new Arguments(args);
+        ...
+    // 通过fork创建进程
+       pid = Zygote.forkAndSpecialize(parsedArgs.uid, parsedArgs.gid, parsedArgs.gids,
+                parsedArgs.debugFlags, rlimits, parsedArgs.mountExternal, parsedArgs.seInfo,
+                parsedArgs.niceName, fdsToClose, parsedArgs.instructionSet,
+                parsedArgs.appDataDir);
+    } catch (Exception e) {
+        ...
+    }
+
+    try {
+        if (pid == 0) {
+            //子进程执行，首先关闭fork继承下来父进程的文件描述符
+            IoUtils.closeQuietly(serverPipeFd);
+            serverPipeFd = null;
+            //进入子进程处理流程
+            handleChildProc(parsedArgs, descriptors, childPipeFd, newStderr);
+            return true;
+        } else {
+            //父进程执行，关闭子进程的文件描述符
+            IoUtils.closeQuietly(childPipeFd);
+            childPipeFd = null;
+            return handleParentProc(pid, descriptors, serverPipeFd, parsedArgs);
+        }
+    } finally {
+        IoUtils.closeQuietly(childPipeFd);
+        IoUtils.closeQuietly(serverPipeFd);
+    }
+}
+</code></pre><p>关于zygote如何fork并启动应用，完成进程间通信，留待后续分析，这里不做过多介绍，可以用如下图来说明其具体流程。</p>
+<img src="/fuckingcode/2018/06/06/源码分析之Zygote启动流程/zygote_ctreate.png" title="zygote_ctreate.png">
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>通过上述的介绍，基本将Zygote执行流程过了一遍，大概的框架梳理出来，后续在对其中具体的通信细节进行介绍，这里总结一下其流程：</p>
+<ol>
+<li>init.cpp解析init.zygote.rc中的参数，启动app_process,创建AppRuntime并调用AppRuntime.start()方法</li>
+<li>AndroidRuntime调用startVM()方法创建虚拟机，调用startReg()注册JNI函数</li>
+<li>app_main中，通过JNI方式反射调用ZygoteInit.main()，第一次进入Java世界</li>
+<li>registerZygoteSocket()建立socket通道，zygote作为通信的服务端，用于响应客户端请求</li>
+<li>ZygoteInit.main中，preload()预加载通用类、drawable和color资源、openGL以及共享库以及WebView，用于提高app启动效率</li>
+<li>zygote完成大部分工作，接下来再通过startSystemServer()，fork得力帮手system_server进程，也是上层framework的运行载体</li>
+<li>zygote功成身退，调用runSelectLoop()，随时待命，当接收到请求创建新进程请求时立即唤醒并执行相应工作</li>
+</ol>
+<hr>
+<h1 id="更多"><a href="#更多" class="headerlink" title="更多"></a>更多</h1><blockquote>
+<p> 参考链接： <a href="http://gityuan.com/2016/02/13/android-zygote/" target="_blank" rel="noopener">戳我</a></p>
+</blockquote>
+<blockquote>
+<p> 罗升阳 Android系统源代码情景分析</p>
+</blockquote>
+<p><a href="http://gityuan.com/archive/" target="_blank" rel="noopener">博客推荐-Gityuan</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/Zygote/" rel="tag"># Zygote</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/06/源码分析之SystemServer流程分析1/" rel="next" title="源码分析之SystemServer流程分析1">
+                <i class="fa fa-chevron-left"></i> 源码分析之SystemServer流程分析1
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/07/源码分析之SystemServer流程分析2/" rel="prev" title="源码分析之SystemServer流程分析2">
+                源码分析之SystemServer流程分析2 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#启动流程分析"><span class="nav-number">2.</span> <span class="nav-text">启动流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#app-process启动流程"><span class="nav-number">2.1.</span> <span class="nav-text">app_process启动流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AppRuntime-start"><span class="nav-number">2.2.</span> <span class="nav-text">AppRuntime.start()</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#startVm-初始化虚拟机"><span class="nav-number">2.2.1.</span> <span class="nav-text">startVm()初始化虚拟机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#startReg"><span class="nav-number">2.2.2.</span> <span class="nav-text">startReg()</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ZygoteInit-main-执行"><span class="nav-number">2.3.</span> <span class="nav-text">ZygoteInit.main()执行</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#registerZygoteSocket"><span class="nav-number">2.3.1.</span> <span class="nav-text">registerZygoteSocket</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#preload"><span class="nav-number">2.3.2.</span> <span class="nav-text">preload</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#startSystemServer"><span class="nav-number">2.3.3.</span> <span class="nav-text">startSystemServer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#runSelectLoop"><span class="nav-number">2.3.4.</span> <span class="nav-text">runSelectLoop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#runOnce"><span class="nav-number">2.3.5.</span> <span class="nav-text">runOnce</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">3.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#更多"><span class="nav-number">4.</span> <span class="nav-text">更多</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

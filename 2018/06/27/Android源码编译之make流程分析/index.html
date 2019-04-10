@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Makefile,源码分析,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="前面分别分析了安卓源码编译过程中 source 和 lunch 命令下的具体操作流程。其中source是向shell环境导入相关变量，lunch命令则是执行build/envsetup.sh文件中定义好的函数，与lunch函数相似，编译系统命令m（make），mm，mmm等命令也是其中定义好的方法，下面我们就来具体分析一下。">
+<meta name="keywords" content="Makefile,源码分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android源码编译之make流程分析">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="前面分别分析了安卓源码编译过程中 source 和 lunch 命令下的具体操作流程。其中source是向shell环境导入相关变量，lunch命令则是执行build/envsetup.sh文件中定义好的函数，与lunch函数相似，编译系统命令m（make），mm，mmm等命令也是其中定义好的方法，下面我们就来具体分析一下。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/make_jiagou.png">
+<meta property="og:updated_time" content="2018-07-16T01:55:42.756Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android源码编译之make流程分析">
+<meta name="twitter:description" content="前面分别分析了安卓源码编译过程中 source 和 lunch 命令下的具体操作流程。其中source是向shell环境导入相关变量，lunch命令则是执行build/envsetup.sh文件中定义好的函数，与lunch函数相似，编译系统命令m（make），mm，mmm等命令也是其中定义好的方法，下面我们就来具体分析一下。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/make_jiagou.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之make流程分析/">
+
+
+
+
+
+  <title>Android源码编译之make流程分析 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/27/Android源码编译之make流程分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android源码编译之make流程分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-27T16:32:02+08:00">
+                2018-06-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码编译/" itemprop="url" rel="index">
+                    <span itemprop="name">源码编译</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/06/27/Android源码编译之make流程分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/27/Android源码编译之make流程分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>前面分别分析了安卓源码编译过程中 source 和 lunch 命令下的具体操作流程。其中source是向shell环境导入相关变量，lunch命令则是执行build/envsetup.sh文件中定义好的函数，与lunch函数相似，编译系统命令m（make），mm，mmm等命令也是其中定义好的方法，下面我们就来具体分析一下。</strong></p>
+<a id="more"></a>
+<h3 id="make编译具体分析"><a href="#make编译具体分析" class="headerlink" title="make编译具体分析"></a>make编译具体分析</h3><h4 id="make（m）分析"><a href="#make（m）分析" class="headerlink" title="make（m）分析"></a>make（m）分析</h4><p>m，mm，mmmm等方法均等定义在build/envsetup.sh中，其就是make命令的简写，代表从源码跟路径开始编译，具体代码如下：</p>
+<pre><code>function m()
+{
+    local T=$(gettop)
+    local DRV=$(getdriver $T)
+    if [ &quot;$T&quot; ]; then
+        $DRV make -C $T -f build/core/main.mk $@
+    else
+        echo &quot;Couldn&apos;t locate the top of the tree.  Try setting TOP.&quot;
+        return 1
+    fi
+}
+</code></pre><p>代码可以看出，获取到源码跟路径后，由此获取到mak编译所需驱动，直接调用 make -C 指定工作目录T，之后通过-f指定Makefile文件，最后将m方法传递的参数$@作为命令make的参数进行编译操作。</p>
+<h4 id="mm-分析"><a href="#mm-分析" class="headerlink" title="mm 分析"></a>mm 分析</h4><p>方法mm表示编译当前路径下的所有模块，不包含依赖。其具体的脚本文件内容如下：</p>
+<pre><code>function mm()
+{
+    local T=$(gettop)
+    local DRV=$(getdriver $T)
+    # If we&apos;re sitting in the root of the build tree, just do a
+    # normal make.
+    if [ -f build/core/envsetup.mk -a -f Makefile ]; then
+        $DRV make $@
+    else
+        # Find the closest Android.mk file.
+        local M=$(findmakefile)
+        local MODULES=
+        local GET_INSTALL_PATH=
+        local ARGS=
+        # Remove the path to top as the makefilepath needs to be relative
+        local M=`echo $M|sed &apos;s:&apos;$T&apos;/::&apos;`
+        if [ ! &quot;$T&quot; ]; then
+            echo &quot;Couldn&apos;t locate the top of the tree.  Try setting TOP.&quot;
+            return 1
+        elif [ ! &quot;$M&quot; ]; then
+            echo &quot;Couldn&apos;t locate a makefile from the current directory.&quot;
+            return 1
+        else
+            for ARG in $@; do
+                case $ARG in
+                  GET-INSTALL-PATH) GET_INSTALL_PATH=$ARG;;
+                esac
+            done
+            if [ -n &quot;$GET_INSTALL_PATH&quot; ]; then
+              MODULES=
+              ARGS=GET-INSTALL-PATH
+            else
+              MODULES=all_modules
+              ARGS=$@
+            fi
+            ONE_SHOT_MAKEFILE=$M $DRV make -C $T -f build/core/main.mk $MODULES $ARGS
+        fi
+    fi
+}
+</code></pre><p>方法mm适用于shell环境当前路径下编译其所在的模块项，具体流程可以总结如下：</p>
+<ol>
+<li>获取源码跟路径，通过判断当前是否存在文件/build/core/envsetup.mk文件和Makefiel文件来确定是否处于源码跟路径，是便执行全局make</li>
+<li>通过findmakefile 方法获取指定的Android.mk文件，找到便停止，得到其绝对路径</li>
+<li>通过取出源码跟路径和找到的绝对路径通过sed命令比对，删除相同部分，获取相对的路径存放于M</li>
+<li>将找到的Android.mk文件的相对路径设置给环境变量ONE_SHOT_MAKE，表示接下来要对它进行编译</li>
+<li><p>由于mm后面一半不接参数，这里源码可以看出 MODULES=all_modules 表示编译指定Anroid.mk文件的所有模块；如果有参数则对参数判断在设置编译选项</p>
+<p> findmakefile代码具体如下：</p>
+<pre><code>function findmakefile()
+{
+    TOPFILE=build/core/envsetup.mk
+    local HERE=$PWD
+    T=
+    while [ \( ! \( -f $TOPFILE \) \) -a \( $PWD != &quot;/&quot; \) ]; do
+        T=`PWD= /bin/pwd`
+        if [ -f &quot;$T/Android.mk&quot; ]; then
+            # 如果找到Android.mk，echo出来的全路径将作为函数的返回值赋给某个变量
+            echo $T/Android.mk
+            \cd $HERE
+            return
+        fi
+        # 向上循环查找
+        \cd ..
+    done
+    \cd $HERE
+}
+</code></pre></li>
+</ol>
+<h4 id="mmm-具体分析"><a href="#mmm-具体分析" class="headerlink" title="mmm 具体分析"></a>mmm 具体分析</h4><p>mmm 后面可以传入编译的路径，编译的模块名称，如下所示：</p>
+<pre><code>mmm &lt;dir-1&gt; &lt;dir-2&gt; ... &lt;dir-N&gt;[:module-1,module-2,...,module-M] 
+</code></pre><p>其中，dir-1、dir-2、dir-N都是包含有Android.mk文件的目录。在最后一个目录dir-N的后面可以带一个冒号，冒号后面可以通过逗号分隔一系列的模块名称module-1、module-2和module-M，用来表示要编译前面指定的Android.mk中的哪些模块。具体的代码如下：</p>
+<pre><code>function mmm()
+{
+    local T=$(gettop)
+    local DRV=$(getdriver $T)
+    if [ &quot;$T&quot; ]; then
+        local MAKEFILE=
+        local MODULES=
+        local ARGS=
+        local DIR TO_CHOP
+        local GET_INSTALL_PATH=
+        # 将以横线“-”开头的字符串提取出，取出编译选项参数
+        local DASH_ARGS=$(echo &quot;$@&quot; | awk -v RS=&quot; &quot; -v ORS=&quot; &quot; &apos;/^-.*$/&apos;)
+        # 将非以横线“-”开头的字符串提取出来，跟在命令mmm后面的字符串
+        # “&lt;dir-1&gt; &lt;dir-2&gt; ... &lt;dir-N&gt;[:module-1,module-2,...,module-M]”
+        # 取出路径和模块名
+        local DIRS=$(echo &quot;$@&quot; | awk -v RS=&quot; &quot; -v ORS=&quot; &quot; &apos;/^[^-].*$/&apos;)
+        for DIR in $DIRS ; do
+            # 将取出字符匹配到的第一个&quot;：&quot;至结尾的数据，删除&quot;，&quot;
+            # 第一个sed获得的是一系列以逗号分隔的模块名称列表
+            # 第二个sed命令用来将前面获得的以逗号分隔的模块名称列表转化为以空格分隔的模块名称列表
+            MODULES=`echo $DIR | sed -n -e &apos;s/.*:\(.*$\)/\1/p&apos; | sed &apos;s/,/ /&apos;`
+            if [ &quot;$MODULES&quot; = &quot;&quot; ]; then
+                # 不指定modules名称状态
+                MODULES=all_modules
+            fi
+            # 第一个sed命令将原来DIR字符串后面的冒号以及冒号后面的模块列表字符串删掉
+            # 第二个sed命令将执行前面一个sed命令获得的目录后面的&quot;/&quot;斜线去，这里的&quot;：&quot;同于&quot;/&quot;，为定界符之意
+            # 此处获得一个末尾不带有斜线“/”的真正路径，并且保存在变量DIR中
+            DIR=`echo $DIR | sed -e &apos;s/:.*//&apos; -e &apos;s:/$::&apos;`
+            if [ -f $DIR/Android.mk ]; then
+                # cd -P进入非链接的真实路径后返回绝对路径，计算字符数，删除其中空格
+                local TO_CHOP=`(\cd -P -- $T &amp;&amp; pwd -P) | wc -c | tr -d &apos; &apos;`
+                # 字符数加1，得到的值保存在变量TO_CHOP中
+                local TO_CHOP=`expr $TO_CHOP + 1`
+                # 执行/bin/pwd命令获得当前执行命令mmm的目录START
+                local START=`PWD= /bin/pwd`
+                # 通过cut命令获得当前目录START相对于Android源码根目录T的路径，并且保存在变量MFILE中
+                # 打印START路径后，裁剪指定字符长度后面的路径
+                local MFILE=`echo $START | cut -c${TO_CHOP}-`
+                if [ &quot;$MFILE&quot; = &quot;&quot; ] ; then
+                # 如果变量MFILE的值等于空，就表明是在Android源码根目录T中执行mmm命令，
+                # 这时候就表明变量DIR描述的就是相对Android源码根目录T的一个目录，
+                # 这时候指定的Android.mk文件相对于Android源码根目录T的路径就为$DIR/Android.mk
+                    MFILE=$DIR/Android.mk
+                else
+                # 如果变量MFILE的值不等于空，就表明是在Android源码根目录T的某一个子目录中执行mmm命令，
+                # 这时候$MFILE/$DIR/Android.mk表示的Android.mk文件路径才是相对于Android源码根目录T的
+                    MFILE=$MFILE/$DIR/Android.mk
+                fi
+                # 将获得的Android.mk路径MFILE附加在变量MAKEFILE描述的字符串的后面，并且以空格分隔
+                MAKEFILE=&quot;$MAKEFILE $MFILE&quot;
+            else
+                case $DIR in
+                # 如果变量DIR描述的不是一个真正的路径，并且它的值等于&quot;snod&quot;、&quot;showcomands&quot;、“dist”或者“incrementaljavac”，
+                # 那么它描述的其实是make修饰命令
+                  showcommands | snod | dist | incrementaljavac | *=*) ARGS=&quot;$ARGS $DIR&quot;;;
+                  GET-INSTALL-PATH) GET_INSTALL_PATH=$DIR;;
+                  *) echo &quot;No Android.mk in $DIR.&quot;; return 1;;
+                esac
+            fi
+        done
+
+        # 变量MAKEFILE保存的是要编译的Android.mk文件列表，它们都是相对于Android源码根目录的路径，
+        # 变量DASH_ARGS保存的是原来执行mmm命令时带的选项参数，
+        # 变量MODULES保存的是指定要编译的模块名称，变量ARGS保存的是修饰命令
+        if [ -n &quot;$GET_INSTALL_PATH&quot; ]; then
+          ARGS=$GET_INSTALL_PATH
+          MODULES=
+        fi
+        # 变量MAKEFILE的内容通过环境变量ONE_SHOT_MAKEFILE传递给make命令，
+        # 而其余变量都是通过参数的形式传递给make命令，并且变量MODULES作为make命令的目标
+        ONE_SHOT_MAKEFILE=&quot;$MAKEFILE&quot; $DRV make -C $T -f build/core/main.mk $DASH_ARGS $MODULES $ARGS
+    else
+        echo &quot;Couldn&apos;t locate the top of the tree.  Try setting TOP.&quot;
+        return 1
+    fi
+}
+</code></pre><p>注释中已对代码进行了相当程度的注释，基本可以无缝看懂。这里总结一下期间复杂的流程：</p>
+<ol>
+<li><p>调用函数gettop获得Android源码根目录。</p>
+</li>
+<li><p>通过命令awk将执行命令mmm时指定的选项参数提取出来，也就是将以横线“-”开头的字符串提取出来，并且保存在变量DASH_ARGS中。</p>
+</li>
+<li><p>通过命令awk将执行命令mmm时指定的非选项参数提取出来，也就是将非以横线“-”开头的字符串提取出来，并且保存在变量DIRS中。这里得到的实际上就是跟在命令mmm后面的字符串“<dir-1> <dir-2> … <dir-n>[:module-1,module-2,…,module-M]”。</dir-n></dir-2></dir-1></p>
+</li>
+<li><p>变量DIRS保存的字符串可以看成是一系以空格分隔的子字符串，因此，就可以通过一个for循环来对这些子字府串进行遍历。每一个子字符串DIR描述的都是一个包含有Android.mk文件的目录。对每一个目录DIR执行以下操作</p>
+<pre><code>4.1 由于目录DIR后面可能会通过冒号指定有模块名称，因此就先通过两个sed命令来获得这些模块名称。第一个sed命令获得的是一系列以逗号分隔的模块名称列表，第二个sed命令用来将前面获得的以逗号分隔的模块名称列表转化为以空格分隔的模块名称列表。最后，获得的以空格分隔的模块名称列表保存在变量MODULES中。由于目录DIR后面也可能不指定有模块名称，因此前面得到的变量MODULES的值就会为空。在这种情况下，需要将变量MODULES的值设置为“all_modules”，表示要编译的是所有模块。
+4.2 通过两个sed命令获得真正的目录DIR。第一个sed命令将原来DIR字符串后面的冒号以及冒号后面的模块列表字符串删掉。第二个sed命令将执行前面一个sed命令获得的目录后面的&quot;/&quot;斜线去掉，最后就得到一个末尾不带有斜线“/”的路径，并且保存在变量DIR中。
+4.3 如果变量DIR描述的是一个真正的路径，也就是在该路径下存在一个Android.mk文件，那么就进行以下处理：
+
+        4.3.1 统计Android源码根目录T包含的字符数，并且将这个字符数加1，得到的值保存在变量TO_CHOP中。
+        4.3.2 通过执行/bin/pwd命令获得当前执行命令mmm的目录START。
+        4.3.3 通过cut命令获得当前目录START相对于Android源码根目录T的路径，并且保存在变量MFILE中。
+        4.3.4 如果变量MFILE的值等于空，就表明是在Android源码根目录T中执行mmm命令，这时候就表明变量DIR描述的就是相对Android源码根目录T的一个目录，这时候指定的Android.mk文件相对于Android源码根目录T的路径就为$DIR/Android.mk。
+        4.3.5 如果变量MFILE的值不等于空，就表明是在Android源码根目录T的某一个子目录中执行mmm命令，这时候$MFILE/$DIR/Android.mk表示的Android.mk文件路径才是相对于Android源码根目录T的。
+        4.3.6 将获得的Android.mk路径MFILE附加在变量MAKEFILE描述的字符串的后面，并且以空格分隔。
+
+4.4 如果变量DIR描述的不是一个真正的路径，并且它的值等于&quot;snod&quot;、&quot;showcomands&quot;、“dist”或者“incrementaljavac”，那么它描述的其实是make修饰命令。这四个修饰命令的含义分别如下所示：
+    4.4.1 snod是“systemimage with no dependencies”的意思，表示忽略依赖性地重新打包system.img。
+    4.4.2 showcommands表示显示编译过程中执行的命令。
+    4.4.3 dist表示将编译后产生的发布文件拷贝到out/dist目录中。
+    4.4.4 incrementaljavac表示对Java源文件采用增量式编译，也就是如果一个Java文件如果没有修改过，那么就不要重新生成对应的class文件。
+</code></pre></li>
+<li><p>上面的for循环执行完毕，变量MAKEFILE保存的是要编译的Android.mk文件列表，它们都是相对于Android源码根目录的路径，变量DASH_ARGS保存的是原来执行mmm命令时带的选项参数，变量MODULES保存的是指定要编译的模块名称，变量ARGS保存的是修饰命令。其中，变量MAKEFILE的内容通过环境变量ONE_SHOT_MAKEFILE传递给make命令，而其余变量都是通过参数的形式传递给make命令，并且变量MODULES作为make命令的目标</p>
+</li>
+</ol>
+<p>从上面的函数m、mm和mmm的具体代码，我们就可以知道：</p>
+<ol>
+<li><p>mm和mmm命令是类似的，它们都是用来编译某些模块。</p>
+</li>
+<li><p>m命令是make的简单封装，用来编译所有模块。</p>
+</li>
+</ol>
+<p>这里引用罗老师博客中的图片来说明其编译过程：</p>
+<img src="/fuckingcode/2018/06/27/Android源码编译之make流程分析/make_jiagou.png" class="make编译流程一览">
+<h4 id="main-mk文件分析"><a href="#main-mk文件分析" class="headerlink" title="main.mk文件分析"></a>main.mk文件分析</h4><p>main.mk文件存在与build/core文件夹下，其通过Android源码根目录下的Makefile文件引用进来，当在源码跟路径下make时候，便会自动调用到main.mk，其代码如下：</p>
+<pre><code>### DO NOT EDIT THIS FILE ###
+include build/core/main.mk
+### DO NOT EDIT THIS FILE ###
+</code></pre><p>build/core/main.mk是Android编译系统的入口文件，它通过加载其它的mk文件来对Android源码中的各个模块进行编译，以及将编译出来的文件打包成各种镜像文件。以下就是build/core/main.mk文件的主要内容：</p>
+<pre><code>......
+
+# This is the default target.  It must be the first declared target.
+.PHONY: droid
+DEFAULT_GOAL := droid
+$(DEFAULT_GOAL):
+......
+
+# These goals don&apos;t need to collect and include Android.mks/CleanSpec.mks
+# in the source tree.
+dont_bother_goals := clean clobber dataclean installclean \
+    help out \
+    snod systemimage-nodeps \
+    stnod systemtarball-nodeps \
+    userdataimage-nodeps userdatatarball-nodeps \
+    cacheimage-nodeps \
+    vendorimage-nodeps \
+    ramdisk-nodeps \
+    bootimage-nodeps \
+    recoveryimage-nodeps
+
+ifneq ($(filter $(dont_bother_goals), $(MAKECMDGOALS)),)
+dont_bother := true
+endif
+
+# Targets that provide quick help on the build system.
+include $(BUILD_SYSTEM)/help.mk
+
+# Set up various standard variables based on configuration
+# and host information.
+include $(BUILD_SYSTEM)/config.mk
+
+# CTS-specific config.
+-include cts/build/config.mk
+
+# This allows us to force a clean build - included after the config.mk
+# environment setup is done, but before we generate any dependencies.  This
+# file does the rm -rf inline so the deps which are all done below will
+# be generated correctly
+include $(BUILD_SYSTEM)/cleanbuild.mk
+
+# Include the google-specific config
+-include vendor/google/build/config.mk
+
+......
+
+ifneq ($(ONE_SHOT_MAKEFILE),)
+# We&apos;ve probably been invoked by the &quot;mm&quot; shell function
+# with a subdirectory&apos;s makefile.
+include $(ONE_SHOT_MAKEFILE)
+......
+else # ONE_SHOT_MAKEFILE
+
+#
+# Include all of the makefiles in the system
+#
+
+# Can&apos;t use first-makefiles-under here because
+# --mindepth=2 makes the prunes not work.
+subdir_makefiles := \
+    $(shell build/tools/findleaves.py --prune=out --prune=.repo --prune=.git $(subdirs) Android.mk)
+
+include $(subdir_makefiles)
+
+endif # ONE_SHOT_MAKEFILE
+
+ifneq ($(dont_bother),true)
+#
+# Include all of the makefiles in the system
+#
+
+# Can&apos;t use first-makefiles-under here because
+# --mindepth=2 makes the prunes not work.
+subdir_makefiles := \
+    $(shell build/tools/findleaves.py $(FIND_LEAVES_EXCLUDES) $(subdirs) Android.mk)
+
+$(foreach mk, $(subdir_makefiles), $(info including $(mk) ...)$(eval include $(mk)))
+
+endif # dont_bother
+......
+
+# -------------------------------------------------------------------
+# Define dependencies for modules that require other modules.
+# This can only happen now, after we&apos;ve read in all module makefiles.
+#
+# TODO: deal with the fact that a bare module name isn&apos;t
+# unambiguous enough.  Maybe declare short targets like
+# APPS:Quake or HOST:SHARED_LIBRARIES:libutils.
+# BUG: the system image won&apos;t know to depend on modules that are
+# brought in as requirements of other modules.
+define add-required-deps
+$(1): $(2)
+endef
+$(foreach m,$(ALL_MODULES), \
+  $(eval r := $(ALL_MODULES.$(m).REQUIRED)) \
+  $(if $(r), \
+    $(eval r := $(call module-installed-files,$(r))) \
+    $(eval $(call add-required-deps,$(ALL_MODULES.$(m).INSTALLED),$(r))) \
+   ) \
+ )
+......
+
+modules_to_install := $(sort \
+    $(ALL_DEFAULT_INSTALLED_MODULES) \
+    $(product_FILES) \
+    $(foreach tag,$(tags_to_install),$($(tag)_MODULES)) \
+    $(call get-tagged-modules, shell_$(TARGET_SHELL)) \
+    $(CUSTOM_MODULES) \
+  )
+......
+
+# build/core/Makefile contains extra stuff that we don&apos;t want to pollute this
+# top-level makefile with.  It expects that ALL_DEFAULT_INSTALLED_MODULES
+# contains everything that&apos;s built during the current make, but it also further
+# extends ALL_DEFAULT_INSTALLED_MODULES.
+ALL_DEFAULT_INSTALLED_MODULES := $(modules_to_install)
+include $(BUILD_SYSTEM)/Makefile
+modules_to_install := $(sort $(ALL_DEFAULT_INSTALLED_MODULES))
+ALL_DEFAULT_INSTALLED_MODULES :=
+
+endif # dont_bother
+
+......
+
+# -------------------------------------------------------------------
+# This is used to to get the ordering right, you can also use these,
+# but they&apos;re considered undocumented, so don&apos;t complain if their
+# behavior changes.
+.PHONY: prebuilt
+prebuilt: $(ALL_PREBUILT)
+......
+
+# All the droid stuff, in directories
+.PHONY: files
+files: prebuilt \
+        $(modules_to_install) \
+        $(modules_to_check) \
+        $(INSTALLED_ANDROID_INFO_TXT_TARGET)
+......
+
+# Build files and then package it into the rom formats
+.PHONY: droidcore
+droidcore: files \
+    systemimage \
+    $(INSTALLED_BOOTIMAGE_TARGET) \
+    $(INSTALLED_RECOVERYIMAGE_TARGET) \
+    $(INSTALLED_USERDATAIMAGE_TARGET) \
+    $(INSTALLED_CACHEIMAGE_TARGET) \
+    $(INSTALLED_FILES_FILE)
+
+......
+
+# Dist for droid if droid is among the cmd goals, or no cmd goal is given.
+ifneq ($(filter droid,$(MAKECMDGOALS))$(filter ||,|$(filter-out $(INTERNAL_MODIFIER_TARGETS),$(MAKECMDGOALS))|),)
+
+ifneq ($(TARGET_BUILD_APPS),)
+  # If this build is just for apps, only build apps and not the full system by default.
+......
+
+.PHONY: apps_only
+apps_only: $(unbundled_build_modules)
+
+droid: apps_only
+
+else # TARGET_BUILD_APPS
+......
+
+# Building a full system-- the default is to build droidcore
+droid: droidcore dist_files
+
+endif # TARGET_BUILD_APPS
+endif # droid in $(MAKECMDGOALS)
+......
+
+# phony target that include any targets in $(ALL_MODULES)
+.PHONY: all_modules
+all_modules: $(ALL_MODULES)
+
+......
+</code></pre><p>以上罗列了main.mk文件中重要的部分，由于本人能力有限，只能理解一部分，这里绝大部分参考了罗老师的博客内容，文章结尾会给出参考文章链接。</p>
+<ol>
+<li>定义默认make目标为droid。目标droid根据不同的情形有不同的依赖关系。如果在初始化编译环境时，指定了TARGET_BUILD_APPS环境变量，那么就表示当前只编译特定的模块，这些特定的模块保存在变量unbundled_build_modules中，这时候目标droid就透过另外一个伪目标app_only依赖它们。如果在初始化编译环境时没有指定TARGET_BUILD_APPS环境变量，那么目标droid就依赖于另外两个文件droidcore和dist_files。droidcore是一个make伪目标，它依赖于各种预编译文件，以及system.img、boot.img、recovery.img和userdata.img等镜像文件。dist_files也是一个make伪目标，用来指定一些需要在编译后拷贝到out/dist目录的文件。也就是说，当我们在Android源码目录中执行不带目标的make命令时，默认就会对目标droid进行编译，也就是会将整个Android系统编译出来。</li>
+<li><p>加载build/core/config.mk文件。从前面Android编译系统环境初始化过程分析一文可以知道，在加载build/core/config.mk文件的过程中，会在执行make命令的进程中完成对Android编译环境的初始化过程，也就是会指定好目标设备以及编译类型。</p>
+</li>
+<li><p>加载build/croe/definitions.mk文件。该文件定义了很多在编译过程中要用到的宏，相当于就是定义了很多通用函数，供编译过程调用。</p>
+</li>
+<li><p>如果在执行make命令时，指定的不是清理文件相关的目标，也就是不是clean、clobber、dataclean和installclean等目标，那么就会将变量dont_bother的值设置为true，表示接下来要执行的是编译命令。</p>
+</li>
+<li><p>在变量dont_bother的值等于true的情况下，如果环境变量ONE_SHOT_MAKEFILE的值不等于空，也就是我们执行的是mm或者mmm命令，那么就表示要编译的是特定的模块。这些指定要编译的模块的Android.mk文件路径就保存在环境变量ONE_SHOT_MAKEFILE中，因此直接将这些Android,mk文件加载进来就获得相应的编译规则。另一方面，如果环境变量ONE_SHOT_MAKEFILE的值等于空，那么就说明我们执行的是m或者make命令，那么就表示要对Android源代码中的所有模块进行编译，这时候就通过build/tools/findleaves.py脚本获得Android源代码工程下的所有Android.mk文件的路径列表，并且将这些Android.mk文件加载进行获得相应的编译规则。</p>
+</li>
+<li><p>上一步指定的Android.mk文件加载完成之后，变量ALL_MODULES就包含了所有要编译的模块的名称，这些模块名称以空格来分隔形成成一个列表。</p>
+</li>
+<li><p>生成模块依赖规则。每一个模块都可以通过LOCAL_REQUIRED_MODULES来指定它所依赖的其它模块，也就是说当一个模块被安装时，它所依赖的其它模块也同样会被安装。每一个模块m依赖的所有模块都会被保存在ALL_MODULES.$(m).REQUIRED变量中。对于每一个被依赖模块r，我们需要获得它的安装文件，也就是最终生成的模块文件的文件路径，以便可以生成相应的编译规则。获得一个模块m的安装文件是通过调用函数module-installed-files来实现的，实质上就是保存在$(ALL_MODULES.$(m).INSTALLED变量中。知道了一个模块m的所依赖的模块的安装文件路径之后，我们就可以通过函数add-required-deps来指定它们之间的依赖关系了。注意，这里实际上指定的是模块m的安装文件与它所依赖的模块r的安装文件的依赖关系。</p>
+</li>
+<li><p>将所有要安装的模块都保存在变量ALL_DEFAULT_INSTALLED_MODULES中，并且将build/core/Makefie文件加载进来。 build/core/Makefie文件会根据要安装的模块产成system.img、boot.img和recovery.img等镜像文件的生成规则。</p>
+</li>
+<li><p>前面提到，当执行mm命令时，make目标指定为all_moudles。另外，当执行mmm命令时，默认的make目标也指定为all_moudles。因此，我们需要指定目标all_modules的编译规则，实际上只要将它依赖于当前要编译的所有模块就行了，也就是依赖于由变量ALL_MODULES所描述的模块。</p>
+</li>
+</ol>
+<p>写到这里，很是纠结，能力有限，内容无法继续下去，这里就告一段落吧！</p>
+<h4 id="mk模块文件分析"><a href="#mk模块文件分析" class="headerlink" title="mk模块文件分析"></a>mk模块文件分析</h4><p>Android源码内的工程跟目录下都有一个Android.mk的编译文件，我们随便挑一个来分析一下，如下：</p>
+<pre><code>LOCAL_PATH:= $(call my-dir)
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := $(call all-subdir-java-files)
+
+LOCAL_PACKAGE_NAME := Provision
+LOCAL_CERTIFICATE := platform
+
+LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+
+include $(BUILD_PACKAGE)
+</code></pre><p>以上为安卓项目中的一个正常的Android.mk文件内容，下面我们来分析一下：</p>
+<ol>
+<li>每个Android.mk文件开头都要声明一个重要的变量LOCAL_PATH，用来指定当前正在编译的模块的目录。这里通过调用宏my-dir来获得，其具体方法定义在build/core/definitions.mk文件，此文件还封装了其他相关常用的mk文件操作方法，具体可自行查看。</li>
+<li>每一个模块在开始编译之前，都必须显示的先对内部变量进行清理，然后再进行初始化。Android编译系统定义了非常多的模块局部变量，因此我们不可能手动地一个一个清理，需要加载一个由变量CLEAR_VARS指定的Makefile脚本来帮我们自动清理。变量CLEAR_VARS的值定义在build/core/config.mk文件，它的值等于build/core/clear_vars.mk。</li>
+<li>Android.mk文件接下来就是通过其它的LOCAL变量定义模块名称、源文件，以及所要依赖的各种库文件等等。例如，在我们这个例子，模块名称定义为Provision，参与编译的源文件通过调用生命好的函数call all-subdir-java-files来获取。</li>
+<li>LOCAL_MODULE_TAGS 指定编译选项，optional指该模块在所有版本下都编译，其他还有user，eng等。</li>
+<li>LOCAL_CERTIFICATE 指定平台签名platform，相当于app发布所需的签名文件，在make系统中使用此标签指定系统签名。</li>
+<li>LOCAL_PROGUARD_FLAG_FILES 指的是代码混淆参考文件，这里不多说了。</li>
+<li><p>BUILD_PACKAGE 指定编译文件类型。mk文件通过加载一个模板文件来告诉编译系统它所要编译的模块的类型。例如，上面 include $(BUILD_PACKAGE) 表示编译的APK文件，其定义在build/core/package.mk中。其他的编译类型如下：</p>
+<pre><code>BUILD_PACKAGE：指向build/core/package.mk，用来编译APK文件。
+
+BUILD_JAVA_LIBRARY：指向build/core/java_library.mk，用来编译Java库文件。
+
+BUILD_STATIC_JAVA_LIBRARY：指向build/core/tatic_java_library.mk，用来编译Java静态库文件。
+
+BUILD_STATIC_LIBRARY：指向build/core/static_library.mk，用来编译静态库文件。也就是.a文件。
+
+BUILD_EXECUTABLE：指向build/core/executable.mk，用来编译可执行文件。
+
+BUILD_PREBUILT：指向build/core/prebuilt.mk。用来编译已经预编译好的第三方库文件，实际上是将这些预编译好的第三方库文件拷贝到合适的位置去，以便可以让其它模块引用。
+</code></pre></li>
+</ol>
+<p>更多的Android.mk标签内容还有很多，这里就不多做介绍。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ul>
+<li><p>本想将安卓编译系统分三步走的方式系统的梳理一遍，无奈到了make模块时真的感觉自己是有心无力，能力有限，很多东西吃不透。其中很大部分借鉴了罗升阳老师博客中的内容，自己初看的时候也基本是一头雾水，无从下笔。但是还是硬生生的憋出来了部分，主要还是安卓源码诺大的工程，岂能是一两字说得清楚。</p>
+</li>
+<li><p>到这里make部分只能先告一段落，以上内容分析并不够彻底，有很大程度的借鉴学习。日后随着本人能力的不断提升，后续有所悟，再继续回来修改补充，进一步完善。</p>
+</li>
+</ul>
+<h4 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h4><p><a href="https://blog.csdn.net/luoshengyang/article/details/19023609" target="_blank" rel="noopener">参考链接</a></p>
+<blockquote>
+<p>推荐博文：老罗的Android之旅</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/Makefile/" rel="tag"># Makefile</a>
+          
+            <a href="/fuckingcode/tags/源码分析/" rel="tag"># 源码分析</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/" rel="next" title="Android源码编译之lunch流程分析">
+                <i class="fa fa-chevron-left"></i> Android源码编译之lunch流程分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/07/12/Binder系统分析之应用层AIDL的具体实现/" rel="prev" title="Binder系统分析之应用层AIDL的具体实现">
+                Binder系统分析之应用层AIDL的具体实现 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#make编译具体分析"><span class="nav-number">1.</span> <span class="nav-text">make编译具体分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#make（m）分析"><span class="nav-number">1.1.</span> <span class="nav-text">make（m）分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mm-分析"><span class="nav-number">1.2.</span> <span class="nav-text">mm 分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mmm-具体分析"><span class="nav-number">1.3.</span> <span class="nav-text">mmm 具体分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#main-mk文件分析"><span class="nav-number">1.4.</span> <span class="nav-text">main.mk文件分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mk模块文件分析"><span class="nav-number">1.5.</span> <span class="nav-text">mk模块文件分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">1.6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他"><span class="nav-number">1.7.</span> <span class="nav-text">其他</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

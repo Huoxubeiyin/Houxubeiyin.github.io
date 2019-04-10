@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Vold">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="Android的存储系统相对来讲还是比较复杂，其中主要包括了native层的Vold以及Java层的MountService。其中Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的。它们之间的通信采用的Socket进行，而不是Binder机制，其主要的原因就是架构上比较简单，代码量也少。本文就从启动流程上分析安">
+<meta name="keywords" content="Vold">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析之存储系统启动流程Vold">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="Android的存储系统相对来讲还是比较复杂，其中主要包括了native层的Vold以及Java层的MountService。其中Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的。它们之间的通信采用的Socket进行，而不是Binder机制，其主要的原因就是架构上比较简单，代码量也少。本文就从启动流程上分析安">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/NM.jpg">
+<meta property="og:updated_time" content="2019-04-10T07:22:17.209Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="源码分析之存储系统启动流程Vold">
+<meta name="twitter:description" content="Android的存储系统相对来讲还是比较复杂，其中主要包括了native层的Vold以及Java层的MountService。其中Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的。它们之间的通信采用的Socket进行，而不是Binder机制，其主要的原因就是架构上比较简单，代码量也少。本文就从启动流程上分析安">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/">
+
+
+
+
+
+  <title>源码分析之存储系统启动流程Vold | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">源码分析之存储系统启动流程Vold</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-28T10:05:52+08:00">
+                2018-09-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>Android的存储系统相对来讲还是比较复杂，其中主要包括了native层的Vold以及Java层的MountService。其中Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的。它们之间的通信采用的Socket进行，而不是Binder机制，其主要的原因就是架构上比较简单，代码量也少。本文就从启动流程上分析安卓系统中的存储模块是如何加载起来的，下面就让我们直接进入正题。</strong></p>
+<a id="more"></a>
+<h1 id="Vold启动流程"><a href="#Vold启动流程" class="headerlink" title="Vold启动流程"></a>Vold启动流程</h1><p>native层的Vlod进程启动在init.rc脚本中进行配置的，其定义于 /system/core/rootdir/init.rc 中，我们看一下脚本文件内容。</p>
+<h2 id="init脚本相关配置"><a href="#init脚本相关配置" class="headerlink" title="init脚本相关配置"></a>init脚本相关配置</h2><p>init.rc 脚本配置如下：</p>
+<pre><code>service vold /system/bin/vold \
+        --blkid_context=u:r:blkid:s0 --blkid_untrusted_context=u:r:blkid_untrusted:s0 \
+        --fsck_context=u:r:fsck:s0 --fsck_untrusted_context=u:r:fsck_untrusted:s0
+    class core
+    socket vold stream 0660 root mount
+    socket cryptd stream 0660 root mount
+    ioprio be 2
+</code></pre><p>脚本文件声明服务 service 为 vold，对应的程序文件路径 /system/bin/vold，系统级 core 核心服务。</p>
+<h2 id="Vold-main"><a href="#Vold-main" class="headerlink" title="Vold.main"></a>Vold.main</h2><p>init进程通过解析上述脚本文件内容，启动对应的Vold进程，进入到vold的main函数中。其函数文件位于 system/vold/main.cpp 中</p>
+<pre><code>// vold 启动时都创建了若干对象
+int main(int argc, char** argv) {
+    setenv(&quot;ANDROID_LOG_TAGS&quot;, &quot;*:v&quot;, 1);
+    android::base::InitLogging(argv, android::base::LogdLogger(android::base::SYSTEM));
+
+    ...
+
+    VolumeManager *vm;
+    CommandListener *cl;
+    CryptCommandListener *ccl;
+    NetlinkManager *nm;
+
+    //解析参数
+    parse_args(argc, argv);
+
+    ...
+
+    // Quickly throw a CLOEXEC on the socket we just inherited from init
+    fcntl(android_get_control_socket(&quot;vold&quot;), F_SETFD, FD_CLOEXEC);
+    fcntl(android_get_control_socket(&quot;cryptd&quot;), F_SETFD, FD_CLOEXEC);
+
+    mkdir(&quot;/dev/block/vold&quot;, 0755);
+
+    // 用于cryptfs检查，并mount加密的文件系统
+    klog_set_level(6);
+
+    //创建单例对象 VolumeManager
+    if (!(vm = VolumeManager::Instance())) {
+        LOG(ERROR) &lt;&lt; &quot;Unable to create VolumeManager&quot;;
+        exit(1);
+    }
+
+    //创建单例对象 NetlinkManager
+    if (!(nm = NetlinkManager::Instance())) {
+        LOG(ERROR) &lt;&lt; &quot;Unable to create NetlinkManager&quot;;
+        exit(1);
+    }
+
+    if (property_get_bool(&quot;vold.debug&quot;, false)) {
+        vm-&gt;setDebug(true);
+    }
+
+    // 创建 CommandListener 对象
+    cl = new CommandListener();
+    // 创建 CryptCommandListener 对象
+    ccl = new CryptCommandListener();
+
+    // 将新创建的 CommandListener 对象 sl 赋值给 vm 对象的成员变量 mBroadcaster
+    vm-&gt;setBroadcaster((SocketListener *) cl);
+
+    nm-&gt;setBroadcaster((SocketListener *) cl);
+
+    if (vm-&gt;start()) {
+        PLOG(ERROR) &lt;&lt; &quot;Unable to start VolumeManager&quot;;
+        exit(1);
+    }
+
+    if (process_config(vm)) {
+        PLOG(ERROR) &lt;&lt; &quot;Error reading configuration... continuing anyways&quot;;
+    }
+
+    if (nm-&gt;start()) {
+        PLOG(ERROR) &lt;&lt; &quot;Unable to start NetlinkManager&quot;;
+        exit(1);
+    }
+
+    coldboot(&quot;/sys/block&quot;);
+//    coldboot(&quot;/sys/class/switch&quot;);
+
+
+    //启动响应命令的监听器
+    if (cl-&gt;startListener()) {
+        PLOG(ERROR) &lt;&lt; &quot;Unable to start CommandListener&quot;;
+        exit(1);
+    }
+
+    if (ccl-&gt;startListener()) {
+        PLOG(ERROR) &lt;&lt; &quot;Unable to start CryptCommandListener&quot;;
+        exit(1);
+    }
+
+    //Vold成为监听线程
+    while(1) {
+        sleep(1000);
+    }
+
+    LOG(ERROR) &lt;&lt; &quot;Vold exiting&quot;;
+    exit(0);
+}
+</code></pre><p>上述代码可以看出，Vold.main函数中主要做了以下几件事：</p>
+<ul>
+<li>解析传入参数</li>
+<li>创建 VolumeManager，设置监听并启动</li>
+<li>创建 NetlinkManager，设置监听并启动</li>
+<li>创建 CommandListener</li>
+<li>创建 CryptCommandListener</li>
+<li>循环成为监听线程</li>
+</ul>
+<h3 id="VM流程分析"><a href="#VM流程分析" class="headerlink" title="VM流程分析"></a>VM流程分析</h3><h4 id="VM初始化"><a href="#VM初始化" class="headerlink" title="VM初始化"></a>VM初始化</h4><p>VolumeManager是Vold进程中最重要的几个类之一，其简而言之就是Vold的统筹管理类，代码位于 /system/vold/VolumeBase.cpp 下，我们看一下其初始化流程。</p>
+<pre><code>// 单例模式
+VolumeManager *VolumeManager::Instance() {
+    if (!sInstance)
+        sInstance = new VolumeManager();
+    return sInstance;
+}
+
+VolumeManager::VolumeManager() {
+    mDebug = false;
+    mActiveContainers = new AsecIdCollection();
+    mBroadcaster = NULL;
+    mUmsSharingCount = 0;
+    mSavedDirtyRatio = -1;
+    // 当UMS获取时，则设置 dirty ratio 为 0
+    mUmsDirtyRatio = 0;
+}
+</code></pre><p>VolumeManager类内部通过单例模式进行创建，创建同时创建AsecIdCollection负责aesc文件的收集，从析构函数中可以看出其被手动删除释放。下面便是设置监听。</p>
+<h4 id="VM-gt-setBroadcaster"><a href="#VM-gt-setBroadcaster" class="headerlink" title="VM-&gt;setBroadcaster"></a>VM-&gt;setBroadcaster</h4><p>VolumeManager设置监听后，VM才可以开启，并且监听线程才能启动。其代码位于头文件中。</p>
+<pre><code>void setBroadcaster(SocketListener *sl) { mBroadcaster = sl; }
+</code></pre><p>代码中，将CommandListener 对象sl赋值给 mBroadcaster。</p>
+<h4 id="VM-gt-start"><a href="#VM-gt-start" class="headerlink" title="VM-&gt;start"></a>VM-&gt;start</h4><p>VolumeManager设置监听后，便开启工作。</p>
+<pre><code>int VolumeManager::start() {
+    // Always start from a clean slate by unmounting everything in
+    // directories that we own, in case we crashed.
+    // 卸载所有设备,已提供最干净的环境
+    unmountAll();
+
+    // Assume that we always have an emulated volume on internal
+    // storage; the framework will decide if it should be mounted.
+    CHECK(mInternalEmulated == nullptr);
+
+    // 创建Emulated内部存储
+    // 其类型为 EmulatedVolume，设备路径为/data/media
+    // id和label为“emulated”，mMountFlags=0
+    // EmulatedVolume 继承于 VolumeBase
+    mInternalEmulated = std::shared_ptr&lt;android::vold::VolumeBase&gt;(
+            new android::vold::EmulatedVolume(&quot;/data/media&quot;));
+
+    // EmulatedVolume继承VolumeBase
+    mInternalEmulated-&gt;create();
+
+    return 0;
+}
+</code></pre><p>VolumeManager开启时候，会线卸载所有设备，保证干净的环境，之后在重新建立存储化境。</p>
+<h5 id="unmountAll卸载设备"><a href="#unmountAll卸载设备" class="headerlink" title="unmountAll卸载设备"></a>unmountAll卸载设备</h5><pre><code>int VolumeManager::unmountAll() {
+    std::lock_guard&lt;std::mutex&gt; lock(mLock);
+
+    // First, try gracefully unmounting all known devices
+    // 1.卸载内部存储
+    if (mInternalEmulated != nullptr) {
+        mInternalEmulated-&gt;unmount();
+    }
+
+    // 2.卸载外部存储
+    for (auto disk : mDisks) {
+        disk-&gt;unmountAll();
+    }
+
+    // Worst case we might have some stale mounts lurking around, so
+    // force unmount those just to be safe.
+    // 有可能存在严重的潜在的旧的挂载设备存在,强力卸载以保证安全
+    FILE* fp = setmntent(&quot;/proc/mounts&quot;, &quot;r&quot;);
+    if (fp == NULL) {
+        SLOGE(&quot;Error opening /proc/mounts: %s&quot;, strerror(errno));
+        return -errno;
+    }
+
+    // Some volumes can be stacked on each other, so force unmount in
+    // reverse order to give us the best chance of success.
+    std::list&lt;std::string&gt; toUnmount;
+    mntent* mentry;
+    while ((mentry = getmntent(fp)) != NULL) {
+        if (strncmp(mentry-&gt;mnt_dir, &quot;/mnt/&quot;, 5) == 0
+                || strncmp(mentry-&gt;mnt_dir, &quot;/storage/&quot;, 9) == 0) {
+            toUnmount.push_front(std::string(mentry-&gt;mnt_dir));
+        }
+    }
+
+    endmntent(fp);
+
+    for (auto path : toUnmount) {
+        SLOGW(&quot;Tearing down stale mount %s&quot;, path.c_str());
+        android::vold::ForceUnmount(path);
+    }
+
+    return 0;
+}
+</code></pre><p>unmountAll中主要卸载系统内部和外部设备，以提供最干净的设备环境。先卸载内部设备，在遍历外部设备，遍历卸载，之后再针对其他情况卸载而外干扰设备。</p>
+<p>其中mInternalEmulated设备为EmulatedVolume类型，其继承了父类VolumeBase，其子类调用unmount方法，优先走父类VolumeBase的方法，其内容如下：</p>
+<pre><code>status_t VolumeBase::unmount() {
+    if (mState != State::kMounted) {
+        LOG(WARNING) &lt;&lt; getId() &lt;&lt; &quot; unmount requires state mounted&quot;;
+        return -EBUSY;
+    }
+
+    // 设置状态，651，5
+    setState(State::kEjecting);
+    for (auto vol : mVolumes) {
+        if (vol-&gt;destroy()) {
+            LOG(WARNING) &lt;&lt; getId() &lt;&lt; &quot; failed to destroy &quot; &lt;&lt; vol-&gt;getId()
+                    &lt;&lt; &quot; stacked above&quot;;
+        }
+    }
+    mVolumes.clear();
+    status_t res = doUnmount();
+    // 设置状态，发送 651，0
+    setState(State::kUnmounted);
+    return res;
+}
+</code></pre><p>父类的上述方法中，首先设置状态，其最终通过VM的方法，向Socket发送命令。其具体代码如下：</p>
+<pre><code>void VolumeBase::setState(State state) {
+    mState = state;
+    notifyEvent(ResponseCode::VolumeStateChanged, StringPrintf(&quot;%d&quot;, mState));
+}
+
+void VolumeBase::notifyEvent(int event) {
+    if (mSilent) return;
+    // 通过socket向MountService发送创建volume的命令(650)
+    VolumeManager::Instance()-&gt;getBroadcaster()-&gt;sendBroadcast(event,
+            getId().c_str(), false);
+}
+</code></pre><p>其次是调用子类的doUnmount方法，其对应到实现的子类自己的方法，这里的子类为EmulatedVolume，其对应的实现方法如下：</p>
+<pre><code>status_t EmulatedVolume::doUnmount() {
+    if (mFusePid &gt; 0) {
+        kill(mFusePid, SIGTERM);
+        TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, 0));
+        mFusePid = 0;
+    }
+
+    // 强制卸载fuse路径
+    ForceUnmount(mFuseDefault);
+    ForceUnmount(mFuseRead);
+    ForceUnmount(mFuseWrite);
+
+    rmdir(mFuseDefault.c_str());
+    rmdir(mFuseRead.c_str());
+    rmdir(mFuseWrite.c_str());
+
+    mFuseDefault.clear();
+    mFuseRead.clear();
+    mFuseWrite.clear();
+
+    return OK;
+}
+</code></pre><p>其内部具体的卸载方法就不一一细看了。最终，在再一次设置状态。到此内部设备就完成卸载，下面是外部设备的卸载过程。</p>
+<pre><code>status_t Disk::unmountAll() {
+    for (auto vol : mVolumes) {
+        vol-&gt;unmount();
+    }
+    return OK;
+}
+</code></pre><p>其通过遍历，调用所有Disk的unmount实现卸载操作，这里就不一一分析了。其具体内容可以参考GitYuan博客内容。</p>
+<p><a href="http://gityuan.com/2016/07/17/android-io/" target="_blank" rel="noopener">博客推荐</a></p>
+<h5 id="EmulatedVolume-gt-create"><a href="#EmulatedVolume-gt-create" class="headerlink" title="EmulatedVolume-&gt;create"></a>EmulatedVolume-&gt;create</h5><p>EmulatedVolume设备的create方法，首先走父类的VolumeBase的create方法，如下：</p>
+<pre><code>status_t VolumeBase::create() {
+    CHECK(!mCreated);
+
+    mCreated = true;
+    status_t res = doCreate();
+    // 通知VolumeCreated事件，发送650
+    notifyEvent(ResponseCode::VolumeCreated,
+            StringPrintf(&quot;%d \&quot;%s\&quot; \&quot;%s\&quot;&quot;, mType, mDiskId.c_str(), mPartGuid.c_str()));
+    // 设置为非挂载状态，发送651，0
+    setState(State::kUnmounted);
+    return res;
+}
+
+status_t VolumeBase::doCreate() {
+    return OK;
+}
+</code></pre><p>父类中检查状态后，直接调用doCreate方法，之后通过VM的Socket发送消息到MountService中。至此，VolumeManager便启动完成。</p>
+<h3 id="NM流程分析"><a href="#NM流程分析" class="headerlink" title="NM流程分析"></a>NM流程分析</h3><h4 id="NM初始化"><a href="#NM初始化" class="headerlink" title="NM初始化"></a>NM初始化</h4><p>Vold.main中初始化VM后，便初始化NM，如下：</p>
+<pre><code>// 同样是单利模式获取
+NetlinkManager *NetlinkManager::Instance() {
+    if (!sInstance)
+        sInstance = new NetlinkManager();
+    return sInstance;
+}
+
+NetlinkManager::NetlinkManager() {
+    mBroadcaster = NULL;
+}
+</code></pre><p>同样是单例模式进行实例化对象，之后便启动start函数，如下：</p>
+<pre><code>int NetlinkManager::start() {
+    struct sockaddr_nl nladdr;
+    int sz = 64 * 1024;
+    int on = 1;
+
+    memset(&amp;nladdr, 0, sizeof(nladdr));
+    nladdr.nl_family = AF_NETLINK;
+
+    // 记录当前进程的pid
+    nladdr.nl_pid = getpid();
+    nladdr.nl_groups = 0xffffffff;
+
+    // 创建 event socket
+    if ((mSock = socket(PF_NETLINK, SOCK_DGRAM | SOCK_CLOEXEC,
+            NETLINK_KOBJECT_UEVENT)) &lt; 0) {
+        SLOGE(&quot;Unable to create uevent socket: %s&quot;, strerror(errno));
+        return -1;
+    }
+
+    // 设置 uevent 的 SO_RCVBUFFORCE 选项
+    if (setsockopt(mSock, SOL_SOCKET, SO_RCVBUFFORCE, &amp;sz, sizeof(sz)) &lt; 0) {
+        SLOGE(&quot;Unable to set uevent socket SO_RCVBUFFORCE option: %s&quot;, strerror(errno));
+        goto out;
+    }
+
+    // 设置 uevent 的 SO_PASSCRED 选项
+    if (setsockopt(mSock, SOL_SOCKET, SO_PASSCRED, &amp;on, sizeof(on)) &lt; 0) {
+        SLOGE(&quot;Unable to set uevent socket SO_PASSCRED option: %s&quot;, strerror(errno));
+        goto out;
+    }
+
+    // 绑定 uevent socket
+    if (bind(mSock, (struct sockaddr *) &amp;nladdr, sizeof(nladdr)) &lt; 0) {
+        SLOGE(&quot;Unable to bind uevent socket: %s&quot;, strerror(errno));
+        goto out;
+    }
+
+    // 在 NetlinkManager 启动中创建 NetlinkHandler
+    mHandler = new NetlinkHandler(mSock);
+    if (mHandler-&gt;start()) {
+        SLOGE(&quot;Unable to start NetlinkHandler: %s&quot;, strerror(errno));
+        goto out;
+    }
+
+    return 0;
+
+out:
+    close(mSock);
+    return -1;
+}
+</code></pre><p>其中内容比较多，最后我们发现其start时候，新建了一个NetlinkHandler负责通信。下面我们具体看看内部流程。</p>
+<h4 id="NH流程分析"><a href="#NH流程分析" class="headerlink" title="NH流程分析"></a>NH流程分析</h4><h5 id="NH初始化"><a href="#NH初始化" class="headerlink" title="NH初始化"></a>NH初始化</h5><p>NetlinkHandler为NetlinkManager内部的handler，负责通信操作，具体如下：</p>
+<pre><code>// NetlinkHandler继承于 NetlinkListener，NetlinkListener 继承于 SocketListener
+// new NetlinkHandler(mSock) 中参数 mSock 是用于与 Kernel 进行通信的 socket 对象
+// 由于这个继承关系，当 NetlinkHandler 初始化时会调用基类的初始化
+NetlinkHandler::NetlinkHandler(int listenerSocket) :
+                NetlinkListener(listenerSocket) {
+}
+
+int NetlinkHandler::start() {
+    return this-&gt;startListener();
+}
+</code></pre><p>其中如注释所写，NetlinkHandler继承于 NetlinkListener，NetlinkListener 继承于 SocketListener，我们看一下其父类和爷爷类：</p>
+<pre><code>NetlinkListener::NetlinkListener(int socket) :
+                            SocketListener(socket, false) {
+    mFormat = NETLINK_FORMAT_ASCII;
+}
+
+SocketListener::SocketListener(const char *socketName, bool listen) {
+    init(socketName, -1, listen, false);
+}
+
+// 通过层层继承调用至此（SocketListener &lt;- NetlinkListener &lt;- NetlinkHandler &lt;- NetlinkManager）
+void SocketListener::init(const char *socketName, int socketFd, bool listen, bool useCmdNum) {
+    mListen = listen;
+    mSocketName = socketName;
+    // 用于监听 Kernel 发送过程的 uevent 事件
+    mSock = socketFd;
+    mUseCmdNum = useCmdNum;
+    // 初始化同步锁
+    pthread_mutex_init(&amp;mClientsLock, NULL);
+    // 创建 socket 通信的 client 端
+    mClients = new SocketClientCollection();
+}
+</code></pre><p>由此最终走到了SocketListener，其最终实现监听kernel发送过来的uevent事件，当然最终上层调用的开始监听也是在这里最终实现，后下面分析到这里会具体分析。</p>
+<h5 id="NH-gt-start"><a href="#NH-gt-start" class="headerlink" title="NH-&gt;start"></a>NH-&gt;start</h5><p>NH初始化完成后，便进入start状态。代码跟踪如下：</p>
+<pre><code>int NetlinkHandler::start() {
+    return this-&gt;startListener();
+}
+</code></pre><p>然后调用父类的方法，这里只在爷爷类SocketListener发现其实现代码，如下：</p>
+<pre><code>int SocketListener::startListener(int backlog) {
+
+    if (!mSocketName &amp;&amp; mSock == -1) {
+        SLOGE(&quot;Failed to start unbound listener&quot;);
+        errno = EINVAL;
+        return -1;
+    } else if (mSocketName) {
+        // 获取所对应的 socket 的句柄
+        if ((mSock = android_get_control_socket(mSocketName)) &lt; 0) {
+            SLOGE(&quot;Obtaining file descriptor socket &apos;%s&apos; failed: %s&quot;,
+                mSocketName, strerror(errno));
+            return -1;
+        }
+        SLOGV(&quot;got mSock = %d for %s&quot;, mSock, mSocketName);
+        fcntl(mSock, F_SETFD, FD_CLOEXEC);
+    }
+
+    // 开始监听
+    if (mListen &amp;&amp; listen(mSock, backlog) &lt; 0) {
+        SLOGE(&quot;Unable to listen on socket (%s)&quot;, strerror(errno));
+        return -1;
+    } else if (!mListen)
+        // 创建 SocketClient 对象，并加入到 mClients 队列
+        mClients-&gt;push_back(new SocketClient(mSock, false, mUseCmdNum));
+
+    // 创建匿名管道
+    // 这是一个二元数组，mCtrlPipe[0]从管道读数据，mCtrlPipe[1]从管道写数据
+    if (pipe(mCtrlPipe)) {
+        SLOGE(&quot;pipe failed (%s)&quot;, strerror(errno));
+        return -1;
+    }
+
+    // 创建工作线程，线程运行函数threadStart
+    if (pthread_create(&amp;mThread, NULL, SocketListener::threadStart, this)) {
+        SLOGE(&quot;pthread_create (%s)&quot;, strerror(errno));
+        return -1;
+    }
+
+    return 0;
+}
+</code></pre><p>在SocketListener开始监听中，其创建SocketClient对象，加入到mClients队列中，然后对二元数组管道进行读写，最终通过pthread_create另外开启一个线程进行监听。线程代码开启如下：</p>
+<pre><code>void *SocketListener::threadStart(void *obj) {
+    SocketListener *me = reinterpret_cast&lt;SocketListener *&gt;(obj);
+
+    //开始监听
+    me-&gt;runListener();
+
+    // 线程退出
+    pthread_exit(NULL);
+    return NULL;
+}
+
+void SocketListener::runListener() {
+
+    SocketClientCollection pendingList;
+
+    while(1) {
+        SocketClientCollection::iterator it;
+        fd_set read_fds;
+        int rc = 0;
+        int max = -1;
+
+        FD_ZERO(&amp;read_fds);
+
+        if (mListen) {
+            max = mSock;
+            FD_SET(mSock, &amp;read_fds);
+        }
+
+        FD_SET(mCtrlPipe[0], &amp;read_fds);
+        if (mCtrlPipe[0] &gt; max)
+            max = mCtrlPipe[0];
+
+        pthread_mutex_lock(&amp;mClientsLock);
+        for (it = mClients-&gt;begin(); it != mClients-&gt;end(); ++it) {
+            // NB: calling out to an other object with mClientsLock held (safe)
+            int fd = (*it)-&gt;getSocket();
+            FD_SET(fd, &amp;read_fds);
+            if (fd &gt; max) {
+                max = fd;
+            }
+        }
+        pthread_mutex_unlock(&amp;mClientsLock);
+        SLOGV(&quot;mListen=%d, max=%d, mSocketName=%s&quot;, mListen, max, mSocketName);
+        if ((rc = select(max + 1, &amp;read_fds, NULL, NULL, NULL)) &lt; 0) {
+            if (errno == EINTR)
+                continue;
+            SLOGE(&quot;select failed (%s) mListen=%d, max=%d&quot;, strerror(errno), mListen, max);
+            sleep(1);
+            continue;
+        } else if (!rc)
+            continue;
+
+        if (FD_ISSET(mCtrlPipe[0], &amp;read_fds)) {
+            char c = CtrlPipe_Shutdown;
+            TEMP_FAILURE_RETRY(read(mCtrlPipe[0], &amp;c, 1));
+            if (c == CtrlPipe_Shutdown) {
+                break;
+            }
+            continue;
+        }
+        if (mListen &amp;&amp; FD_ISSET(mSock, &amp;read_fds)) {
+            struct sockaddr addr;
+            socklen_t alen;
+            int c;
+
+            do {
+                alen = sizeof(addr);
+                c = accept(mSock, &amp;addr, &amp;alen);
+                SLOGV(&quot;%s got %d from accept&quot;, mSocketName, c);
+            } while (c &lt; 0 &amp;&amp; errno == EINTR);
+            if (c &lt; 0) {
+                SLOGE(&quot;accept failed (%s)&quot;, strerror(errno));
+                sleep(1);
+                continue;
+            }
+            fcntl(c, F_SETFD, FD_CLOEXEC);
+            pthread_mutex_lock(&amp;mClientsLock);
+            mClients-&gt;push_back(new SocketClient(c, true, mUseCmdNum));
+            pthread_mutex_unlock(&amp;mClientsLock);
+        }
+
+        /* Add all active clients to the pending list first */
+        pendingList.clear();
+        pthread_mutex_lock(&amp;mClientsLock);
+        for (it = mClients-&gt;begin(); it != mClients-&gt;end(); ++it) {
+            SocketClient* c = *it;
+            // NB: calling out to an other object with mClientsLock held (safe)
+            int fd = c-&gt;getSocket();
+            if (FD_ISSET(fd, &amp;read_fds)) {
+                pendingList.push_back(c);
+                c-&gt;incRef();
+            }
+        }
+        pthread_mutex_unlock(&amp;mClientsLock);
+
+        /* Process the pending list, since it is owned by the thread,
+        * there is no need to lock it */
+        while (!pendingList.empty()) {
+            /* Pop the first item from the list */
+            it = pendingList.begin();
+            SocketClient* c = *it;
+            pendingList.erase(it);
+            /* Process it, if false is returned, remove from list */
+            if (!onDataAvailable(c)) {
+                release(c, false);
+            }
+            c-&gt;decRef();
+        }
+    }
+}
+</code></pre><p>runListener中，通过死循环和加锁机制，不断读取上述二元数组内的数据，最终将读写到的数据通过方法onDataAvailable实现回调。</p>
+<h5 id="SL-gt-onDataAvailable"><a href="#SL-gt-onDataAvailable" class="headerlink" title="SL-&gt;onDataAvailable"></a>SL-&gt;onDataAvailable</h5><p>这里我们不妨多看看其回调过程,其SocketListener本身没有实现这个方法，其直接子类NetlinkListener实现了，如下：</p>
+<pre><code>// 父类 SocketListener 回调此方法
+bool NetlinkListener::onDataAvailable(SocketClient *cli)
+{
+    int socket = cli-&gt;getSocket();
+    ssize_t count;
+    uid_t uid = -1;
+
+    bool require_group = true;
+    if (mFormat == NETLINK_FORMAT_BINARY_UNICAST) {
+        require_group = false;
+    }
+
+    // 多次尝试获取socket数据
+    count = TEMP_FAILURE_RETRY(uevent_kernel_recv(socket,
+            mBuffer, sizeof(mBuffer), require_group, &amp;uid));
+    if (count &lt; 0) {
+        if (uid &gt; 0)
+            LOG_EVENT_INT(65537, uid);
+        SLOGE(&quot;recvmsg failed (%s)&quot;, strerror(errno));
+        return false;
+    }
+
+    NetlinkEvent *evt = new NetlinkEvent();
+    // 解析消息并封装成 NetlinkEvent
+    if (evt-&gt;decode(mBuffer, count, mFormat)) {
+        //事件处理
+        onEvent(evt);
+    } else if (mFormat != NETLINK_FORMAT_BINARY) {
+        // Don&apos;t complain if parseBinaryNetlinkMessage returns false. That can
+        // just mean that the buffer contained no messages we&apos;re interested in.
+        SLOGE(&quot;Error decoding NetlinkEvent&quot;);
+    }
+
+    delete evt;
+    return true;
+}
+</code></pre><p>NetlinkListener在得到父类传来的数据后，将数据进行封装NetlinkEvent。最终实现onEvent方法回调。这里的onEvent接口是在哪声明的呢？根据头文件我们发现，其是一个虚函数，需要子类进行实现，其声明如下：</p>
+<pre><code>-&gt; /system/vold/NetlinkHandler.h
+
+protected:
+    virtual void onEvent(NetlinkEvent *evt);
+};
+</code></pre><p>由于NetlinkHandler为NetlinkListener的子类，我们查看发现其具体实现如下：</p>
+<pre><code>// NetlinkListener 在 onDataAvailable 回调到此方法
+void NetlinkHandler::onEvent(NetlinkEvent *evt) {
+    VolumeManager *vm = VolumeManager::Instance();
+    const char *subsys = evt-&gt;getSubsystem();
+
+    if (!subsys) {
+        SLOGW(&quot;No subsystem found in netlink event&quot;);
+        return;
+    }
+
+    if (!strcmp(subsys, &quot;block&quot;)) {
+        // 调用 VolumeManager 处理块设备
+        vm-&gt;handleBlockEvent(evt);
+    }
+}
+</code></pre><p>到这里，最终调用VolumeManager的handleBlockEvent实现处理。至此我们先告一段落，在后面存储系统工作流程中进行具体分析。</p>
+<h3 id="CommandListener流程分析"><a href="#CommandListener流程分析" class="headerlink" title="CommandListener流程分析"></a>CommandListener流程分析</h3><h4 id="CL初始化"><a href="#CL初始化" class="headerlink" title="CL初始化"></a>CL初始化</h4><p>分析完程VM和NM的流程，下面便是CommandListener的实例化过程，如下：</p>
+<pre><code>CommandListener::CommandListener() :
+                FrameworkListener(&quot;vold&quot;, true) {
+
+    // 加入到 mCommands 队列
+    registerCmd(new DumpCmd());
+    registerCmd(new VolumeCmd());
+    registerCmd(new AsecCmd());
+    registerCmd(new ObbCmd());
+    registerCmd(new StorageCmd());
+    registerCmd(new FstrimCmd());
+    // MStar Android Patch Begin
+    registerCmd(new ISOCmd());
+    registerCmd(new SambaCmd());
+    // MStar Android Patch End
+}
+
+void FrameworkListener::registerCmd(FrameworkCommand *cmd) {
+    // 加入到mCommands队列
+    mCommands-&gt;push_back(cmd);
+}
+</code></pre><p>CommandListener在实例化中，注册了各种设备的操作命令，例如DumpCmd，VolumCmd等，其父类FrameworkListener做了啥，我们查看一下：</p>
+<pre><code>FrameworkListener::FrameworkListener(const char *socketName) :
+                            SocketListener(socketName, true, false) {
+    init(socketName, false);
+}
+
+void FrameworkListener::init(const char *socketName UNUSED, bool withSeq) {
+    mCommands = new FrameworkCommandCollection();
+    errorRate = 0;
+    mCommandCount = 0;
+    mWithSeq = withSeq;
+    mSkipToNextNullByte = false;
+}
+</code></pre><p>父类FrameworkListener初始化又新建了FrameworkCommandCollection，这是干嘛的呀？其通过typedef重声明定义如下：</p>
+<pre><code>typedef android::sysutils::List&lt;FrameworkCommand *&gt; FrameworkCommandCollection;
+
+FrameworkCommand::FrameworkCommand(const char *cmd) {
+    mCommand = cmd;
+}
+</code></pre><h5 id="关于DumpCmd，VolumCmd等几种cmd的介绍"><a href="#关于DumpCmd，VolumCmd等几种cmd的介绍" class="headerlink" title="关于DumpCmd，VolumCmd等几种cmd的介绍"></a>关于DumpCmd，VolumCmd等几种cmd的介绍</h5><p>在这里有必要介绍这几种DumpCmd，VolumCmd之间的关系，例如VolumCmd继承自VoldCommand继承自FrameworkCommand，FrameworkCommand有一个重要的方法runCommand实现如下：</p>
+<pre><code>int FrameworkCommand::runCommand(SocketClient *c UNUSED, int argc UNUSED,
+                                char **argv UNUSED) {
+    SLOGW(&quot;Command %s has no run handler!&quot;, getCommand());
+    errno = ENOSYS;
+    return -1;
+}
+</code></pre><p>其中其没有必要的实现代码，我们继续通过继承关系向上追溯，发现其在CommandListener类中实现了具体代码，如下：</p>
+<p>int CommandListener::VolumeCmd::runCommand(SocketClient *cli,<br>                                           int argc, char **argv) {<br>    dumpArgs(argc, argv, -1);</p>
+<pre><code>if (argc &lt; 2) {
+    cli-&gt;sendMsg(ResponseCode::CommandSyntaxError, &quot;Missing Argument&quot;, false);
+    return 0;
+}
+
+VolumeManager *vm = VolumeManager::Instance();
+std::lock_guard&lt;std::mutex&gt; lock(vm-&gt;getLock());
+
+std::string cmd(argv[1]);
+if (cmd == &quot;reset&quot;) {
+    return sendGenericOkFail(cli, vm-&gt;reset());
+
+}
+
+...
+
+} else if (cmd == &quot;mount&quot; &amp;&amp; argc &gt; 2) {
+    // mount [volId] [flags] [user]
+    std::string id(argv[2]);
+    auto vol = vm-&gt;findVolume(id);
+    if (vol == nullptr) {
+        return cli-&gt;sendMsg(ResponseCode::CommandSyntaxError, &quot;Unknown volume&quot;, false);
+    }
+
+    int mountFlags = (argc &gt; 3) ? atoi(argv[3]) : 0;
+    userid_t mountUserId = (argc &gt; 4) ? atoi(argv[4]) : -1;
+
+    vol-&gt;setMountFlags(mountFlags);
+    vol-&gt;setMountUserId(mountUserId);
+
+    // Mstar Android Patch Begin
+    CommandListener::VolumeCmd::finished = false;
+    CommandListener::VolumeCmd::res = 1;
+    std::thread mThread(&amp;CommandListener::VolumeCmd::doMount,this,vol);
+    mThread.detach();
+
+    int i = 0;
+    // if mount time &gt; 3S ,return fail
+    while(i&lt;6 &amp;&amp; CommandListener::VolumeCmd::finished == false) {
+        SLOGD(&quot;sleep 0.5s&quot;);
+        usleep(500000); //sleep 0.5s
+        i++;
+    }
+
+    if (mountFlags &amp; android::vold::VolumeBase::MountFlags::kPrimary) {
+        vm-&gt;setPrimary(vol);
+    }
+    return sendGenericOkFail(cli, CommandListener::VolumeCmd::res);
+    // Mstar Android Patch End
+
+} else if (cmd == &quot;unmount&quot; &amp;&amp; argc &gt; 2) {
+    // unmount [volId]
+    std::string id(argv[2]);
+    auto vol = vm-&gt;findVolume(id);
+    if (vol == nullptr) {
+        return cli-&gt;sendMsg(ResponseCode::CommandSyntaxError, &quot;Unknown volume&quot;, false);
+    }
+
+    return sendGenericOkFail(cli, vol-&gt;unmount());
+
+} else if (cmd == &quot;format&quot; &amp;&amp; argc &gt; 3) {
+    // format [volId] [fsType|auto]
+    std::string id(argv[2]);
+    std::string fsType(argv[3]);
+    auto vol = vm-&gt;findVolume(id);
+    if (vol == nullptr) {
+        return cli-&gt;sendMsg(ResponseCode::CommandSyntaxError, &quot;Unknown volume&quot;, false);
+    }
+
+    return sendGenericOkFail(cli, vol-&gt;format(fsType));
+
+} 
+
+...
+
+return cli-&gt;sendMsg(ResponseCode::CommandSyntaxError, nullptr, false);
+</code></pre><p>}<br>其中代码比较长，实现了各种针对Volume设备的各种操作，比如 挂载mount，格式化format等等。。。</p>
+<h4 id="CL-gt-startListener"><a href="#CL-gt-startListener" class="headerlink" title="CL-&gt;startListener"></a>CL-&gt;startListener</h4><p>下面我们查看一下CommandListener的startListener方法，CommandListener没有实现此方法，但是其继承自FrameworkListener，FrameworkListener也没有实现，其又继承自SocketListener，最终由SocketListener实现，如下：</p>
+<pre><code>int SocketListener::startListener() {
+    return startListener(4);
+}
+
+int SocketListener::startListener(int backlog) {
+
+    if (!mSocketName &amp;&amp; mSock == -1) {
+        SLOGE(&quot;Failed to start unbound listener&quot;);
+        errno = EINVAL;
+        return -1;
+    } else if (mSocketName) {
+        // 获取所对应的 socket 的句柄
+        if ((mSock = android_get_control_socket(mSocketName)) &lt; 0) {
+            SLOGE(&quot;Obtaining file descriptor socket &apos;%s&apos; failed: %s&quot;,
+                mSocketName, strerror(errno));
+            return -1;
+        }
+        SLOGV(&quot;got mSock = %d for %s&quot;, mSock, mSocketName);
+        fcntl(mSock, F_SETFD, FD_CLOEXEC);
+    }
+
+    // 开始监听
+    if (mListen &amp;&amp; listen(mSock, backlog) &lt; 0) {
+        SLOGE(&quot;Unable to listen on socket (%s)&quot;, strerror(errno));
+        return -1;
+    } else if (!mListen)
+        // 创建 SocketClient 对象，并加入到 mClients 队列
+        mClients-&gt;push_back(new SocketClient(mSock, false, mUseCmdNum));
+
+    // 创建匿名管道
+    // 这是一个二元数组，mCtrlPipe[0]从管道读数据，mCtrlPipe[1]从管道写数据
+    if (pipe(mCtrlPipe)) {
+        SLOGE(&quot;pipe failed (%s)&quot;, strerror(errno));
+        return -1;
+    }
+
+    // 创建工作线程，线程运行函数threadStart
+    if (pthread_create(&amp;mThread, NULL, SocketListener::threadStart, this)) {
+        SLOGE(&quot;pthread_create (%s)&quot;, strerror(errno));
+        return -1;
+    }
+
+    return 0;
+}
+</code></pre><p>至此，CommandListener的startListener就分析完毕。</p>
+<h3 id="CryptCommandListener流程分析"><a href="#CryptCommandListener流程分析" class="headerlink" title="CryptCommandListener流程分析"></a>CryptCommandListener流程分析</h3><h4 id="CLL初始化"><a href="#CLL初始化" class="headerlink" title="CLL初始化"></a>CLL初始化</h4><p>CryptCommandListener的初始化流程和上述的CommandListener基本相似，这了我们粗略的看一下，有兴趣的读者自行查看：</p>
+<pre><code>CryptCommandListener::CryptCommandListener() :
+FrameworkListener(&quot;cryptd&quot;, true) {
+    registerCmd(new CryptfsCmd());
+}
+
+CryptCommandListener::CryptfsCmd::CryptfsCmd() :
+                VoldCommand(&quot;cryptfs&quot;) {
+}
+</code></pre><p>通过额外的registerCmd注册CryptfsCmd命令，其具体的runCommand实现对应的操作，这里就不贴代码了。</p>
+<h4 id="CLL-gt-startListener"><a href="#CLL-gt-startListener" class="headerlink" title="CLL-&gt;startListener"></a>CLL-&gt;startListener</h4><p>当然CryptCommandListener也没有实现方法startListener，其最终还是通过SocketListener来实现的。具体参考上述流程。</p>
+<h2 id="相关类图"><a href="#相关类图" class="headerlink" title="相关类图"></a>相关类图</h2><p>相信到此，如果你认真的看完第一遍并且是第一次看完的话，肯定是一头雾水，什么跟什么啊，这么多类，各种跳真的是烦。不急不急，这里我们引用一张类图还是有必要的，根据这张类图，在回过去看代码流程，你就能轻松的知道各个类之间的关系是如何的。</p>
+<h3 id="VM相关类图"><a href="#VM相关类图" class="headerlink" title="VM相关类图"></a>VM相关类图</h3><img src="/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg" class="VolumeManger相关类图">
+<p>VolumeManager作为Vold模块最重要的一个类，其承载了很多重要的工作流程，其中涉及到很多类，类中各种继承关系也很复杂，对着上述的类图就很容易理清各个类之间的关系了。</p>
+<h3 id="NM相关类图"><a href="#NM相关类图" class="headerlink" title="NM相关类图"></a>NM相关类图</h3><img src="/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/NM.jpg" class="VolumeManger相关类图">
+<p>NetLinkManager负责直接接收Kernel发来的uevent事件，其类之间的关系更是复杂，相信有这张类图后，在回溯到代码流程中就很清晰了。SocketListener为最重要的父类，其直接和Socket打交道，之后在分发到子类中处理，其大概可以分为两个部分，如下：</p>
+<h4 id="命令流程如下："><a href="#命令流程如下：" class="headerlink" title="命令流程如下："></a>命令流程如下：</h4><p>SocketListener发现Socket中有数据后，对数据进行封装（NetlinkEvent），通过dispatchCommand方法，将命令分别分发到指定的Cmd进行处理，各种Cmd的声明和处理流程在CommandListener中都有声明。其中各种Cmd相似的方法处理都由父类FrameworkCommand进行统一的抽象管理。</p>
+<h4 id="命令分发如下："><a href="#命令分发如下：" class="headerlink" title="命令分发如下："></a>命令分发如下：</h4><p>当然SocketListener得到数据后，还会通过onDataAvaiable进行回传，到Netlinkhandler中通过onEventh回传到VolumeManager进行处理。</p>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><h3 id="内容说明"><a href="#内容说明" class="headerlink" title="内容说明"></a>内容说明</h3><p>本想一篇章写完Android存储系统中启动流程，其主要包括native层的Vold和Java层MountService。介于篇幅太长，下面会在独立篇章介绍MountService启动流程以及两者之间的通信过程，希望三篇博客可以结束这段痛苦的代码阅读之旅。</p>
+<h3 id="引用说明"><a href="#引用说明" class="headerlink" title="引用说明"></a>引用说明</h3><p>此博客内容为作者实战编辑，并非随便的拷贝，内容参考学习GitYuan博客中内容，这里郑重说明一下。其链接见下面。</p>
+<p><a href="http://gityuan.com/2016/07/17/android-io/" target="_blank" rel="noopener">GitYuan博客推荐</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/存储系统/" rel="tag"># 存储系统</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/" rel="next" title="Android系统HAL层驱动开发实战">
+                <i class="fa fa-chevron-left"></i> Android系统HAL层驱动开发实战
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/" rel="prev" title="源码分析之存储系统启动流程MountService模块">
+                源码分析之存储系统启动流程MountService模块 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Vold启动流程"><span class="nav-number">1.</span> <span class="nav-text">Vold启动流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#init脚本相关配置"><span class="nav-number">1.1.</span> <span class="nav-text">init脚本相关配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Vold-main"><span class="nav-number">1.2.</span> <span class="nav-text">Vold.main</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#VM流程分析"><span class="nav-number">1.2.1.</span> <span class="nav-text">VM流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#VM初始化"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">VM初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#VM-gt-setBroadcaster"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">VM-&gt;setBroadcaster</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#VM-gt-start"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">VM-&gt;start</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#unmountAll卸载设备"><span class="nav-number">1.2.1.3.1.</span> <span class="nav-text">unmountAll卸载设备</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#EmulatedVolume-gt-create"><span class="nav-number">1.2.1.3.2.</span> <span class="nav-text">EmulatedVolume-&gt;create</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NM流程分析"><span class="nav-number">1.2.2.</span> <span class="nav-text">NM流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NM初始化"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">NM初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NH流程分析"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">NH流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#NH初始化"><span class="nav-number">1.2.2.2.1.</span> <span class="nav-text">NH初始化</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#NH-gt-start"><span class="nav-number">1.2.2.2.2.</span> <span class="nav-text">NH-&gt;start</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#SL-gt-onDataAvailable"><span class="nav-number">1.2.2.2.3.</span> <span class="nav-text">SL-&gt;onDataAvailable</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CommandListener流程分析"><span class="nav-number">1.2.3.</span> <span class="nav-text">CommandListener流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CL初始化"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">CL初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#关于DumpCmd，VolumCmd等几种cmd的介绍"><span class="nav-number">1.2.3.1.1.</span> <span class="nav-text">关于DumpCmd，VolumCmd等几种cmd的介绍</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CL-gt-startListener"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">CL-&gt;startListener</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CryptCommandListener流程分析"><span class="nav-number">1.2.4.</span> <span class="nav-text">CryptCommandListener流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CLL初始化"><span class="nav-number">1.2.4.1.</span> <span class="nav-text">CLL初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CLL-gt-startListener"><span class="nav-number">1.2.4.2.</span> <span class="nav-text">CLL-&gt;startListener</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#相关类图"><span class="nav-number">1.3.</span> <span class="nav-text">相关类图</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#VM相关类图"><span class="nav-number">1.3.1.</span> <span class="nav-text">VM相关类图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NM相关类图"><span class="nav-number">1.3.2.</span> <span class="nav-text">NM相关类图</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#命令流程如下："><span class="nav-number">1.3.2.1.</span> <span class="nav-text">命令流程如下：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#命令分发如下："><span class="nav-number">1.3.2.2.</span> <span class="nav-text">命令分发如下：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他"><span class="nav-number">1.4.</span> <span class="nav-text">其他</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#内容说明"><span class="nav-number">1.4.1.</span> <span class="nav-text">内容说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#引用说明"><span class="nav-number">1.4.2.</span> <span class="nav-text">引用说明</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

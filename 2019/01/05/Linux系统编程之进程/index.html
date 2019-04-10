@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="fork exec wait">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="学习Linux中的进程，主要设计了三个重要的函数：fork（创建子进程），exec（执行命令），wait（回收进程资源）。进程的管理由内核中的task_struct结构体(PCB进程控制块)负责，下面我们来具体了解一下。">
+<meta name="keywords" content="fork exec wait">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux系统编程之进程">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="学习Linux中的进程，主要设计了三个重要的函数：fork（创建子进程），exec（执行命令），wait（回收进程资源）。进程的管理由内核中的task_struct结构体(PCB进程控制块)负责，下面我们来具体了解一下。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/fork.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/exec.png">
+<meta property="og:updated_time" content="2019-01-07T03:39:14.422Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux系统编程之进程">
+<meta name="twitter:description" content="学习Linux中的进程，主要设计了三个重要的函数：fork（创建子进程），exec（执行命令），wait（回收进程资源）。进程的管理由内核中的task_struct结构体(PCB进程控制块)负责，下面我们来具体了解一下。">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/fork.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/">
+
+
+
+
+
+  <title>Linux系统编程之进程 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/05/Linux系统编程之进程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux系统编程之进程</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-05T09:33:30+08:00">
+                2019-01-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2019/01/05/Linux系统编程之进程/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2019/01/05/Linux系统编程之进程/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>学习Linux中的进程，主要设计了三个重要的函数：fork（创建子进程），exec（执行命令），wait（回收进程资源）。进程的管理由内核中的task_struct结构体(PCB进程控制块)负责，下面我们来具体了解一下。</strong><br><a id="more"></a></p>
+<h3 id="PCB及进程环境"><a href="#PCB及进程环境" class="headerlink" title="PCB及进程环境"></a>PCB及进程环境</h3><h4 id="进程控制块PCB"><a href="#进程控制块PCB" class="headerlink" title="进程控制块PCB"></a>进程控制块PCB</h4><p>我们知道，每个进程在内核中都有一个进程控制块(PCB)来维护进程相关的信息，Linux内核的进程控制块是task_struct结构体。现在我们全面了解一下其中都有哪些信息。</p>
+<ul>
+<li>进程id。系统中每个进程有唯一的id，在C语言中用pid_t类型表示，其实就是一个非负整数。</li>
+<li>进程的状态，有运行、挂起、停止、僵尸等状态。</li>
+<li>进程切换时需要保存和恢复的一些CPU寄存器。</li>
+<li>描述虚拟地址空间的信息。</li>
+<li>描述控制终端的信息。</li>
+<li>当前工作目录(Current Working Directory)。</li>
+<li>umask掩码。</li>
+<li>文件描述符表，包含很多指向file结构体的指针。</li>
+<li>和信号相关的信息。</li>
+<li>用户id和组id。</li>
+<li>控制终端、Session和进程组。</li>
+<li>进程可以使用的资源上限(Resource Limit)</li>
+</ul>
+<h4 id="进程环境"><a href="#进程环境" class="headerlink" title="进程环境"></a>进程环境</h4><p>每个进程在运行时，都会涉及到默认的环境变量。按照惯例，环境变量字符串都是name=value这样的形式，大多数name由大写字母加下划线组成，一般把name的部分叫做环境变量，value的部分则是环境变量的值。环境变量定义了进程的运行环境，一些比较重要的环境变量的含义如下:</p>
+<p>PATH</p>
+<ul>
+<li>可执行文件的搜索路径。ls命令也是一个程序，执行它不需要提供完整的路径名/bin/ ls，然而通常我们执行当前目录下的程序a.out却需要提供完整的路径名./a.out，这 是因为PATH环境变量的值里面包含了ls命令所在的目录/bin，却不包含a.out所在的目录。PATH环境变量的值可以包含多个目录，用:号隔开。在Shell中用echo命令可以查 看这个环境变量的值:$ echo $PATH </li>
+</ul>
+<p>SHELL</p>
+<ul>
+<li>当前Shell，它的值通常是/bin/bash。 </li>
+</ul>
+<p>TERM</p>
+<ul>
+<li>当前终端类型，在图形界面终端下它的值通常是xterm，终端类型决定了一些程序的输 出显示方式，比如图形界面终端可以显示汉字，而字符终端一般不行。</li>
+</ul>
+<p>LANG</p>
+<ul>
+<li>语言和locale，决定了字符编码以及时间、货币等信息的显示格式。</li>
+</ul>
+<p>HOME</p>
+<ul>
+<li>当前用户主目录的路径，很多程序需要在主目录下保存配置文件，使得每个用户在运 行该程序时都有自己的一套配置。</li>
+</ul>
+<h4 id="环境变量相关函数"><a href="#环境变量相关函数" class="headerlink" title="环境变量相关函数"></a>环境变量相关函数</h4><p>libc中定义的全局变量environ指向环境变量表，environ没有包含在任何头文件中，所<br>以在使用时要用extern声明。例如：</p>
+<pre><code>#include &lt;stdio.h&gt;
+
+int main(void) {
+    extern char **environ;
+    int i;
+    for(i=0; environ[i]!=NULL; i++)
+    printf(&quot;%s\n&quot;, environ[i]); return 0;
+}
+</code></pre><p>用environ指针可以查看所有环境变量字符串，但是不够方便，如果给出name要在环境变量 表中查找它对应的value，可以用getenv函数。</p>
+<h5 id="获取环境变量getenv"><a href="#获取环境变量getenv" class="headerlink" title="获取环境变量getenv"></a>获取环境变量getenv</h5><pre><code>#include &lt;stdlib.h&gt;
+
+char *getenv(const char *name); 
+getenv的返回值是指向value的指针，若未找到则为NULL。
+</code></pre><h4 id="设置及取消"><a href="#设置及取消" class="headerlink" title="设置及取消"></a>设置及取消</h4><pre><code>#include &lt;stdlib.h&gt;
+
+int setenv(const char *name, const char *value, int rewrite); 
+void unsetenv(const char *name);
+putenv和setenv函数若成功则返回为0，若出错则返回非0。
+</code></pre><p>setenv将环境变量name的值设置为value。如果已存在环境变量name，那么若rewrite非0，则覆盖原来的定义; 若rewrite为0，则不覆盖原来的定义，也不返回错误。unsetenv删除name的定义。即使name没有定义也不返回错误。</p>
+<h4 id="示例代码"><a href="#示例代码" class="headerlink" title="示例代码"></a>示例代码</h4><pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main(void)
+{
+    // 获取
+    char* path = getenv(&quot;PATH&quot;);
+    printf(&quot;PATH : %s \n&quot;, path);
+    // 设置
+    setenv(&quot;PATH&quot;,&quot;what fuck you!&quot;,1);
+    printf(&quot;NEW PATH: %s\n&quot;,getenv(&quot;PATH&quot;));
+    return 0;
+}
+</code></pre><h4 id="进程资源限制"><a href="#进程资源限制" class="headerlink" title="进程资源限制"></a>进程资源限制</h4><p>PCB由内核实施管理，其为每个进程分配的资源大小也是固定有限的，不能无限制的增加，一般来说软限制不得大于硬限制，设置进程资源的函数如下（root权限）：</p>
+<pre><code>#include &lt;sys/time.h&gt; #include &lt;sys/resource.h&gt;
+
+int getrlimit(int resource, struct rlimit *rlim);
+int setrlimit(int resource, const struct rlimit *rlim)；
+</code></pre><p>查看资源限制</p>
+<pre><code>cat /proc/self/limlts
+ulimit -a
+</code></pre><p>设置进程打开文件上限值</p>
+<pre><code>ulimit -n ?
+</code></pre><h3 id="进程原语"><a href="#进程原语" class="headerlink" title="进程原语"></a>进程原语</h3><p>linux涉及进程的函数主要包括复制进程fork，执行命令exec以及回收进程资源wait（waitpid）。程序一般的流程是通过fork得到一个子进程，然后再子进程中执行exec命令操作，之后通过wait或者waitpid回收进程执行的结果。</p>
+<h4 id="进程状态"><a href="#进程状态" class="headerlink" title="进程状态"></a>进程状态</h4><p>linux中进程存在多种状态，运行，就绪，睡眠，停止，各种状态存在转换关系，例如运行态可以切换到任意其他三种状态，具体切换状态如下：</p>
+<p>运行： 可以切换到就绪，睡眠，停止任意状态<br>就绪： 可以切换到就绪，停止，无法直接切换到运行<br>就绪： 同运行，可以切换任意其他状态<br>停止： 无法切换状态</p>
+<h5 id="相关命令"><a href="#相关命令" class="headerlink" title="相关命令"></a>相关命令</h5><p>查看系统所有程序： ps aux<br>动态查看进程： top<br>进程组查看： ps ajx</p>
+<h4 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h4><p>fork的作用是根据一个现有的进程复制出一个新进程，原来的进程称为父进程(Parent Process)，新进程称为子进程(Child Process)。系统中同时运行着很多进程，这些进程都是从最初只有一个进程开始一个一个复制出来的。在Shell下输入命令可以运行一个程序，是因为Shell进程在读取用户输入的命令之后会调用fork复制出一个新的Shell进程，然后新的Shell进程调用exec执行新的程序。</p>
+<h5 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h5><pre><code>#include &lt;unistd.h&gt;
+
+pid_t fork(void);
+</code></pre><h5 id="参数介绍"><a href="#参数介绍" class="headerlink" title="参数介绍"></a>参数介绍</h5><p>void</p>
+<h5 id="返回值"><a href="#返回值" class="headerlink" title="返回值"></a>返回值</h5><p>fork调用一次，返回两次。调用成功后，父进程中返回0，子进程中返回系统分配的pid（非负整数）。如果调用失败，父进程中返回-1，并且设置errno，子进程不被创建。</p>
+<pre><code>EAGAIN: 当前的进程数已经达到了系统规定的上限，这时errno的值被设置为
+ENOMEM: 系统内存不足，这时errno的值被设置为
+</code></pre><h5 id="相关说明"><a href="#相关说明" class="headerlink" title="相关说明"></a>相关说明</h5><ol>
+<li>fork调用一次，返回两次，成功时，父进程中返回0，子进程中返回进程id。</li>
+<li>fork执行后，父子进程的执行代码直接从返回值处pid开始，父子进程的执行的先后顺序不确定，由操作系统调度。父进程先于子进程结束，子进程的父进程转换成init守护进程。</li>
+<li>父子进程的拷贝采用读时共享，写时复制机制（copy on write）。</li>
+</ol>
+<h5 id="参考代码"><a href="#参考代码" class="headerlink" title="参考代码"></a>参考代码</h5><pre><code>#include &lt;sys/types.h&gt; 
+#include &lt;unistd.h&gt; 
+#include &lt;stdio.h&gt; 
+#include &lt;stdlib.h&gt;
+int main(void) {
+    pid_t id = fork();
+    pid_t pid; char *message; int n;
+    pid = fork(); 
+    if (pid &lt; 0) {
+        perror(&quot;fork failed&quot;);
+        exit(1);
+    }
+    if (pid == 0) {
+        message = &quot;This is the child\n&quot;; n = 6;
+    } else {
+        message = &quot;This is the parent\n&quot;; n = 3;
+    }
+    for(; n &gt; 0; n--) {
+        printf(message);
+        sleep(1); 
+    }
+    return 0; 
+}
+</code></pre><p>fork调用完成后，此时父子进程都从if判断开始，由于父子进程执行顺序不确定，在各自逻辑处理完成后，睡眠等待 1s 后，在结束父进程，后续可以通过wait函数进行回收进程资源。其代码执行流程见下图：</p>
+<img src="/fuckingcode/2019/01/05/Linux系统编程之进程/fork.png" class="fork执行流程">
+<h4 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h4><p>用fork创建子进程后执行的是和父进程相同的程序(但有可能执行不同的代码分支)，子进程往往要调用一种exec函数以执行另一个程序。当进程调用一种exec函数时，该进程的用户空间代码和数据完全被新程序替换，从新程序的启动例程开始执行。调用exec并不创建新进程，所以调用exec前后该进程的id并未改变。其实有六种以exec开头的函数，统称exec函数:</p>
+<pre><code>#include &lt;unistd.h&gt;
+int execl(const char *path, const char *arg, ...);
+int execlp(const char *file, const char *arg, ...);
+int execle(const char *path, const char *arg, ..., char *const envp[]）; 
+int execv(const char *path, char *const argv[]);
+int execvp(const char *file, char *const argv[]);
+int execve(const char *path, char *const argv[], char *const envp[]);
+</code></pre><p>这些函数如果调用成功则加载新的程序从启动代码开始执行，不再返回，如果调用出错，则返回-1，所以exec函数只有出错的返回值而没有成功的返回值。</p>
+<h5 id="相关说明-1"><a href="#相关说明-1" class="headerlink" title="相关说明"></a>相关说明</h5><p>exec函数族记忆方式：</p>
+<pre><code>l 命令行参数列表
+p 搜素file时使用path变量
+v 使用命令行参数数组
+e 使用环境变量数组,不使用进程原有的环境变量，设置新加载程序运行的环境变量
+
+execvp常用，使用数组将命令组织，调用时直接使用系统路径进行
+</code></pre><p>代码举例:</p>
+<pre><code>char *const ps_argv[] ={&quot;ps&quot;, &quot;-o&quot;, &quot;pid,ppid,pgrp,session,tpgid,comm&quot;, NULL}; 
+char *const ps_envp[] ={&quot;PATH=/bin:/usr/bin&quot;, &quot;TERM=console&quot;, NULL}; 
+
+execl(&quot;/bin/ps&quot;, &quot;ps&quot;, &quot;-o&quot;, &quot;pid,ppid,pgrp,session,tpgid,comm&quot;, NULL); 
+execv(&quot;/bin/ps&quot;, ps_argv);
+execle(&quot;/bin/ps&quot;, &quot;ps&quot;, &quot;-o&quot;, &quot;pid,ppid,pgrp,session,tpgid,comm&quot;, NULL, ps_envp); 
+execve(&quot;/bin/ps&quot;, ps_argv, ps_envp);
+execlp(&quot;ps&quot;, &quot;ps&quot;, &quot;-o&quot;, &quot;pid,ppid,pgrp,session,tpgid,comm&quot;, NULL);
+execvp(&quot;ps&quot;, ps_argv);
+</code></pre><p>事实上，只有execve是真正的系统调用，其它五个函数最终都调用execve，所以execve 在man手册第2节，其它函数在man手册第3节。这些函数之间的关系如下图所示:</p>
+<img src="/fuckingcode/2019/01/05/Linux系统编程之进程/exec.png" class="fork执行流程">
+<h5 id="示例代码-1"><a href="#示例代码-1" class="headerlink" title="示例代码"></a>示例代码</h5><pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+
+int main()
+{
+    pid_t id = fork();
+    if(id == 0)
+    {
+        // 子进程执行打开网页
+        execlp(&quot;firefox&quot;,&quot;firefox&quot;,&quot;www.baidu.com&quot;,NULL);
+    }
+    else if(id &gt; 0)
+    {
+        // 父进程执行 ls
+        execl(&quot;/bin/ls&quot;,&quot;ls&quot;,&quot;-la&quot;, &quot;./../&quot;,NULL);
+    }
+    return 0;
+}
+</code></pre><h4 id="wait-waitpid"><a href="#wait-waitpid" class="headerlink" title="wait(waitpid)"></a>wait(waitpid)</h4><p>一个进程在终止时会关闭所有文件描述符，释放在用户空间分配的内存，但它的PCB还保留着，内核在其中保存了一些信息:如果是正常终止则保存着退出状态，如果是异常终止 则保存着导致该进程终止的信号是哪个。这个进程的父进程可以调用wait或waitpid获取这些信息，然后彻底清除掉这个进程。</p>
+<p>我们知道一个进程的退出状态可以在Shell中用特殊变量$?查看，因为Shell是它的父进程，当它终止时Shell调用wait或waitpid得到它的退出状态同时彻底清除掉这个进程。如果一个进程已经终止，但是它的父进程尚未调用wait或waitpid对它进行清理，这时的进程状态称为僵尸(Zombie)进程。任何进程在刚终止时都是僵尸进程，正常情况下，僵尸进程都立刻被父进程清理了。</p>
+<ul>
+<li>僵尸进程： 子进程退出，父进程没有回收子进程资源(PCB)，则子进程变成僵尸进程</li>
+<li>孤儿进程： 父进程先于子进程结束，则子进程成为孤儿进程</li>
+<li>领养孤儿进程： 成为孤儿的子进程，其父进程变成成为1号init进程</li>
+</ul>
+<h5 id="函数原型"><a href="#函数原型" class="headerlink" title="函数原型"></a>函数原型</h5><pre><code>#include &lt;sys/types.h&gt; 
+#include &lt;sys/wait.h&gt;
+pid_t wait(int *status);
+pid_t waitpid(pid_t pid, int *status, int options);
+
+对于 waitpid 的 pid 而言：
+&lt; -1 回收指定进程组内的任意子进程
+-1 回收任意子进程
+0 回收和当前调用waitpid一个组的所有子进程 
+&gt; 0 回收指定ID的子进程
+</code></pre><p>若调用成功则返回清理掉的子进程id，若调用出错则返回-1。父进程调用 wait或waitpid 时可能出现情况:</p>
+<ul>
+<li>阻塞(如果它的所有子进程都还在运行)。</li>
+<li>带子进程的终止信息立即返回(如果一个子进程已终止，正等待父进程读取其终止信息)。</li>
+<li>出错立即返回(如果它没有任何子进程)</li>
+</ul>
+<p>这两个函数的区别是:</p>
+<ul>
+<li>如果父进程的所有子进程都还在运行，调用wait将使父进程阻塞，而调用waitpid时如果在options参数中指定WNOHANG可以使父进程不阻塞而立即返回0。</li>
+<li>wait等待第一个终止的子进程，而waitpid可以通过pid参数指定等待哪一个子进程。</li>
+</ul>
+<p>可见，调用 wait和waitpid 不仅可以获得子进程的终止信息，还可以使父进程阻塞等待子进程终止，起到进程间同步的作用。如果参数 status 不是空指针，则子进程的终止信息通过这个参数传出，如果只是为了同步而不关心子进程的终止信息，可以将 status 参数指定为 NULL。</p>
+<p>对于子进程退出状态的监测，使用宏函数进行监测，具体参考 Man Page。</p>
+<h5 id="示例代码-2"><a href="#示例代码-2" class="headerlink" title="示例代码"></a>示例代码</h5><p>wait阻塞推出监测</p>
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;wait.h&gt;
+
+int main()
+{
+
+    pid_t id = fork();
+    int status;
+    pid_t ret;
+
+    if(id == 0)
+    {
+        // 子进程中返回，处理子进程逻辑
+        printf(&quot;Child is running for 5s! The pid is %d\n&quot;,getpid());
+        // 延时5s，执行退出
+        sleep(5);
+        exit(1);
+    }
+    else if(id &gt; 0)
+    {
+        // 父进程中返回
+        printf(&quot;This is parent, the parent id is %d\n&quot;,getppid());
+    }
+
+    while(1)
+    {
+        // 阻塞函数，将子进程返回状态存到status中
+        ret = wait(&amp;status);
+        if(ret == id)
+            printf(&quot;Child exits, pid id %d\n&quot;,ret);
+        else if(ret == -1)
+        {
+            printf(&quot;No child is exist\n&quot;);
+            break;
+        }
+        else
+            break;
+    }
+
+    // 退出状态监测status
+    if (WIFEXITED(status))
+        printf(&quot;Child exited with code %d\n&quot;, WEXITSTATUS(status));
+    else if (WIFSIGNALED(status))
+        printf(&quot;Child terminated abnormally, signal %d\n&quot;, WTERMSIG(status));
+
+    return 0;
+}
+</code></pre><p>waitpid指定阻塞监听</p>
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main(void)
+{
+    pid_t pid;
+    pid = fork();
+    if (pid &lt; 0) {
+        perror(&quot;fork failed&quot;);
+        exit(1);
+    }
+    if (pid == 0) {
+        int i;
+        for (i = 3; i &gt; 0; i--) {
+            printf(&quot;This is the child\n&quot;);
+            sleep(1);
+        }
+        exit(3);
+    } else {
+        int stat_val;
+        // 回收指定id进程资源
+        waitpid(pid, &amp;stat_val, 0);
+            if (WIFEXITED(stat_val))
+                printf(&quot;Child exited with code %d\n&quot;, WEXITSTATUS(stat_val));
+            else if (WIFSIGNALED(stat_val))
+                printf(&quot;Child terminated abnormally, signal %d\n&quot;, WTERMSIG(stat_val));
+    }
+    return 0;
+}
+</code></pre><p>#### 进程相关函数</p>
+<p>获取进程id</p>
+<pre><code>#include &lt;sys/types.h&gt; 
+#include &lt;unistd.h&gt;
+pid_t getpid(void); //返回调用进程的PID号
+pid_t getppid(void); //返回调用进程父进程的PID号
+</code></pre><p>获取用户id</p>
+<pre><code>#include &lt;unistd.h&gt; 
+#include &lt;sys/types.h&gt;
+uid_t getuid(void); //返回实际用户ID 
+uid_t geteuid(void); //返回有效用户ID
+</code></pre><p>获取组id</p>
+<pre><code>#include &lt;unistd.h&gt; 
+#include &lt;sys/types.h&gt;
+gid_t getgid(void); //返回实际用户组ID 
+gid_t getegid(void); //返回有效用户组ID
+</code></pre><h5 id="特殊权限位"><a href="#特殊权限位" class="headerlink" title="特殊权限位"></a>特殊权限位</h5><p>s: 这里的特殊权限位s代表的是动态权限设置位（setuid），方便普通用户可以以root用户的角色运行只有root帐号才能运行的程序或命令。</p>
+<pre><code>whereis passwd
+/usr/bin/passwd
+ls -la /usr/bin/passwd
+-rwsr-xr-x  1   root    root    ...
+</code></pre><p>在设置s权限时文件属主、属组必须先设置相应的x权限，否则s权限并不能正真生效（当我们ls -l时看到rwS，大写S说明s权限未生效）</p>
+<pre><code>执行    sudo chmod * 04755  
+原权限  -rwxr-xr-x 
+新权限  -rwsr-xr-x 
+</code></pre><p>t: 设置粘着位，一个文件可读写的用户并一定相让他有删除此文件的权限，如果文件设置了t权限则只用属主和root有删除文件的权限，通过chmod +t filename 来设置t权限。</p>
+<p>i: 不可修改权限。例：chattr u+i filename 则filename文件就不可修改，无论任何人，如果需要修改需要先删除i权限，用chattr -i filename就可以了。查看文件是否设置了i权限用lsattr filename。</p>
+<p>a: 只追加权限，对于日志系统很好用，这个权限让目标文件只能追加，不能删除，而且不能通过编辑器追加。可以使用chattr +a设置追加权限。</p>
+<p><a href="https://blog.csdn.net/LYJwonderful/article/details/80220452" target="_blank" rel="noopener">特殊权限详见</a></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本篇博文主要介绍了Linux中涉及进程的三大函数fork、exec以及wait，知晓了一般进程的创建，执行以及回收销毁登，为后续进程间通信提供基础。对于Linux中的进程限制，可以通过手动修改提高程序的并发行，但是此方法也不是万能的，后续还会介绍Linux下的多线程编程基础，涉及到多线程，又不得不提线程同步，东西那么多还是要一点一点的啃，此章节就此告一段落吧！</p>
+<blockquote>
+<p>邢文鹏老师Linux教学资料</p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/进程/" rel="tag"># 进程</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/04/Linux系统编程之文件IO进阶/" rel="next" title="Linux系统编程之文件IO进阶">
+                <i class="fa fa-chevron-left"></i> Linux系统编程之文件IO进阶
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/07/Linux系统编程之进程间通信/" rel="prev" title="Linux系统编程之进程间通信">
+                Linux系统编程之进程间通信 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#PCB及进程环境"><span class="nav-number">1.</span> <span class="nav-text">PCB及进程环境</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#进程控制块PCB"><span class="nav-number">1.1.</span> <span class="nav-text">进程控制块PCB</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程环境"><span class="nav-number">1.2.</span> <span class="nav-text">进程环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#环境变量相关函数"><span class="nav-number">1.3.</span> <span class="nav-text">环境变量相关函数</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#获取环境变量getenv"><span class="nav-number">1.3.1.</span> <span class="nav-text">获取环境变量getenv</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#设置及取消"><span class="nav-number">1.4.</span> <span class="nav-text">设置及取消</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#示例代码"><span class="nav-number">1.5.</span> <span class="nav-text">示例代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程资源限制"><span class="nav-number">1.6.</span> <span class="nav-text">进程资源限制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#进程原语"><span class="nav-number">2.</span> <span class="nav-text">进程原语</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#进程状态"><span class="nav-number">2.1.</span> <span class="nav-text">进程状态</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#相关命令"><span class="nav-number">2.1.1.</span> <span class="nav-text">相关命令</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#fork"><span class="nav-number">2.2.</span> <span class="nav-text">fork</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#概述"><span class="nav-number">2.2.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#参数介绍"><span class="nav-number">2.2.2.</span> <span class="nav-text">参数介绍</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#返回值"><span class="nav-number">2.2.3.</span> <span class="nav-text">返回值</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#相关说明"><span class="nav-number">2.2.4.</span> <span class="nav-text">相关说明</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#参考代码"><span class="nav-number">2.2.5.</span> <span class="nav-text">参考代码</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#exec"><span class="nav-number">2.3.</span> <span class="nav-text">exec</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#相关说明-1"><span class="nav-number">2.3.1.</span> <span class="nav-text">相关说明</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例代码-1"><span class="nav-number">2.3.2.</span> <span class="nav-text">示例代码</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#wait-waitpid"><span class="nav-number">2.4.</span> <span class="nav-text">wait(waitpid)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#函数原型"><span class="nav-number">2.4.1.</span> <span class="nav-text">函数原型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例代码-2"><span class="nav-number">2.4.2.</span> <span class="nav-text">示例代码</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#特殊权限位"><span class="nav-number">2.4.3.</span> <span class="nav-text">特殊权限位</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

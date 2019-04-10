@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Builder,设计模式,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="前言接着上次讲到的Builder设计模式说起吧！Builder的主要作用，在我的理解上来看就是分离原料部件和组装过程，使部件组装自由化，高度解耦，内部返回自己的对象以形成链式调用，优化代码逻辑，在实例化对象过程中需要很多参数或者默认很多配置的情况下尤为突出。下面我们就来看一下Android源码中的Builder模式是怎么实现的吧！ Android源码AlertDialog的Builder设计模式">
+<meta name="keywords" content="Builder,设计模式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android源码分析之Buinder模式">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2017/10/12/Android源码分析之Builder模式/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="前言接着上次讲到的Builder设计模式说起吧！Builder的主要作用，在我的理解上来看就是分离原料部件和组装过程，使部件组装自由化，高度解耦，内部返回自己的对象以形成链式调用，优化代码逻辑，在实例化对象过程中需要很多参数或者默认很多配置的情况下尤为突出。下面我们就来看一下Android源码中的Builder模式是怎么实现的吧！ Android源码AlertDialog的Builder设计模式">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-06-21T01:23:56.883Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android源码分析之Buinder模式">
+<meta name="twitter:description" content="前言接着上次讲到的Builder设计模式说起吧！Builder的主要作用，在我的理解上来看就是分离原料部件和组装过程，使部件组装自由化，高度解耦，内部返回自己的对象以形成链式调用，优化代码逻辑，在实例化对象过程中需要很多参数或者默认很多配置的情况下尤为突出。下面我们就来看一下Android源码中的Builder模式是怎么实现的吧！ Android源码AlertDialog的Builder设计模式">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2017/10/12/Android源码分析之Builder模式/">
+
+
+
+
+
+  <title>Android源码分析之Buinder模式 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2017/10/12/Android源码分析之Builder模式/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android源码分析之Buinder模式</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-12T18:27:34+08:00">
+                2017-10-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/设计模式/" itemprop="url" rel="index">
+                    <span itemprop="name">设计模式</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2017/10/12/Android源码分析之Builder模式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2017/10/12/Android源码分析之Builder模式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>接着上次讲到的<a href="https://juejin.im/post/59c8ef285188254f5d175407" target="_blank" rel="noopener"><em>Builder设计模式</em></a>说起吧！Builder的主要作用，在我的理解上来看就是分离原料部件和组装过程，使部件组装自由化，高度解耦，内部返回自己的对象以形成链式调用，优化代码逻辑，在实例化对象过程中需要很多参数或者默认很多配置的情况下尤为突出。下面我们就来看一下Android源码中的Builder模式是怎么实现的吧！</p>
+<h3 id="Android源码AlertDialog的Builder设计模式"><a href="#Android源码AlertDialog的Builder设计模式" class="headerlink" title="Android源码AlertDialog的Builder设计模式"></a>Android源码AlertDialog的Builder设计模式</h3><ul>
+<li><p>在Android中，使用Builder模式最突出的就是Dialog了。每次我们在使用dialog时候，都要默认的设置很多参数，例如title，message，button等等。对于这样在实例化对象需要很多参数的情况下，Builder的设计优势便体现出来了。例如下面我们经常使用的实例化Dialog方式：</p>
+<pre><code>private void showDialog() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+    builder.setTitle(&quot;title&quot;)
+            .setIcon(null)
+            .setMessage(&quot;Message&quot;)
+            .setView(null)
+            .setPositiveButton(&quot;button&quot;,null)
+            .setPositiveButton(&quot;button&quot;, null)
+            .show();
+}
+</code></pre></li>
+<li><p>上面展示了AlertDialog的实例过程，通过链式调用我们很方便并清晰的实例化了自己想要的Dialog，其内部含有多个参数需要配置，通过调用方法后返回自身对象，可以使得我们更加方便的进行链式调用，使得整个逻辑更加清晰。</p>
+</li>
+<li><p>首先我们先来到源码的AlertDialog类中，AlertDialog继承Dialog实现了DialogInterface，具体代码如下：</p>
+<pre><code>public class AlertDialog extends Dialog implements DialogInterface {
+    //接受Builder成员变量P中的各个参数
+    private AlertController mAlert;
+    //省略部分
+    //构造函数
+    AlertDialog(Context context, @StyleRes int themeResId, boolean createContextThemeWrapper) {
+        super(context, createContextThemeWrapper ? resolveDialogTheme(context, themeResId) : 0,
+                createContextThemeWrapper);
+
+        mWindow.alwaysReadCloseOnTouchAttr();
+        //构造AlertController实例对象mAlert
+        mAlert = new AlertController(getContext(), this, getWindow());
+    }
+}
+    //AlertDialog实际上调用的是mAlert的setMessage方法
+    public void setMessage(CharSequence message) {
+        mAlert.setMessage(message);
+    }
+</code></pre><p>上面可以看到，在实例化AlertDialog过程中，构造了一个mAler成员对象，它是AlertController中的对象，主要负责Dialo真正的参数和布局文件的设置工作，有点代理类的意味，这里我们就不做更深的讨论。</p>
+</li>
+<li><p>在AlertDialog中，有一个Builder的静态内部类，如下：</p>
+<pre><code>public static class Builder {
+    //存储AlertDialog的各个参数，如title,mmessage,icon等
+    private final AlertController.AlertParams P;
+    //省略部分
+    public Builder(Context context, int themeResId) {
+        P = new AlertController.AlertParams(new ContextThemeWrapper(
+                context, resolveDialogTheme(context, themeResId)));
+    }
+
+    //设置各种参数
+    public Builder setTitle(@StringRes int titleId) {
+        P.mTitle = P.mContext.getText(titleId);
+        return this;
+    }
+}
+
+public Builder setView(View view, int viewSpacingLeft, int viewSpacingTop,
+        int viewSpacingRight, int viewSpacingBottom) {
+    P.mView = view;
+    P.mViewLayoutResId = 0;
+    P.mViewSpacingSpecified = true;
+    P.mViewSpacingLeft = viewSpacingLeft;
+    P.mViewSpacingTop = viewSpacingTop;
+    P.mViewSpacingRight = viewSpacingRight;
+    P.mViewSpacingBottom = viewSpacingBottom;
+    return this;
+}
+</code></pre></li>
+</ul>
+<p>上面在Builder实例化过程中，又通过AlertController中构建一个AlertController。AlertParams的P成员变量，这跟变量用来存储Dialog的相关参数，在下面的设置参数过程中，直接将参数通过P对象中的局部变量进行保存，相信的后面过程中，统一会从中抽取参数进行Dialog的布局设置工作。其次，在设置参数过程中，其默认直接返回本身，这样有利于我们在设置多个参数过程中方便的进行链式调用，使得程序更加简洁。</p>
+<ul>
+<li><p>下面我们来看一下AlertDialog中Bbuilder的OnCreate（）方法，代码如下：</p>
+<pre><code>public AlertDialog create() {
+       // Context has already been wrapped with the appropriate theme.
+       //4. 调用new AlertDialog构造对象，并且将参数传递给个体AlertDialog
+       final AlertDialog dialog = new AlertDialog(P.mContext, 0, false);
+       //5. 将P中参数应用到dialog的mAlert对象中
+       P.apply(dialog.mAlert);
+       dialog.setCancelable(P.mCancelable);
+       if (P.mCancelable) {
+           dialog.setCanceledOnTouchOutside(true);
+       }
+       dialog.setOnCancelListener(P.mOnCancelListener);
+       dialog.setOnDismissListener(P.mOnDismissListener);
+       if (P.mOnKeyListener != null) {
+           dialog.setOnKeyListener(P.mOnKeyListener);
+       }
+       return dialog;
+   }
+</code></pre><p>在这里，我们才看到真正的Dialog才被创建，其创建过程中，通过P（AlertController.AlertParams）这个变量获取获取之前用户设置的参数配置，通过P.apply()将配置统一配置到Dialog样式中去。</p>
+</li>
+<li><p>对于P.apply()这个方法我们有必要来看一下其内部实现原理。其在AlertDialog的另一个重要的控制类AlertController中的静态类AlertParams中，如下：</p>
+<pre><code>public void apply(AlertController dialog) {
+        if (mCustomTitleView != null) {
+            dialog.setCustomTitle(mCustomTitleView);
+        } else {
+            if (mTitle != null) {
+                dialog.setTitle(mTitle);
+            }
+            //省略
+        }
+        if (mMessage != null) {
+            dialog.setMessage(mMessage);
+        }
+        if (mPositiveButtonText != null) {
+            dialog.setButton(DialogInterface.BUTTON_POSITIVE, mPositiveButtonText,
+                    mPositiveButtonListener, null);
+        }
+        //省略
+        if (mView != null) {
+            if (mViewSpacingSpecified) {
+                dialog.setView(mView, mViewSpacingLeft, mViewSpacingTop, mViewSpacingRight,
+                        mViewSpacingBottom);
+            } else {
+                dialog.setView(mView);
+            }
+        } else if (mViewLayoutResId != 0) {
+            dialog.setView(mViewLayoutResId);
+        }
+    }
+</code></pre><p>上面的主要逻辑是将用户设置的AlertDialog的参数设置到真正的dialog中去，其中的各个参数一开始就被记录到AlertController中的AlertParams中去了。在AlertParams中包含众多AlertDialog的成员变量，记录用户设置的参数，用户设置的alertDialog的参数全部被记录在这里，部分代码如下：</p>
+<pre><code>public static class AlertParams {
+    public final Context mContext;
+    public final LayoutInflater mInflater;
+    public int mIconId = 0;
+    public Drawable mIcon;
+    public int mIconAttrId = 0;
+    public CharSequence mTitle;
+    public View mCustomTitleView;
+    public CharSequence mMessage；
+    public boolean mCancelable;
+    public DialogInterface.OnKeyListener mOnKeyListener;
+    public CharSequence[] mItems;
+    public ListAdapter mAdapter;
+    public DialogInterface.OnClickListener mOnClickListener;
+    public int mViewLayoutResId;
+    public View mView;
+    //省略部分
+}
+</code></pre></li>
+<li><p>在设置好Dialog的参数后，我们便调用show即可在界面显示设置的Dialog。我们先来看一下Dialo的shoew()方法：</p>
+<pre><code>public AlertDialog show() {
+    final AlertDialog dialog = create();
+    dialog.show();
+    return dialog;
+}
+</code></pre><p>具体的show()方法在Dialog中实现：</p>
+<pre><code>public void show() {
+    //显示状态，return
+    if (mShowing) {
+        //省略
+        return;
+    }
+
+    mCanceled = false;
+    //1. onCreate调用
+    if (!mCreated) {
+        dispatchOnCreate(null);
+    }
+
+    //2. onStart
+    onStart();
+    //3. 获取DecorView
+    mDecor = mWindow.getDecorView();
+
+    //省略
+
+    //4. 获取布局参数
+    WindowManager.LayoutParams l = mWindow.getAttributes();
+    if ((l.softInputMode
+            &amp; WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) == 0) {
+        WindowManager.LayoutParams nl = new WindowManager.LayoutParams();
+        nl.copyFrom(l);
+        nl.softInputMode |=
+                WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION;
+        l = nl;
+    }
+
+    try {
+        //5. 将mDecor添加到WindowManager中
+        mWindowManager.addView(mDecor, l);
+        mShowing = true;
+        //6. 发送一个显示Dialog的消息
+        sendShowMessage();
+    } finally {
+    }
+}
+</code></pre><p>在show（）函数中主要做了一下几个事情：</p>
+</li>
+</ul>
+<ol>
+<li>通过dispatchOnCreate调用AlertDialog的onCreate方法</li>
+<li>代用AlertDialog的onStart方法</li>
+<li>将Dialog的DectorView添加到WindowManager中</li>
+<li>发送消息，通过WindowManager显示当前的Dialog</li>
+</ol>
+<p>以上几个方面调用了Dialog的一系列生命周期，完成Dialo的实例化过程，下面我们跟踪一下AlertDialog的onCreate方法（Dialog的oncreate是一个空实现）：</p>
+<pre><code>protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // 调用AlertController的inatallContent方法
+    mAlert.installContent();
+}
+</code></pre><ul>
+<li>在AlertDialog的oncreate中，其父类Dialog的通过dispatchOnCreate将方法分发给子类自己，如下:<br>  public void installContent() {<pre><code>    /* We use a custom title so never request a window title */
+    //设置窗口，没有title
+    mWindow.requestFeature(Window.FEATURE_NO_TITLE);
+    int contentView = selectContentView();
+    //设置窗口的内容视图布局
+    mWindow.setContentView(contentView);
+    //初始化AlertDialog的其他子视图内容
+    setupView();
+    setupDecor();
+}
+</code></pre></li>
+<li><p>在installContent中，设置AlertDialog的内容布局，这个布局的默认布局文件及布局样式在AlertDialog的构造函数中进行了初始化</p>
+<pre><code>public AlertController(Context context, DialogInterface di, Window window) {
+    mContext = context;
+    mDialogInterface = di;
+    mWindow = window;
+    mHandler = new ButtonHandler(di);
+
+    //获取布局样式和属性
+    final TypedArray a = context.obtainStyledAttributes(null,
+            R.styleable.AlertDialog, R.attr.alertDialogStyle, 0);
+
+    mAlertDialogLayout = a.getResourceId(
+            R.styleable.AlertDialog_layout, R.layout.alert_dialog);
+    mButtonPanelSideLayout = a.getResourceId(
+            R.styleable.AlertDialog_buttonPanelSideLayout, 0);
+    mListLayout = a.getResourceId(
+            R.styleable.AlertDialog_listLayout, R.layout.select_dialog);
+    //省略
+    a.recycle();
+}
+</code></pre></li>
+<li><p>对于setupview()方法，我们进一步看看：</p>
+<pre><code> private void setupView() {
+    final View parentPanel = mWindow.findViewById(R.id.parentPanel);
+    //1. 初始化title区域
+    final View defaultTopPanel = parentPanel.findViewById(R.id.topPanel);
+    //2. 初始化内容区域
+    final View defaultContentPanel = parentPanel.findViewById(R.id.contentPanel);
+    //3. 初始化button区域
+    final View defaultButtonPanel = parentPanel.findViewById(R.id.buttonPanel);
+
+    // Install custom content before setting up the title or buttons so
+    // that we can handle panel overrides.
+    //4. 用户自定义视图区域
+    final ViewGroup customPanel = (ViewGroup) parentPanel.findViewById(R.id.customPanel);
+    setupCustomContent(customPanel);
+
+    final View customTopPanel = customPanel.findViewById(R.id.topPanel);
+    final View customContentPanel = customPanel.findViewById(R.id.contentPanel);
+    final View customButtonPanel = customPanel.findViewById(R.id.buttonPanel);
+
+    // Resolve the correct panels and remove the defaults, if needed.
+    //5. 如果用户自定义内容区域，替换默认区域内容为自定义
+    final ViewGroup topPanel = resolvePanel(customTopPanel, defaultTopPanel);
+    final ViewGroup contentPanel = resolvePanel(customContentPanel, defaultContentPanel);
+    final ViewGroup buttonPanel = resolvePanel(customButtonPanel, defaultButtonPanel);
+
+    //6. 填充相应布局
+    setupContent(contentPanel);
+    setupButtons(buttonPanel);
+    setupTitle(topPanel);
+
+    //7. 处理显示与隐藏逻辑
+    final boolean hasCustomPanel = customPanel != null
+            &amp;&amp; customPanel.getVisibility() != View.GONE;
+    final boolean hasTopPanel = topPanel != null
+            &amp;&amp; topPanel.getVisibility() != View.GONE;
+    final boolean hasButtonPanel = buttonPanel != null
+            &amp;&amp; buttonPanel.getVisibility() != View.GONE;
+
+    //省略部分    
+}
+</code></pre><p>setupView()主要加载初始化AlertDialog布局文件中的各个部分。统一加载系统默认的Dialog布局文件和用户设置的布局文件，然后根据用户自定义的程度，优先设置自定义的布局方式及相关属性值，并将其设置到Dialog中去。</p>
+</li>
+<li>此时，用户通过show方法后，WindoeManager便会将AlertDialog显示到界面上。</li>
+</ul>
+<p><strong>总结</strong><br>Android源码的Builder设计模式在AlertDialog中使用最为频繁，通过AlertDialog我们可以这样理解：</p>
+<ol>
+<li>AlertDialog内部使用Builder设计模式，其内部类Builder每次构建返回自身，有利于链式调用，代码结构清晰</li>
+<li>AlertDialog的Builder掌握所有的Dialog参数配置工作，其具体配置由AlertController来实现</li>
+<li>AlertController是AlertDialog的重要实现类，用户配置的参数信息由内部静态类AlertParams来保存，其内部具体完成Dialog的装配工作</li>
+<li>Dialog的具体显示和消失逻辑由WindowManager来完成</li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/Builder/" rel="tag"># Builder</a>
+          
+            <a href="/fuckingcode/tags/设计模式/" rel="tag"># 设计模式</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2017/10/12/源码编译之镜像翻转/" rel="next" title="源码编译之镜像翻转显示">
+                <i class="fa fa-chevron-left"></i> 源码编译之镜像翻转显示
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2017/10/21/设计模式之状态模式/" rel="prev" title="设计模式之状态模式">
+                设计模式之状态模式 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android源码AlertDialog的Builder设计模式"><span class="nav-number">2.</span> <span class="nav-text">Android源码AlertDialog的Builder设计模式</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

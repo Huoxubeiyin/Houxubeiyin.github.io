@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="系统定制,bootanim,">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="Android bootanim流程分析bootanim启动步骤 init.rc 文件声明两个重要的服务 bootanim, surfaceflinger 启动界面依赖于 surface 管理服务，优先启动显示管理服务 surfaceflinger  surfaceflinger 服务完成后，通过 (“ctl.start”, “bootanim”) 启动 bootanim 开机动画 当 syste">
+<meta name="keywords" content="系统定制,bootanim">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 开机动画流程分析">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/08/开机动画流程分析/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="Android bootanim流程分析bootanim启动步骤 init.rc 文件声明两个重要的服务 bootanim, surfaceflinger 启动界面依赖于 surface 管理服务，优先启动显示管理服务 surfaceflinger  surfaceflinger 服务完成后，通过 (“ctl.start”, “bootanim”) 启动 bootanim 开机动画 当 syste">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/08/开机动画流程分析/bootanim1.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/08/开机动画流程分析/bootanim2.png">
+<meta property="og:image" content="https://891904833.gitee.io/fuckingcode/2018/06/08/开机动画流程分析/bootanim3.png">
+<meta property="og:updated_time" content="2018-06-20T04:40:17.353Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 开机动画流程分析">
+<meta name="twitter:description" content="Android bootanim流程分析bootanim启动步骤 init.rc 文件声明两个重要的服务 bootanim, surfaceflinger 启动界面依赖于 surface 管理服务，优先启动显示管理服务 surfaceflinger  surfaceflinger 服务完成后，通过 (“ctl.start”, “bootanim”) 启动 bootanim 开机动画 当 syste">
+<meta name="twitter:image" content="https://891904833.gitee.io/fuckingcode/2018/06/08/开机动画流程分析/bootanim1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/08/开机动画流程分析/">
+
+
+
+
+
+  <title>Android 开机动画流程分析 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/08/开机动画流程分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android 开机动画流程分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-08T16:13:14+08:00">
+                2018-06-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/06/08/开机动画流程分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/06/08/开机动画流程分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Android-bootanim流程分析"><a href="#Android-bootanim流程分析" class="headerlink" title="Android bootanim流程分析"></a>Android bootanim流程分析</h3><h4 id="bootanim启动步骤"><a href="#bootanim启动步骤" class="headerlink" title="bootanim启动步骤"></a>bootanim启动步骤</h4><ol>
+<li>init.rc 文件声明两个重要的服务 bootanim, surfaceflinger</li>
+<li>启动界面依赖于 surface 管理服务，优先启动显示管理服务 surfaceflinger </li>
+<li>surfaceflinger 服务完成后，通过 (“ctl.start”, “bootanim”) 启动 bootanim 开机动画</li>
+<li><p>当 system_server 启动系统 HomeUI 的时候关闭 bootanim</p>
+<p> 其具体流程可以参考下图所示</p>
+ <img src="/fuckingcode/2018/06/08/开机动画流程分析/bootanim1.png" title="bootanim1.png">
+</li>
+</ol>
+<ul>
+<li><p>init.rc 文件相关声明</p>
+<p>  surfaceflinger类属core，随core类服务一同启动，服务重启直接导致Zygote服务的重启</p>
+<pre><code>service surfaceflinger /system/bin/surfaceflinger
+    class core
+    user system
+    group graphics drmrpc system
+    onrestart restart zygote
+</code></pre><p>  bootanim类属core，但是disable标志它不随core服务一同启动，用户及用户组均是graphics，而且仅启动一次oneshot</p>
+<pre><code>service bootanim /system/bin/bootanimation
+    class core
+    user graphics
+    group graphics audio
+    disabled
+    oneshot
+</code></pre></li>
+</ul>
+<h4 id="surfaceflinger服务的启动流程"><a href="#surfaceflinger服务的启动流程" class="headerlink" title="surfaceflinger服务的启动流程"></a>surfaceflinger服务的启动流程</h4><ul>
+<li><p>surfaceflinger 的 main 方法</p>
+<p>  –&gt; frameworks/native/services/surfaceflinger/main_surfaceflinger.cpp</p>
+<pre><code>int main(int, char**) {
+    // 设置线程数量最大4
+    ProcessState::self()-&gt;setThreadPoolMaxThreadCount(4);
+
+    // 开启线程池
+    sp&lt;ProcessState&gt; ps(ProcessState::self());
+    ps-&gt;startThreadPool();
+
+    // 实例surfaceflinger
+    sp&lt;SurfaceFlinger&gt; flinger = new SurfaceFlinger();
+
+    setpriority(PRIO_PROCESS, 0, PRIORITY_URGENT_DISPLAY);
+
+    set_sched_policy(0, SP_FOREGROUND);
+
+    // 在客户端连接前初始化
+    flinger-&gt;init();
+
+    // 发布surfaceflinger就绪
+    sp&lt;IServiceManager&gt; sm(defaultServiceManager());
+    sm-&gt;addService(String16(SurfaceFlinger::getServiceName()), flinger, false);
+
+    // 启动
+    flinger-&gt;run();
+
+    return 0;
+}
+</code></pre></li>
+<li><p>surfaceflinger 在 init 中启动 bootanim 服务</p>
+<p>  –&gt; frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp</p>
+<p>  surfaceflinger 的初始化工作代码众多，这里就不一一列举了，在其init过程中，启动了bootanim服务</p>
+<pre><code>void SurfaceFlinger::init() {
+
+    // 初始化 EGL 用于显示
+    mEGLDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    eglInitialize(mEGLDisplay, NULL, NULL);
+
+    mHwc = new HWComposer(this,
+            *static_cast&lt;HWComposer::EventHandler *&gt;(this));
+
+    ...
+
+    mDrawingState = mCurrentState;
+
+    initializeDisplays();
+
+    // 启动 boot animation
+    startBootAnim();
+
+   ...
+
+}
+</code></pre></li>
+<li><p>init 中通过 property_set(“ctl.start”, “bootanim”) 启动了 bootanim 服务</p>
+<pre><code>void SurfaceFlinger::startBootAnim() {
+    // 开启 bootanim 服务
+    struct timespec t = {0, 0};
+    clock_gettime(CLOCK_MONOTONIC, &amp;t);
+
+    // 置位操作
+    property_set(&quot;service.bootanim.exit&quot;, &quot;0&quot;);
+    property_set(&quot;ctl.start&quot;, &quot;bootanim&quot;);
+}
+</code></pre></li>
+</ul>
+<h4 id="bootanim-服务的启动流程"><a href="#bootanim-服务的启动流程" class="headerlink" title="bootanim 服务的启动流程"></a>bootanim 服务的启动流程</h4><ul>
+<li><p>总体概述</p>
+<p>  –&gt; frameworks/base/cmds/bootanimation/BootAnimation.cpp</p>
+<p>  bootanim 流程如下图所示:</p>
+  <img src="/fuckingcode/2018/06/08/开机动画流程分析/bootanim2.png" title="bootanim2.png">
+<p>  bootanim内部有大量的逻辑用于初始化和surfaceflinger通信，其内部依赖于安卓独有的binder通信机制，这里不做过多的说明。关于binder通信机制，需要大量篇幅的介绍说明，个人目前还没有这个能力。下面我们来看点可以看得懂的干货</p>
+</li>
+<li><p>readyToRun 流程</p>
+<pre><code>status_t BootAnimation::readyToRun() {
+
+   ...
+
+    // 创建 native层surface
+    sp&lt;SurfaceControl&gt; control = session()-&gt;createSurface(String8(&quot;BootAnimation&quot;),
+            dinfo.w, dinfo.h, PIXEL_FORMAT_RGBA_8888, 0);
+</code></pre></li>
+</ul>
+<pre><code>        SurfaceComposerClient::openGlobalTransaction();
+        SurfaceComposerClient::closeGlobalTransaction();
+
+        sp&lt;Surface&gt; s = control-&gt;getSurface();
+
+        // 初始化 opengl 和 egl
+        EGLint w, h;
+        EGLint numConfigs;
+        EGLConfig config;
+        EGLSurface surface;
+        EGLContext context;
+
+        EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        eglInitialize(display, 0, 0);
+        eglChooseConfig(display, attribs, &amp;config, 1, &amp;numConfigs);
+
+        ...
+
+        // 设备支持编码选项或者正处于编码进程中，显示编码动画
+        char decrypt[PROPERTY_VALUE_MAX];
+        property_get(&quot;vold.decrypt&quot;, decrypt, &quot;&quot;);
+
+        bool encryptedAnimation = atoi(decrypt) != 0 || !strcmp(&quot;trigger_restart_min_framework&quot;, decrypt);
+
+        ZipFileRO* zipFile = NULL;
+        if ((encryptedAnimation &amp;&amp;
+                (access(SYSTEM_ENCRYPTED_BOOTANIMATION_FILE, R_OK) == 0) &amp;&amp;
+                ((zipFile = ZipFileRO::open(SYSTEM_ENCRYPTED_BOOTANIMATION_FILE)) != NULL)) ||
+
+                ((access(OEM_BOOTANIMATION_FILE, R_OK) == 0) &amp;&amp;
+                ((zipFile = ZipFileRO::open(OEM_BOOTANIMATION_FILE)) != NULL)) ||
+
+                ((access(SYSTEM_BOOTANIMATION_FILE, R_OK) == 0) &amp;&amp;
+                ((zipFile = ZipFileRO::open(SYSTEM_BOOTANIMATION_FILE)) != NULL))) {
+            mZip = zipFile;
+        }
+
+        // 查看是否存在需要播放的video文件
+        if ((property_get(&quot;mstar.bootvideo&quot;, decrypt, NULL) &gt; 0) ||
+            (access(USER_BOOTVIDEO_FILE, F_OK) == 0)) {
+            mVideo = true;
+            mZip = NULL;
+        } else {
+            mVideo = false;
+            if(property_get(&quot;mstar.close.bootlogo.gop.frame&quot;, decrypt, NULL) &lt;= 0 ) {
+                property_set(&quot;mstar.close.bootlogo.gop.frame&quot;, &quot;3&quot;);
+            }
+        }
+           return NO_ERROR;
+    }
+
+这里需要注意mZip文件的获取，其三个文件的文件夹路径如下：
+
+    #define OEM_BOOTANIMATION_FILE &quot;/oem/media/bootanimation.zip&quot;
+    #define SYSTEM_BOOTANIMATION_FILE &quot;/system/media/bootanimation.zip&quot;
+    #define SYSTEM_ENCRYPTED_BOOTANIMATION_FILE &quot;/system/media/bootanimation-encrypted.zip&quot;
+    #define USER_BOOTVIDEO_FILE &quot;/data/video/video.ts&quot;
+
+通过代码可以看出，文件的获取优先级是bootanimation-encrypted.zip最高，/oem/media/文件夹下的bootanimation.zip次之，最低级的是/system/media/文件夹下的bootanimation.zip。最后在检查指定目录是否存在用于启动播放的video视频。
+</code></pre><ul>
+<li><p>threadLoop 流程</p>
+<pre><code>bool BootAnimation::threadLoop()
+{
+    bool r;
+    // 等待硬件初始化完成，开启 bootanim 动画
+    char property[PROPERTY_VALUE_MAX] = {0};
+    property_get(&quot;mstar.hw.init&quot;, property, &quot;0&quot;);
+    int hwInit = atoi(property);
+    memset(property, 0, PROPERTY_VALUE_MAX);
+    property_get(&quot;mstar.str.suspending&quot;, property, &quot;0&quot;);
+    int strSuspending = atoi(property);
+    if (hwInit == 0) {
+        int exitnow;
+
+        property_get(EXIT_PROP_NAME, property, &quot;0&quot;);
+        exitnow = atoi(property);
+        if (exitnow) {
+            r = false;
+            goto exit;
+        }
+        return true;
+    }
+
+    // 存在video，播放它
+    // 存在bootanim文件，播放它
+    // 其他情况，显示静态logo
+    if (mVideo &amp;&amp; (strSuspending == 0)) {
+        r = video();
+    } else if (mZip == NULL) {
+        r = android();
+    } else {
+        r = movie();
+    }
+
+exit:
+
+    eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(mDisplay, mContext);
+    eglDestroySurface(mDisplay, mSurface);
+    mFlingerSurface.clear();
+    mFlingerSurfaceControl.clear();
+    eglTerminate(mDisplay);
+    IPCThreadState::self()-&gt;stopProcess();
+    return r;
+}
+</code></pre><p>  线程循环等待中的逻辑就更简单了。首先监测系统的硬件是否初始化完成，确保播放动画的相关配置均已ok，然后分别对上面获取的指定文件进行判断，优先播放video视频，其次是自定义的bootanim动画，如果什么都没有，就显示静态logo。</p>
+<p>  对于显示的具体流程这里就不做分析了，后续会对如何定制 bootanim.zip 文件进行集中的分析。这里我们只看一下代码显示logo中如何检测开机完成并关闭动画的逻辑。</p>
+</li>
+<li><p>动画显示关闭流程</p>
+</li>
+</ul>
+<pre><code>    bool BootAnimation::android()
+    {
+        // 初始化静态logo图片
+        initTexture(&amp;mAndroid[0], mAssets, &quot;images/android-logo-mask.png&quot;);
+        initTexture(&amp;mAndroid[1], mAssets, &quot;images/android-logo-shine.png&quot;);
+
+        // 清除屏幕
+        glShadeModel(GL_FLAT);
+        glDisable(GL_DITHER);
+        glDisable(GL_SCISSOR_TEST);
+
+           ...
+
+        const nsecs_t startTime = systemTime();
+        do {
+            nsecs_t now = systemTime();
+            double time = now - startTime;
+            float t = 4.0f * float(time / us2ns(16667)) / mAndroid[1].w;
+            GLint offset = (1 - (t - floorf(t))) * mAndroid[1].w;
+            GLint x = xc - offset;
+
+            ...
+
+            // 12fps: don&apos;t animate too fast to preserve CPU
+            const nsecs_t sleepTime = 83333 - ns2us(systemTime() - now);
+            if (sleepTime &gt; 0)
+                usleep(sleepTime);
+
+            // 监测动画是否退出
+            checkExit();
+        } while (!exitPending());
+
+        glDeleteTextures(1, &amp;mAndroid[0].name);
+        glDeleteTextures(1, &amp;mAndroid[1].name);
+        return false;
+    }
+
+显示静态logo中，死循环监测动画是否退出。
+
+    void BootAnimation::checkExit() {
+        // Allow surface flinger to gracefully request shutdown
+        char value[PROPERTY_VALUE_MAX];
+        property_get(EXIT_PROP_NAME, value, &quot;0&quot;);
+        int exitnow = atoi(value);
+        if (exitnow) {
+            requestExit();
+            if (mAudioPlayer != NULL) {
+                mAudioPlayer-&gt;requestExit();
+            }
+        }
+    }
+
+    #define EXIT_PROP_NAME &quot;service.bootanim.exit&quot;
+
+checkExit中监测 value = &quot;service.bootanim.exit&quot; 的属性值，如果等于1，那么就要退出动画。
+</code></pre><h4 id="开机动画的关闭"><a href="#开机动画的关闭" class="headerlink" title="开机动画的关闭"></a>开机动画的关闭</h4><ul>
+<li><p>概述</p>
+<p>  当SystemServer将系统中的关键服务启动完成后，会启动桌面启动器Launcher。Launcher启动后，会向ActivityManagerService发送一个Activity组件空闲通知，AMS收到该通知后，就会调用成员函数enableScreenAfterBoot()停止开机动画，以便让屏幕显示桌面。</p>
+</li>
+<li><p>AMS -&gt; enableScreenAfterBoot</p>
+<pre><code>void enableScreenAfterBoot() {
+    EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_ENABLE_SCREEN,
+            SystemClock.uptimeMillis());
+
+    // 通知WMS enableScreenAfterBoot
+    mWindowManager.enableScreenAfterBoot();
+
+    synchronized (this) {
+        updateEventDispatchingLocked();
+    }
+}
+</code></pre></li>
+<li><p>WMS -&gt; enableScreenAfterBoot</p>
+<pre><code>由AMS间接调用WMS的enableScreenAfterBoot通知开机完成。
+
+public void enableScreenAfterBoot() {
+    synchronized(mWindowMap) {
+
+        ...
+
+        mSystemBooted = true;
+        hideBootMessagesLocked();
+        // If the screen still doesn&apos;t come up after 30 seconds, give
+        // up and turn it on.
+        mH.sendEmptyMessageDelayed(H.BOOT_TIMEOUT, 30*1000);
+    }
+
+    mPolicy.systemBooted();
+
+    // 系统启动完成，准备显示桌面
+    performEnableScreen();
+}
+</code></pre></li>
+<li><p>准备桌面 -&gt; performEnableScreen</p>
+<pre><code>public void performEnableScreen() {
+    synchronized(mWindowMap) {
+
+        ...
+
+        if (!mBootAnimationStopped) {
+            // Do this one time.
+            try {
+
+                // 通过binder通信机制，向SurfaceFlinger发送消息，停止开机动画
+                IBinder surfaceFlinger = ServiceManager.getService(&quot;SurfaceFlinger&quot;);
+                if (surfaceFlinger != null) {
+                    Parcel data = Parcel.obtain();
+                    data.writeInterfaceToken(&quot;android.ui.ISurfaceComposer&quot;);
+
+                    //消息内容为 IBinder.FIRST_CALL_TRANSACTION
+                    surfaceFlinger.transact(IBinder.FIRST_CALL_TRANSACTION, // BOOT_FINISHED
+                            data, null, 0);
+                    data.recycle();
+                }
+            } catch (RemoteException ex) {
+                Slog.e(TAG, &quot;Boot completed: SurfaceFlinger is dead!&quot;);
+            }
+            mBootAnimationStopped = true;
+        }
+
+        ...
+    }
+}
+</code></pre><p>  代码可以看出，通过binder通信机制，获取到远程的surfaceflinger服务，向其发送 IBinder.FIRST_CALL_TRANSACTION 消息，远程服务接收到此消息再做处理。</p>
+</li>
+<li><p>surfaceflinger 接收消息处理</p>
+<p>  根据其传递的接口名”android.ui.ISurfaceComposer”，找到其文件位置，如下</p>
+<p>  –&gt; frameworks/native/include/gui/ISurfaceComposer.h<br>  –&gt; frameworks/native/libs/gui/ISurfaceComposer.cpp</p>
+<p>  其头文件又如下枚举定义值</p>
+<pre><code>class BnSurfaceComposer: public BnInterface&lt;ISurfaceComposer&gt; {
+    public:
+        enum {
+            // Note: BOOT_FINISHED must remain this value, it is called from
+            // Java by ActivityManagerService.
+            BOOT_FINISHED = IBinder::FIRST_CALL_TRANSACTION,
+            CREATE_CONNECTION,
+            CREATE_GRAPHIC_BUFFER_ALLOC,
+            CREATE_DISPLAY_EVENT_CONNECTION,
+
+            ...
+            }
+}
+</code></pre><p>  这里可以看到BOOT_FINISHED消息的定义，之后我们可以在 ISurfaceComposer.cpp 中找到处理这个消息的逻辑</p>
+</li>
+<li><p>ISurfaceComposer.cpp 处理 BOOT_FINISHED 消息</p>
+<pre><code>status_t BnSurfaceComposer::onTransact(
+    uint32_t code, const Parcel&amp; data, Parcel* reply, uint32_t flags)
+{
+    switch(code) {
+
+        ...
+
+        case BOOT_FINISHED: {
+            CHECK_INTERFACE(ISurfaceComposer, data, reply);
+            bootFinished();
+            return NO_ERROR;
+        }
+
+       ...
+
+    }
+}
+</code></pre><p>  在 ISurfaceComposer.cpp 中的onTransact方法中，集中处理发来的binder消息，这里可以看出在对WMS发来的 BOOT_FINISHED(IBinder::FIRST_CALL_TRANSACTION) 消息，直接回掉bootFinished()方法。</p>
+<pre><code>virtual void bootFinished(){
+    Parcel data, reply;
+    data.writeInterfaceToken(ISurfaceComposer::getInterfaceDescriptor());
+    remote()-&gt;transact(BnSurfaceComposer::BOOT_FINISHED, data, &amp;reply);
+}
+</code></pre></li>
+<li><p>SurfaceFlinger 回掉 bootFinished</p>
+<p>  SurfaceFlinger 继承 BnSurfaceComposer，BnSurfaceComposer 又继承 BnInterface，BnInterface 时定义好的模版，形参为 ISurfaceComposer。SurfaceFlinger的bootFinished方法如下：</p>
+<pre><code>void SurfaceFlinger::bootFinished(){
+    const nsecs_t now = systemTime();
+    const nsecs_t duration = now - mBootTime;
+    mBootFinished = true;
+
+    struct timespec t = {0, 0};
+    clock_gettime(CLOCK_MONOTONIC, &amp;t);
+
+    const String16 name(&quot;window&quot;);
+    sp&lt;IBinder&gt; window(defaultServiceManager()-&gt;getService(name));
+    if (window != 0) {
+        window-&gt;linkToDeath(static_cast&lt;IBinder::DeathRecipient*&gt;(this));
+    }
+
+    // 置位关闭动画属性值
+    property_set(&quot;service.bootanim.exit&quot;, &quot;1&quot;);
+}
+</code></pre><p>  走到这里，serfaceflinger就完成了关闭动画的属性值更改操作，后面就是bootanim程序死循环中不断检测指定属性值实现动画的关闭。</p>
+</li>
+<li><p>bootanim 循环监测实现关闭动画</p>
+<pre><code>void BootAnimation::checkExit() {
+    // Allow surface flinger to gracefully request shutdown
+    char value[PROPERTY_VALUE_MAX];
+    property_get(EXIT_PROP_NAME, value, &quot;0&quot;);
+    int exitnow = atoi(value);
+    if (exitnow) {
+        requestExit();
+        if (mAudioPlayer != NULL) {
+            mAudioPlayer-&gt;requestExit();
+        }
+    }
+}
+</code></pre></li>
+</ul>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>安卓开机动画的显示和消失，涉及的内容还是挺多的，想要详细了解其内部的实现流程还是有一定难度的。尤其是在binder消息的传递和处理上面，各个部分来回跳转，真的很头疼。对于bootanim.zip的自定义实现，后续会集中根据代码的解析来分析内部文件的具体含义。</p>
+<ul>
+<li><p>引用参考博客中很好的一幅图片来收尾：</p>
+  <img src="/fuckingcode/2018/06/08/开机动画流程分析/bootanim3.png" title="bootanim3.png">
+</li>
+</ul>
+<blockquote>
+<p><a href="https://blog.csdn.net/hovan/article/details/43198399" target="_blank" rel="noopener">参考博客地址</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/系统定制/" rel="tag"># 系统定制</a>
+          
+            <a href="/fuckingcode/tags/bootanim/" rel="tag"># bootanim</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/07/源码分析之SystemServer流程分析2/" rel="next" title="源码分析之SystemServer流程分析2">
+                <i class="fa fa-chevron-left"></i> 源码分析之SystemServer流程分析2
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2018/06/09/bootanim-zip文件分析/" rel="prev" title="bootanim压缩包源码分析">
+                bootanim压缩包源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Android-bootanim流程分析"><span class="nav-number">1.</span> <span class="nav-text">Android bootanim流程分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bootanim启动步骤"><span class="nav-number">1.1.</span> <span class="nav-text">bootanim启动步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#surfaceflinger服务的启动流程"><span class="nav-number">1.2.</span> <span class="nav-text">surfaceflinger服务的启动流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bootanim-服务的启动流程"><span class="nav-number">1.3.</span> <span class="nav-text">bootanim 服务的启动流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#开机动画的关闭"><span class="nav-number">1.4.</span> <span class="nav-text">开机动画的关闭</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

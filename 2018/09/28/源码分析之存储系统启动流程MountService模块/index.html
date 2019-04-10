@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/fuckingcode/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/fuckingcode/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="MountService">
+
+
+
+
+
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="上篇我们介绍了Android的存储系统中native层的Vold的启动流程，Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的，下面我们就来看一下Java层的MountService是如何启动的。">
+<meta name="keywords" content="MountService">
+<meta property="og:type" content="article">
+<meta property="og:title" content="源码分析之存储系统启动流程MountService模块">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/index.html">
+<meta property="og:site_name" content="FuckingCode">
+<meta property="og:description" content="上篇我们介绍了Android的存储系统中native层的Vold的启动流程，Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的，下面我们就来看一下Java层的MountService是如何启动的。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-04-10T07:31:13.464Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="源码分析之存储系统启动流程MountService模块">
+<meta name="twitter:description" content="上篇我们介绍了Android的存储系统中native层的Vold的启动流程，Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的，下面我们就来看一下Java层的MountService是如何启动的。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/fuckingcode/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/">
+
+
+
+
+
+  <title>源码分析之存储系统启动流程MountService模块 | FuckingCode</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/fuckingcode/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">FuckingCode</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">-安卓系统-  -源码分析-  -linux编程-  -设计模式-</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/fuckingcode/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/fuckingcode/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/fuckingcode/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/fuckingcode/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/fuckingcode/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allies">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="FuckingCode">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">源码分析之存储系统启动流程MountService模块</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-28T15:42:18+08:00">
+                2018-09-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count gitment-comments-count" data-xid="/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                    字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                    分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>上篇我们介绍了Android的存储系统中native层的Vold的启动流程，Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的，下面我们就来看一下Java层的MountService是如何启动的。</strong></p>
+<a id="more"></a>
+<h1 id="MountService启动流程"><a href="#MountService启动流程" class="headerlink" title="MountService启动流程"></a>MountService启动流程</h1><p>Java层的MountService服务是在SystemServer中配置的，我们来分析一下其启动流程。</p>
+<h2 id="SystemServer启动配置"><a href="#SystemServer启动配置" class="headerlink" title="SystemServer启动配置"></a>SystemServer启动配置</h2><pre><code>private static final String MOUNT_SERVICE_CLASS = &quot;com.android.server.MountService$Lifecycle&quot;;
+
+private void startOtherServices() {
+
+    ...
+    if (mFactoryTestMode != FactoryTest.FACTORY_TEST_LOW_LEVEL) {
+        if (!disableStorage &amp;&amp;
+            !&quot;0&quot;.equals(SystemProperties.get(&quot;system_init.startmountservice&quot;))) {
+            try {
+                /*
+                 * NotificationManagerService is dependant on MountService,
+                 * (for media / usb notifications) so we must start MountService first.
+                 */
+                //启动MountService服务
+                mSystemServiceManager.startService(MOUNT_SERVICE_CLASS);
+                //等价new IMountService.Stub.Proxy()，即获取MountService的proxy对象
+                mountService = IMountService.Stub.asInterface(
+                        ServiceManager.getService(&quot;mount&quot;));
+            } catch (Throwable e) {
+                reportWtf(&quot;starting Mount Service&quot;, e);
+            }
+        }
+    }
+    ...
+
+}
+</code></pre><p>这里可以看出，启动MountService并非直接启动，而是通过其静态内部类Lifecycle实现启动，下面我们看一下其内部静态类的实现。</p>
+<h2 id="静态内部类Lifecycle"><a href="#静态内部类Lifecycle" class="headerlink" title="静态内部类Lifecycle"></a>静态内部类Lifecycle</h2><pre><code>// Lifecycle继承SystemService，受制于父类的生命周期方法回调，其为MountService的内部静态类，控制MountService的实例化操作
+public static class Lifecycle extends SystemService {
+    private MountService mMountService;
+
+    public Lifecycle(Context context) {
+        super(context);
+    }
+
+    @Override
+    public void onStart() {
+        //创建MountService对象【见小节2.3】
+        mMountService = new MountService(getContext());
+        //登记Binder服务
+        publishBinderService(&quot;mount&quot;, mMountService);
+    }
+
+    // 由SystenServer启动到指定阶段进行回调，其内部由mServices持有
+    @Override
+    public void onBootPhase(int phase) {
+        // 由于MountService的内部Lifecycle已添加SystemServiceManager的mServices服务列表；
+        // 系统启动到PHASE_ACTIVITY_MANAGER_READY时会回调mServices中的onBootPhase方法
+        if (phase == SystemService.PHASE_ACTIVITY_MANAGER_READY) {
+            mMountService.systemReady();
+        }
+    }
+
+    ...
+
+}
+</code></pre><p>静态内部类Lifecycle中实现MountService的初始化操作，然后通过publishBinderService将新建的MountService添加到服务列表中。</p>
+<h2 id="MountService初始化"><a href="#MountService初始化" class="headerlink" title="MountService初始化"></a>MountService初始化</h2><p>MountService在其静态内部类LifeCycle中进行初始化，具体如下：</p>
+<pre><code>public MountService(Context context) {
+    sSelf = this;
+
+    mContext = context;
+    //FgThread线程名为“&quot;android.fg&quot;，创建IMountServiceListener回调方法（1线程）
+    mCallbacks = new Callbacks(FgThread.get().getLooper());
+
+    // XXX: This will go away soon in favor of IMountServiceObserver
+    //获取PKMS的Client端对象
+    mPms = (PackageManagerService) ServiceManager.getService(&quot;package&quot;);
+
+    //创建“MountService”线程（2线程）
+    HandlerThread hthread = new HandlerThread(TAG);
+    hthread.start();
+    mHandler = new MountServiceHandler(hthread.getLooper());
+
+    // Add OBB Action Handler to MountService thread.
+    //IoThread线程名为&quot;android.io&quot;，创建OBB操作的handler（3线程）
+    mObbActionHandler = new ObbActionHandler(IoThread.get().getLooper());
+
+    // Initialize the last-fstrim tracking if necessary
+    File dataDir = Environment.getDataDirectory();
+    File systemDir = new File(dataDir, &quot;system&quot;);
+    mLastMaintenanceFile = new File(systemDir, LAST_FSTRIM_FILE);
+    //判断/data/system/last-fstrim文件，不存在则创建，存在则更新最后修改时间
+    if (!mLastMaintenanceFile.exists()) {
+        // Not setting mLastMaintenance here means that we will force an
+        // fstrim during reboot following the OTA that installs this code.
+        try {
+            (new FileOutputStream(mLastMaintenanceFile)).close();
+        } catch (IOException e) {
+            Slog.e(TAG, &quot;Unable to create fstrim record &quot; + mLastMaintenanceFile.getPath());
+        }
+    } else {
+        mLastMaintenance = mLastMaintenanceFile.lastModified();
+    }
+
+    mSettingsFile = new AtomicFile(
+            new File(Environment.getSystemSecureDirectory(), &quot;storage.xml&quot;));
+
+    synchronized (mLock) {
+        readSettingsLocked();
+    }
+
+    //将MountServiceInternalImpl登记到sLocalServiceObjects，区别Binder的RemoteService
+    LocalServices.addService(MountServiceInternal.class, mMountServiceInternal);
+
+    /*
+     * Create the connection to vold with a maximum queue of twice the
+     * amount of containers we&apos;d ever expect to have. This keeps an
+     * &quot;asec list&quot; from blocking a thread repeatedly.
+     */
+
+    //创建用于VoldConnector的NDC(native守护进程连接器)对象
+    mConnector = new NativeDaemonConnector(this, &quot;vold&quot;, MAX_CONTAINERS * 2, VOLD_TAG, 25,
+            null);
+    mConnector.setDebug(true);
+
+    //创建线程名为&quot;VoldConnector&quot;的线程，用于跟vold通信,启动（4线程）
+    Thread thread = new Thread(mConnector, VOLD_TAG);
+    thread.start();
+
+    // Reuse parameters from first connector since they are tested and safe
+    //创建用于CryptdConnector工作的NDC对象,同上面的一样
+    mCryptConnector = new NativeDaemonConnector(this, &quot;cryptd&quot;,
+            MAX_CONTAINERS * 2, CRYPTD_TAG, 25, null);
+    mCryptConnector.setDebug(true);
+
+    //创建线程名为&quot;CryptdConnector&quot;的线程，用于加密（5线程）
+    Thread crypt_thread = new Thread(mCryptConnector, CRYPTD_TAG);
+    crypt_thread.start();
+
+    //注册监听用户添加、删除的广播
+    final IntentFilter userFilter = new IntentFilter();
+    userFilter.addAction(Intent.ACTION_USER_ADDED);
+    userFilter.addAction(Intent.ACTION_USER_REMOVED);
+    mContext.registerReceiver(mUserReceiver, userFilter, null, mHandler);
+
+    //内部私有volume的路径为/data，该volume通过dumpsys mount是不会显示的
+    addInternalVolume();
+
+    // Add ourself to the Watchdog monitors if enabled.
+    if (WATCHDOG_ENABLE) {
+        Watchdog.getInstance().addMonitor(this);
+    }
+}
+</code></pre><p>代码内容比较多，我们梳理一下其主要工作：</p>
+<ul>
+<li>创建线程 Callbacks，线程名android.fg</li>
+<li>创建线程 HandlerThread，线程名MountService，并开启</li>
+<li>创建线程 ObbActionHandler，线程名android.io</li>
+<li>创建 NativeDaemonConnector对象，线程 thread并开启，线程名VoldConnector</li>
+<li>创建 NativeDaemonConnector对象，线程 crypt_thread并开启，线程名CryptdConnector</li>
+<li>注册广播和其他操作</li>
+</ul>
+<p>这里设计线程数量比较多，新建了三个线程：MountService，VoldConnector，CryptdConnector；还有两个额外的系统进程中的线程android.fg和android.io</p>
+<h3 id="Callbacke"><a href="#Callbacke" class="headerlink" title="Callbacke"></a>Callbacke</h3><pre><code>private static class Callbacks extends Handler {
+    private static final int MSG_STORAGE_STATE_CHANGED = 1;
+    private static final int MSG_VOLUME_STATE_CHANGED = 2;
+    private static final int MSG_VOLUME_RECORD_CHANGED = 3;
+    private static final int MSG_VOLUME_FORGOTTEN = 4;
+    private static final int MSG_DISK_SCANNED = 5;
+    private static final int MSG_DISK_DESTROYED = 6;
+
+    //通过 register() 方法添加 IMountServiceListener 对象信息到 mCallbacks 成员变量。
+    // RemoteCallbackList 的内部类 Callback 继承于 IBinder.DeathRecipient，这是死亡通知
+    //当 binder 服务端进程死亡后，回调 binderDied 方法通知 binder 客户端进行相应地处理
+    private final RemoteCallbackList&lt;IMountServiceListener&gt;
+            mCallbacks = new RemoteCallbackList&lt;&gt;();
+
+    public Callbacks(Looper looper) {
+        super(looper);
+    }
+
+    public void register(IMountServiceListener callback) {
+        mCallbacks.register(callback);
+    }
+
+    public void unregister(IMountServiceListener callback) {
+        mCallbacks.unregister(callback);
+    }
+
+    @Override
+    public void handleMessage(Message msg) {
+        final SomeArgs args = (SomeArgs) msg.obj;
+        final int n = mCallbacks.beginBroadcast();
+        for (int i = 0; i &lt; n; i++) {
+            final IMountServiceListener callback = mCallbacks.getBroadcastItem(i);
+            try {
+                invokeCallback(callback, msg.what, args);
+            } catch (RemoteException ignored) {
+            }
+        }
+        mCallbacks.finishBroadcast();
+        args.recycle();
+    }
+
+    private void invokeCallback(IMountServiceListener callback, int what, SomeArgs args)
+            throws RemoteException {
+        switch (what) {
+            case MSG_STORAGE_STATE_CHANGED: {
+                callback.onStorageStateChanged((String) args.arg1, (String) args.arg2,
+                        (String) args.arg3);
+                break;
+            }
+
+            ...
+
+        }
+    }
+
+    private void notifyStorageStateChanged(String path, String oldState, String newState) {
+        final SomeArgs args = SomeArgs.obtain();
+        args.arg1 = path;
+        args.arg2 = oldState;
+        args.arg3 = newState;
+        obtainMessage(MSG_STORAGE_STATE_CHANGED, args).sendToTarget();
+    }
+
+    ...
+
+}
+</code></pre><p>Callback继承自handler，其中Looper采用的是系统进程线程android.fg，其内部还有一个成员变量mCallbacks，通过register()方法添加IMountServiceListener对象信息到mCallbacks成员变量。RemoteCallbackList的内部类Callback继承于IBinder.DeathRecipient，很显然这是死亡通知，当binder服务端进程死亡后，回调binderDied方法通知binder客户端进行相应地处理。</p>
+<h3 id="MountServiceHandler"><a href="#MountServiceHandler" class="headerlink" title="MountServiceHandler"></a>MountServiceHandler</h3><pre><code>class MountServiceHandler extends Handler {
+    public MountServiceHandler(Looper looper) {
+        super(looper);
+    }
+
+    @Override
+    public void handleMessage(Message msg) {
+        switch (msg.what) {
+            case H_SYSTEM_READY: {
+                // 处理system_server主线程发送 H_SYSTEM_READY 消息
+                handleSystemReady();
+                break;
+            }
+            case H_DAEMON_CONNECTED: {
+                // Daemon-Socket 已经建立连接
+                handleDaemonConnected();
+                break;
+            }
+
+            ...
+
+            case H_VOLUME_MOUNT: {
+                final VolumeInfo vol = (VolumeInfo) msg.obj;
+                if (isMountDisallowed(vol)) {
+                    Slog.i(TAG, &quot;Ignoring mount &quot; + vol.getId() + &quot; due to policy&quot;);
+                    break;
+                }
+                try {
+                    mConnector.execute(&quot;volume&quot;, &quot;mount&quot;, vol.id, vol.mountFlags,
+                            vol.mountUserId);
+                } catch (NativeDaemonConnectorException ignored) {
+                }
+                break;
+            }
+
+            ...
+
+        }
+    }
+}
+</code></pre><p>Handler主线程，负责处理所有的UI事件。</p>
+<h2 id="NativeDaemonConnector初始化"><a href="#NativeDaemonConnector初始化" class="headerlink" title="NativeDaemonConnector初始化"></a>NativeDaemonConnector初始化</h2><pre><code>NativeDaemonConnector(INativeDaemonConnectorCallbacks callbacks, String socket,
+        int responseQueueSize, String logTag, int maxLogSize, PowerManager.WakeLock wl) {
+    this(callbacks, socket, responseQueueSize, logTag, maxLogSize, wl,
+            FgThread.get().getLooper());
+}
+
+// mLooper 为 FgThread.get().getLooper()，即运行在 ”android.fg” 线程
+NativeDaemonConnector(INativeDaemonConnectorCallbacks callbacks, String socket,
+        int responseQueueSize, String logTag, int maxLogSize, PowerManager.WakeLock wl,
+        Looper looper) {
+    mCallbacks = callbacks;
+    //socket名为&quot;vold&quot;
+    mSocket = socket;
+    // mResponseQueue 对象中成员变量 mPendingCmds 数据类型为 LinkedList
+    //记录着 vold 进程上报的响应事件，事件个数上限为500
+    mResponseQueue = new ResponseQueue(responseQueueSize);
+    mWakeLock = wl;
+    if (mWakeLock != null) {
+        mWakeLock.setReferenceCounted(true);
+    }
+    mLooper = looper;
+    mSequenceNumber = new AtomicInteger(0);
+
+    // TAG 为&quot;VoldConnector&quot;
+    TAG = logTag != null ? logTag : &quot;NativeDaemonConnector&quot;;
+    mLocalLog = new LocalLog(maxLogSize);
+}
+</code></pre><p>NativeDaemonConnector使用的线程为android.fg，其主要负责和Native层Vold进程通过Socket进行痛惜，其中mResponseQueue对象中成员变量mPendingCmds数据类型为LinkedList，记录着vold进程上报的响应事件，事件个数上限为500。</p>
+<p>在线程VoldConnector中建立了名为vold的socket的客户端，通过循环方式不断监听Vold服务端发送过来的消息。 另外，同理还有一个线程CryptdConnector也采用类似的方式，建立了cryptd的socket客户端，监听Vold中另个线程发送过来的消息。</p>
+<h3 id="NDC-gt-run"><a href="#NDC-gt-run" class="headerlink" title="NDC-&gt;run"></a>NDC-&gt;run</h3><p>接下来就是NDC的start进入run方法，如下；</p>
+<pre><code>@Override
+public void run() {
+    mCallbackHandler = new Handler(mLooper, this);
+
+    while (true) {
+        try {
+            //监听vold的socket
+            listenToSocket();
+        } catch (Exception e) {
+            loge(&quot;Error in NativeDaemonConnector: &quot; + e);
+            SystemClock.sleep(5000);
+        }
+    }
+}
+</code></pre><h3 id="listenToSocket"><a href="#listenToSocket" class="headerlink" title="listenToSocket"></a>listenToSocket</h3><pre><code>// 监听 socket 内数据
+private void listenToSocket() throws IOException {
+    LocalSocket socket = null;
+
+    try {
+        socket = new LocalSocket();
+        LocalSocketAddress address = determineSocketAddress();
+
+        // 建立与&quot;/dev/socket/vold&quot;的socket连接
+        socket.connect(address);
+
+        InputStream inputStream = socket.getInputStream();
+        synchronized (mDaemonLock) {
+            mOutputStream = socket.getOutputStream();
+        }
+
+        // 建立连接后，回调 MS.onDaemonConnected
+        mCallbacks.onDaemonConnected();
+
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int start = 0;
+
+        while (true) {
+            int count = inputStream.read(buffer, start, BUFFER_SIZE - start);
+            if (count &lt; 0) {
+                loge(&quot;got &quot; + count + &quot; reading with start = &quot; + start);
+                break;
+            }
+
+            // Add our starting point to the count and reset the start.
+            count += start;
+            start = 0;
+
+            for (int i = 0; i &lt; count; i++) {
+                if (buffer[i] == 0) {
+                    // Note - do not log this raw message since it may contain
+                    // sensitive data
+                    final String rawEvent = new String(
+                            buffer, start, i - start, StandardCharsets.UTF_8);
+
+                    boolean releaseWl = false;
+                    try {
+                        //解析 socket 服务端发送的 event
+                        final NativeDaemonEvent event = NativeDaemonEvent.parseRawEvent(
+                                rawEvent);
+
+                        log(&quot;RCV &lt;- {&quot; + event + &quot;}&quot;);
+
+                        //当事件的响应码区间为[600,700)，则发送消息交由 mCallbackHandler 处理
+                        if (event.isClassUnsolicited()) {
+                            // TODO: migrate to sending NativeDaemonEvent instances
+                            if (mCallbacks.onCheckHoldWakeLock(event.getCode())
+                                    &amp;&amp; mWakeLock != null) {
+                                mWakeLock.acquire();
+                                releaseWl = true;
+                            }
+                            if (mCallbackHandler.sendMessage(mCallbackHandler.obtainMessage(
+                                    event.getCode(), event.getRawEvent()))) {
+                                releaseWl = false;
+                            }
+                        } else {
+                            // 对于其他的响应码则添加到 mResponseQueue 队列
+                            // 该方法便能触发 ResponseQueue.poll 阻塞操作继续往下执行
+                            mResponseQueue.add(event.getCmdNumber(), event);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        log(&quot;Problem parsing message &quot; + e);
+                    } finally {
+                        if (releaseWl) {
+                            mWakeLock.acquire();
+                        }
+                    }
+                    start = i + 1;
+                }
+            }
+
+            if (start == 0) {
+                log(&quot;RCV incomplete&quot;);
+            }
+
+            // We should end at the amount we read. If not, compact then
+            // buffer and read again.
+            if (start != count) {
+                final int remaining = BUFFER_SIZE - start;
+                System.arraycopy(buffer, start, buffer, 0, remaining);
+                start = remaining;
+            } else {
+                start = 0;
+            }
+        }
+    } catch (IOException ex) {
+        loge(&quot;Communications error: &quot; + ex);
+        throw ex;
+    } finally {
+        //收尾清理类工作，关闭mOutputStream, socket
+        synchronized (mDaemonLock) {
+            if (mOutputStream != null) {
+                try {
+                    loge(&quot;closing stream for &quot; + mSocket);
+                    mOutputStream.close();
+                } catch (IOException e) {
+                    loge(&quot;Failed closing output stream: &quot; + e);
+                }
+                mOutputStream = null;
+            }
+        }
+
+        try {
+            if (socket != null) {
+                socket.close();
+            }
+        } catch (IOException ex) {
+            loge(&quot;Failed closing socket: &quot; + ex);
+        }
+    }
+}
+</code></pre><p>内容比较多，这里也是比较重要的部分，建立连接后，便会进行onDaemonConnected回调。之后进入死循环不断监听，调用NativeDaemonEvent.parseRawEvent解析Socket内的元数据，根据事件类型进行分类处理。当事件的响应码区间为[600,700)，则发送消息交由 mCallbackHandler 处理，其他的则添加到 mResponseQueue 队列，触发 ResponseQueue.poll 阻塞操作继续往下执行。最终在finally释放锁和清理工作。</p>
+<h3 id="onDaemonConnected"><a href="#onDaemonConnected" class="headerlink" title="onDaemonConnected"></a>onDaemonConnected</h3><pre><code>// 主线程发送消息 H_DAEMON_CONNECTED 给线程 MountService
+// 该线程收到消息后调用 MountServiceHandler 的 handleMessage()
+@Override
+public void onDaemonConnected() {
+    mDaemonConnected = true;
+    mHandler.obtainMessage(H_DAEMON_CONNECTED).sendToTarget();
+}
+</code></pre><p>其通过handler，最终调用到handleDaemonConnected，如下：</p>
+<h3 id="MountService-handleDaemonConnected"><a href="#MountService-handleDaemonConnected" class="headerlink" title="MountService.handleDaemonConnected"></a>MountService.handleDaemonConnected</h3><pre><code>private void handleDaemonConnected() {
+    synchronized (mLock) {
+        // 重置清理工作
+        resetIfReadyAndConnectedLocked();
+    }
+
+    /*
+     * Now that we&apos;ve done our initialization, release
+     * the hounds!
+     */
+
+    // 类型为 CountDownLatch，用于多线程同步，阻塞await()直到计数器为零
+    mConnectedSignal.countDown();
+    if (mConnectedSignal.getCount() != 0) {
+        // More daemons need to connect
+        return;
+    }
+
+    // On an encrypted device we can&apos;t see system properties yet, so pull
+    // the system locale out of the mount service.
+    if (&quot;&quot;.equals(SystemProperties.get(&quot;vold.encrypt_progress&quot;))) {
+        copyLocaleFromMountService();
+    }
+
+    // Let package manager load internal ASECs.
+    //调用PMS来加载ASECs
+    mPms.scanAvailableAsecs();
+
+    // Notify people waiting for ASECs to be scanned that it&apos;s done.
+    //用于通知ASEC扫描已完成
+    mAsecsScanned.countDown();
+}
+</code></pre><h4 id="mResponseQueue-add"><a href="#mResponseQueue-add" class="headerlink" title="mResponseQueue.add"></a>mResponseQueue.add</h4><pre><code>public void add(int cmdNum, NativeDaemonEvent response) {
+        PendingCmd found = null;
+        synchronized (mPendingCmds) {
+            for (PendingCmd pendingCmd : mPendingCmds) {
+                if (pendingCmd.cmdNum == cmdNum) {
+                    found = pendingCmd;
+                    break;
+                }
+            }
+
+            //没有找到则创建相应的PendingCmd
+            if (found == null) {
+                // 没有找到,在添加之前,确保队列容量不溢出
+                while (mPendingCmds.size() &gt;= mMaxCount) {
+                    Slog.e(&quot;NativeDaemonConnector.ResponseQueue&quot;,
+                            &quot;more buffered than allowed: &quot; + mPendingCmds.size() +
+                            &quot; &gt;= &quot; + mMaxCount);
+                    // let any waiter timeout waiting for this
+                    PendingCmd pendingCmd = mPendingCmds.remove();
+                    Slog.e(&quot;NativeDaemonConnector.ResponseQueue&quot;,
+                            &quot;Removing request: &quot; + pendingCmd.logCmd + &quot; (&quot; +
+                            pendingCmd.cmdNum + &quot;)&quot;);
+                }
+                found = new PendingCmd(cmdNum, null);
+                mPendingCmds.add(found);
+            }
+            found.availableResponseCount++;
+            // if a matching remove call has already retrieved this we can remove this
+            // instance from our list
+            if (found.availableResponseCount == 0) mPendingCmds.remove(found);
+        }
+        try {
+            found.responses.put(response);
+        } catch (InterruptedException e) { }
+    }
+</code></pre><p>mResponseQueue.add()，通过该方法便能触发ResponseQueue.poll阻塞操作继续往下执行。</p>
+<p>到此,MountService与NativeDaemonConnector都已经启动，之前我们看到MountService内部静态类LifeCycle继承自SystemService，那么接下来到系统启动到达阶段PHASE_ACTIVITY_MANAGER_READY，则调用到其onBootPhase方法。</p>
+<h2 id="Lifecycle-gt-onBootPhase"><a href="#Lifecycle-gt-onBootPhase" class="headerlink" title="Lifecycle-&gt;onBootPhase"></a>Lifecycle-&gt;onBootPhase</h2><pre><code>// 由SystenServer启动到指定阶段进行回调，其内部由mServices持有
+    @Override
+    public void onBootPhase(int phase) {
+        // 由于MountService的内部Lifecycle已添加SystemServiceManager的mServices服务列表；
+        // 系统启动到PHASE_ACTIVITY_MANAGER_READY时会回调mServices中的onBootPhase方法
+        if (phase == SystemService.PHASE_ACTIVITY_MANAGER_READY) {
+            mMountService.systemReady();
+        }
+    }
+</code></pre><p>由SystemService统一管理其声明流程，之后调用systemReady方法，如下：</p>
+<h3 id="systemReady"><a href="#systemReady" class="headerlink" title="systemReady"></a>systemReady</h3><pre><code>private void systemReady() {
+    mSystemReady = true;
+    // 此处 mHandler = new MountServiceHandler(hthread.getLooper())
+    // 采用的是线程 ”MountService” 中的 Looper
+    // system_server 主线程通过 handler 向线程 ”MountService” 发送 H_SYSTEM_READY 消息
+    mHandler.obtainMessage(H_SYSTEM_READY).sendToTarget();
+}
+</code></pre><p>MountService的systemReady通过Handler发送消息到MountServiceHandler中进行处理，其收到消息处理后进入handleSystemReady方法</p>
+<h3 id="handleSystemReady"><a href="#handleSystemReady" class="headerlink" title="handleSystemReady"></a>handleSystemReady</h3><pre><code>private void handleSystemReady() {
+    synchronized (mLock) {
+        // 重置...
+        resetIfReadyAndConnectedLocked();
+    }
+
+    // Start scheduling nominally-daily fstrim operations
+    // 计划执行日常的 fstrim 操作【】
+    MountServiceIdler.scheduleIdlePass(mContext);
+}
+</code></pre><p>主要做了两件事情，一件事重置操作，一件事执行fstrim操作。</p>
+<h3 id="resetIfReadyAndConnectedLocked"><a href="#resetIfReadyAndConnectedLocked" class="headerlink" title="resetIfReadyAndConnectedLocked"></a>resetIfReadyAndConnectedLocked</h3><pre><code>private void resetIfReadyAndConnectedLocked() {
+    Slog.d(TAG, &quot;Thinking about reset, mSystemReady=&quot; + mSystemReady
+            + &quot;, mDaemonConnected=&quot; + mDaemonConnected);
+    if (mSystemReady &amp;&amp; mDaemonConnected) {
+        killMediaProvider();
+
+        // Mstar Android Patch Begin
+        new Thread() {
+            public void run() {
+                try {
+
+                    mConnector.execute(&quot;volume&quot;, &quot;reset&quot;);
+
+                    // Tell vold about all existing and started users
+                    //告知所有已经存在和启动的 users
+                    final UserManager um = mContext.getSystemService(UserManager.class);
+                    final List&lt;UserInfo&gt; users = um.getUsers();
+                    for (UserInfo user : users) {
+                        mConnector.execute(&quot;volume&quot;, &quot;user_added&quot;, user.id, user.serialNumber);
+                    }
+                    for (int userId : mStartedUsers) {
+                        mConnector.execute(&quot;volume&quot;, &quot;user_started&quot;, userId);
+                    }
+                } catch (NativeDaemonConnectorException e) {
+                    Slog.w(TAG, &quot;Failed to reset vold&quot;, e);
+                }
+            }
+        }.start();
+        // Mstar Android Patch End
+    }
+}
+</code></pre><p>首先检测系统是否启动完毕，是否和Vold建立连接，之后开启线程通过mConnector执行execute(“volume”, “reset”)，并再次通过mConnector告知所有的用户user_added和user_started。</p>
+<h3 id="NDC-gt-execute"><a href="#NDC-gt-execute" class="headerlink" title="NDC-&gt;execute"></a>NDC-&gt;execute</h3><p>NativeDaemonConnector执行execute经过层层调用，最终走到executeForList，此时命令执行超时时长为1分钟，具体如下：</p>
+<pre><code>public NativeDaemonEvent[] executeForList(long timeoutMs, String cmd, Object... args)
+        throws NativeDaemonConnectorException {
+    final long startTime = SystemClock.elapsedRealtime();
+
+    final ArrayList&lt;NativeDaemonEvent&gt; events = Lists.newArrayList();
+
+    final StringBuilder rawBuilder = new StringBuilder();
+    final StringBuilder logBuilder = new StringBuilder();
+
+    // mSequenceNumber初始化值为0，每执行一次该方法则进行加1操作
+    final int sequenceNumber = mSequenceNumber.incrementAndGet();
+
+    makeCommand(rawBuilder, logBuilder, sequenceNumber, cmd, args);
+
+    //例如：“7 volume mount”
+    final String rawCmd = rawBuilder.toString();
+    final String logCmd = logBuilder.toString();
+
+    log(&quot;SND -&gt; {&quot; + logCmd + &quot;}&quot;);
+
+    synchronized (mDaemonLock) {
+        if (mOutputStream == null) {
+            throw new NativeDaemonConnectorException(&quot;missing output stream&quot;);
+        } else {
+            try {
+                //将 cmd 写入到 socket 的输出流
+                mOutputStream.write(rawCmd.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new NativeDaemonConnectorException(&quot;problem sending command&quot;, e);
+            }
+        }
+    }
+
+    NativeDaemonEvent event = null;
+    do {
+        event = mResponseQueue.remove(sequenceNumber, timeoutMs, logCmd);
+        if (event == null) {
+            loge(&quot;timed-out waiting for response to &quot; + logCmd);
+            throw new NativeDaemonTimeoutException(logCmd, event);
+        }
+        if (VDBG) log(&quot;RMV &lt;- {&quot; + event + &quot;}&quot;);
+        events.add(event);
+        // 当收到的事件响应码属于[100,200)区间，则继续等待后续事件上报
+    } while (event.isClassContinue());
+
+    final long endTime = SystemClock.elapsedRealtime();
+
+    //对于执行时间超过500ms则会记录到log
+    if (endTime - startTime &gt; WARN_EXECUTE_DELAY_MS) {
+        loge(&quot;NDC Command {&quot; + logCmd + &quot;} took too long (&quot; + (endTime - startTime) + &quot;ms)&quot;);
+    }
+
+    if (event.isClassClientError()) {
+        throw new NativeDaemonArgumentException(logCmd, event);
+    }
+    if (event.isClassServerError()) {
+        throw new NativeDaemonFailureException(logCmd, event);
+    }
+
+    return events.toArray(new NativeDaemonEvent[events.size()]);
+}
+</code></pre><p>其流程也是比较重要的，主要是和Socket进行打交道。首先，将带执行的命令mSequenceNumber执行加1操作，再将cmd(例如7 volume mount)写入到socket的输出流，通知Vold进行处理。然后通过循环与poll机制等待执行底层响应该操作结果，否则直到1分钟超时才结束该方法。即便收到底层的响应码，如果响应码属于[100,200)区间，则继续阻塞等待后续事件上报。</p>
+<h3 id="mResponseQueue-remove"><a href="#mResponseQueue-remove" class="headerlink" title="mResponseQueue.remove"></a>mResponseQueue.remove</h3><p>和上面的add操作相反，这里是将阻塞队列ResponseQueue移除操作，多有操作都是由ReentrantLock同步锁来控制，实现多线程下并发操作。</p>
+<pre><code>public NativeDaemonEvent remove(int cmdNum, long timeoutMs, String logCmd) {
+    PendingCmd found = null;
+    synchronized (mPendingCmds) {
+        // 从mPendingCmds查询cmdNum
+        for (PendingCmd pendingCmd : mPendingCmds) {
+            if (pendingCmd.cmdNum == cmdNum) {
+                found = pendingCmd;
+                break;
+            }
+        }
+
+        // 如果已有的mPendingCmds中查询不到，则创建一个新的PendingCmd
+        if (found == null) {
+            found = new PendingCmd(cmdNum, logCmd);
+            mPendingCmds.add(found);
+        }
+        found.availableResponseCount--;
+        // if a matching add call has already retrieved this we can remove this
+        // instance from our list
+        if (found.availableResponseCount == 0) mPendingCmds.remove(found);
+    }
+    NativeDaemonEvent result = null;
+    try {
+        //采用poll轮询方式等待底层上报该事件，直到1分钟超时
+        //这里用到poll，先来看看responses
+        result = found.responses.poll(timeoutMs, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {}
+    if (result == null) {
+        Slog.e(&quot;NativeDaemonConnector.ResponseQueue&quot;, &quot;Timeout waiting for response&quot;);
+    }
+    return result;
+}
+</code></pre><ul>
+<li>关于ArrayBlockingQueue可以参考如下链接：</li>
+</ul>
+<p><a href="http://blog.csdn.net/javazejian/article/details/77410889" target="_blank" rel="noopener">ArrayBlockingQueue</a></p>
+<h1 id="MountService总结"><a href="#MountService总结" class="headerlink" title="MountService总结"></a>MountService总结</h1><p>MountService启动方式和其他的Service有点不同，主要是由其静态内部类LifeCycle控制其实例化过程，然后LifeCycle又继承SystemService，从而其受到SystemService的控制，系统启动到Ready阶段便会回调LifeCycle对应的方法，然后由发送消息到MountService进行处理。</p>
+<p>MountService启动时候，自行建立了三个子线程：MountService、VoldConnector、CryptdConnector，其中VoldConnector，CryptdConnector分别对应监听Vold进程中的两个线程，接受他它们传递过来的消息。</p>
+<p>其中重要的NativeDaemonConnector负责和Vold传递来的Socket进行通信，其运行在VoldConnector线程中。同理还有一个NDC运行在CryptdConnecto线程中。</p>
+<p>部分内容参考如下：</p>
+<p><a href="http://gityuan.com/2016/07/17/android-io/" target="_blank" rel="noopener">GitYuan</a></p>
+<p><a href="http://blog.csdn.net/javazejian/article/details/77410889" target="_blank" rel="noopener">AttayBlockingQueue</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Allies 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Allies 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/fuckingcode/tags/系统存储/" rel="tag"># 系统存储</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/" rel="next" title="源码分析之存储系统启动流程Vold">
+                <i class="fa fa-chevron-left"></i> 源码分析之存储系统启动流程Vold
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fuckingcode/2019/01/03/Linux系统编程之文件IO/" rel="prev" title="Linux系统编程之文件IO">
+                Linux系统编程之文件IO <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      
+        <div id="gitment-container"></div>
+      
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+            
+              <p class="site-author-name" itemprop="name">Allies</p>
+              <p class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/fuckingcode/archives/">
+              
+                  <span class="site-state-item-count">75</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">59</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Huoxubeiyin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github-alt"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://weibo.com/allies321" target="_blank" title="微博">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>微博</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="891904833@qq.com" target="_blank" title="邮箱">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://juejin.im/user/57fb19cf816dfa0056c17d47" target="_blank" title="掘金">
+                      
+                        <i class="fa fa-fw fa-globe"></i>掘金</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MountService启动流程"><span class="nav-number">1.</span> <span class="nav-text">MountService启动流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SystemServer启动配置"><span class="nav-number">1.1.</span> <span class="nav-text">SystemServer启动配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#静态内部类Lifecycle"><span class="nav-number">1.2.</span> <span class="nav-text">静态内部类Lifecycle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MountService初始化"><span class="nav-number">1.3.</span> <span class="nav-text">MountService初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Callbacke"><span class="nav-number">1.3.1.</span> <span class="nav-text">Callbacke</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MountServiceHandler"><span class="nav-number">1.3.2.</span> <span class="nav-text">MountServiceHandler</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NativeDaemonConnector初始化"><span class="nav-number">1.4.</span> <span class="nav-text">NativeDaemonConnector初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NDC-gt-run"><span class="nav-number">1.4.1.</span> <span class="nav-text">NDC-&gt;run</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#listenToSocket"><span class="nav-number">1.4.2.</span> <span class="nav-text">listenToSocket</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#onDaemonConnected"><span class="nav-number">1.4.3.</span> <span class="nav-text">onDaemonConnected</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MountService-handleDaemonConnected"><span class="nav-number">1.4.4.</span> <span class="nav-text">MountService.handleDaemonConnected</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#mResponseQueue-add"><span class="nav-number">1.4.4.1.</span> <span class="nav-text">mResponseQueue.add</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lifecycle-gt-onBootPhase"><span class="nav-number">1.5.</span> <span class="nav-text">Lifecycle-&gt;onBootPhase</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#systemReady"><span class="nav-number">1.5.1.</span> <span class="nav-text">systemReady</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#handleSystemReady"><span class="nav-number">1.5.2.</span> <span class="nav-text">handleSystemReady</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#resetIfReadyAndConnectedLocked"><span class="nav-number">1.5.3.</span> <span class="nav-text">resetIfReadyAndConnectedLocked</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NDC-gt-execute"><span class="nav-number">1.5.4.</span> <span class="nav-text">NDC-&gt;execute</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mResponseQueue-remove"><span class="nav-number">1.5.5.</span> <span class="nav-text">mResponseQueue.remove</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MountService总结"><span class="nav-number">2.</span> <span class="nav-text">MountService总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allies</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/fuckingcode/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/fuckingcode/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/fuckingcode/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/fuckingcode/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/fuckingcode/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+<!-- LOCAL: You can save these files to your site and update links -->
+    
+        
+        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
+        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
+    
+<!-- END LOCAL -->
+
+    
+
+    
+      <script type="text/javascript">
+      function renderGitment(){
+        var gitment = new Gitmint({
+            id: window.location.pathname, 
+            owner: 'huoxubeiyin',
+            repo: 'https://github.com/Huoxubeiyin/gitment.git',
+            
+            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
+            
+            oauth: {
+            
+            
+                client_secret: '4a98c004d3e77cac1371d8585a1c89a0c3600aa2',
+            
+                client_id: 'bc24a5d786f9acc6c9a6'
+            }});
+        gitment.render('gitment-container');
+      }
+
+      
+      renderGitment();
+      
+      </script>
+    
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/fuckingcode/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
