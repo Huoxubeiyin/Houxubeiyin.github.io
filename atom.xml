@@ -3,11 +3,11 @@
   <title>FuckingCode</title>
   
   <subtitle>-安卓系统-  -源码分析-  -linux编程-  -设计模式-</subtitle>
-  <link href="/FuckCode/atom.xml" rel="self"/>
+  <link href="/fuckingcode/atom.xml" rel="self"/>
   
-  <link href="https://891904833.gitee.io/FuckCode/"/>
+  <link href="https://891904833.gitee.io/fuckingcode/"/>
   <updated>2019-04-10T07:49:48.337Z</updated>
-  <id>https://891904833.gitee.io/FuckCode/</id>
+  <id>https://891904833.gitee.io/fuckingcode/</id>
   
   <author>
     <name>Allies</name>
@@ -18,8 +18,8 @@
   
   <entry>
     <title>源码分析之Handler、Looper及MessageQueue之间关系</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/04/09/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8BHandler%E3%80%81Looper%E5%8F%8AMessageQueue%E4%B9%8B%E9%97%B4%E5%85%B3%E7%B3%BB/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/04/09/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8BHandler%E3%80%81Looper%E5%8F%8AMessageQueue%E4%B9%8B%E9%97%B4%E5%85%B3%E7%B3%BB/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/</id>
     <published>2019-04-09T06:20:05.000Z</published>
     <updated>2019-04-10T07:49:48.337Z</updated>
     
@@ -31,17 +31,17 @@
     
     </summary>
     
-      <category term="源码分析" scheme="https://891904833.gitee.io/FuckCode/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+      <category term="源码分析" scheme="https://891904833.gitee.io/fuckingcode/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
     
     
-      <category term="Handler" scheme="https://891904833.gitee.io/FuckCode/tags/Handler/"/>
+      <category term="Handler" scheme="https://891904833.gitee.io/fuckingcode/tags/Handler/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之多路IO转接服务器</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/23/Linux系统编程之多路IO转接服务器/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/23/Linux系统编程之多路IO转接服务器/</id>
     <published>2019-01-23T02:41:30.000Z</published>
     <updated>2019-01-23T10:39:45.567Z</updated>
     
@@ -53,17 +53,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="多路IO转接" scheme="https://891904833.gitee.io/FuckCode/tags/%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5/"/>
+      <category term="多路IO转接" scheme="https://891904833.gitee.io/fuckingcode/tags/%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之多进程、多线程并发服务器</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/21/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%BF%9B%E7%A8%8B%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%B9%B6%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%99%A8/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/21/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%BF%9B%E7%A8%8B%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%B9%B6%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%99%A8/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/</id>
     <published>2019-01-21T01:41:10.000Z</published>
     <updated>2019-01-23T02:26:40.000Z</updated>
     
@@ -75,17 +75,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="并发服务器" scheme="https://891904833.gitee.io/FuckCode/tags/%E5%B9%B6%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%99%A8/"/>
+      <category term="并发服务器" scheme="https://891904833.gitee.io/fuckingcode/tags/%E5%B9%B6%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%99%A8/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之Socket编程</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/18/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8BSocket%E7%BC%96%E7%A8%8B/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/18/Linux系统编程之Socket编程/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8BSocket%E7%BC%96%E7%A8%8B/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/</id>
     <published>2019-01-18T03:45:20.000Z</published>
     <updated>2019-01-19T07:00:37.985Z</updated>
     
@@ -97,17 +97,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="Socket" scheme="https://891904833.gitee.io/FuckCode/tags/Socket/"/>
+      <category term="Socket" scheme="https://891904833.gitee.io/fuckingcode/tags/Socket/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之TCP/UDP协议</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/17/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8BTCP-UDP%E5%8D%8F%E8%AE%AE/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/17/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8BTCP-UDP%E5%8D%8F%E8%AE%AE/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/</id>
     <published>2019-01-17T06:34:21.000Z</published>
     <updated>2019-01-19T06:59:49.982Z</updated>
     
@@ -119,17 +119,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="网络 TCP UDP" scheme="https://891904833.gitee.io/FuckCode/tags/%E7%BD%91%E7%BB%9C-TCP-UDP/"/>
+      <category term="网络 TCP UDP" scheme="https://891904833.gitee.io/fuckingcode/tags/%E7%BD%91%E7%BB%9C-TCP-UDP/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之网络基础</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/16/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/16/Linux系统编程之网络基础/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/16/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/16/Linux系统编程之网络基础/</id>
     <published>2019-01-16T03:47:04.000Z</published>
     <updated>2019-01-17T06:37:50.462Z</updated>
     
@@ -141,17 +141,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="网络" scheme="https://891904833.gitee.io/FuckCode/tags/%E7%BD%91%E7%BB%9C/"/>
+      <category term="网络" scheme="https://891904833.gitee.io/fuckingcode/tags/%E7%BD%91%E7%BB%9C/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之线程同步</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/15/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/15/Linux系统编程之线程同步/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/15/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/15/Linux系统编程之线程同步/</id>
     <published>2019-01-15T01:54:26.000Z</published>
     <updated>2019-01-15T09:58:17.678Z</updated>
     
@@ -163,17 +163,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="线程同步 锁机制" scheme="https://891904833.gitee.io/FuckCode/tags/%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5-%E9%94%81%E6%9C%BA%E5%88%B6/"/>
+      <category term="线程同步 锁机制" scheme="https://891904833.gitee.io/fuckingcode/tags/%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5-%E9%94%81%E6%9C%BA%E5%88%B6/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之线程</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/14/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E7%BA%BF%E7%A8%8B/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/14/Linux系统编程之线程/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/14/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E7%BA%BF%E7%A8%8B/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/14/Linux系统编程之线程/</id>
     <published>2019-01-14T08:57:52.000Z</published>
     <updated>2019-01-14T09:58:05.221Z</updated>
     
@@ -185,17 +185,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="线程" scheme="https://891904833.gitee.io/FuckCode/tags/%E7%BA%BF%E7%A8%8B/"/>
+      <category term="线程" scheme="https://891904833.gitee.io/fuckingcode/tags/%E7%BA%BF%E7%A8%8B/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之守护进程</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/14/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/14/Linux系统编程之守护进程/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/14/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/14/Linux系统编程之守护进程/</id>
     <published>2019-01-14T01:20:40.000Z</published>
     <updated>2019-01-14T03:53:10.836Z</updated>
     
@@ -207,17 +207,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="守护进程" scheme="https://891904833.gitee.io/FuckCode/tags/%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B/"/>
+      <category term="守护进程" scheme="https://891904833.gitee.io/fuckingcode/tags/%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之信号后记</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/10/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E4%BF%A1%E5%8F%B7%E5%90%8E%E8%AE%B0/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/10/Linux系统编程之信号后记/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/10/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E4%BF%A1%E5%8F%B7%E5%90%8E%E8%AE%B0/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/10/Linux系统编程之信号后记/</id>
     <published>2019-01-10T02:37:52.000Z</published>
     <updated>2019-01-10T03:41:25.713Z</updated>
     
@@ -229,17 +229,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="信号" scheme="https://891904833.gitee.io/FuckCode/tags/%E4%BF%A1%E5%8F%B7/"/>
+      <category term="信号" scheme="https://891904833.gitee.io/fuckingcode/tags/%E4%BF%A1%E5%8F%B7/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之信号进阶</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/08/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E4%BF%A1%E5%8F%B7%E8%BF%9B%E9%98%B6/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/08/Linux系统编程之信号进阶/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/08/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E4%BF%A1%E5%8F%B7%E8%BF%9B%E9%98%B6/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/08/Linux系统编程之信号进阶/</id>
     <published>2019-01-08T08:26:37.000Z</published>
     <updated>2019-01-10T02:39:37.753Z</updated>
     
@@ -251,17 +251,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="信号" scheme="https://891904833.gitee.io/FuckCode/tags/%E4%BF%A1%E5%8F%B7/"/>
+      <category term="信号" scheme="https://891904833.gitee.io/fuckingcode/tags/%E4%BF%A1%E5%8F%B7/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之信号基础</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/08/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E4%BF%A1%E5%8F%B7%E5%9F%BA%E7%A1%80/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/08/Linux系统编程之信号基础/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/08/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E4%BF%A1%E5%8F%B7%E5%9F%BA%E7%A1%80/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/08/Linux系统编程之信号基础/</id>
     <published>2019-01-08T03:39:45.000Z</published>
     <updated>2019-01-14T03:42:49.411Z</updated>
     
@@ -273,17 +273,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="信号" scheme="https://891904833.gitee.io/FuckCode/tags/%E4%BF%A1%E5%8F%B7/"/>
+      <category term="信号" scheme="https://891904833.gitee.io/fuckingcode/tags/%E4%BF%A1%E5%8F%B7/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之静态/动态库生成实战</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/07/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E9%9D%99%E6%80%81-%E5%8A%A8%E6%80%81%E5%BA%93%E7%94%9F%E6%88%90%E5%AE%9E%E6%88%98/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/07/Linux系统编程之静态-动态库生成实战/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/07/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E9%9D%99%E6%80%81-%E5%8A%A8%E6%80%81%E5%BA%93%E7%94%9F%E6%88%90%E5%AE%9E%E6%88%98/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/07/Linux系统编程之静态-动态库生成实战/</id>
     <published>2019-01-07T08:40:22.000Z</published>
     <updated>2019-01-07T10:12:55.963Z</updated>
     
@@ -295,17 +295,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="共享库" scheme="https://891904833.gitee.io/FuckCode/tags/%E5%85%B1%E4%BA%AB%E5%BA%93/"/>
+      <category term="共享库" scheme="https://891904833.gitee.io/fuckingcode/tags/%E5%85%B1%E4%BA%AB%E5%BA%93/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之进程间通信</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/07/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/07/Linux系统编程之进程间通信/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/07/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/07/Linux系统编程之进程间通信/</id>
     <published>2019-01-07T03:42:31.000Z</published>
     <updated>2019-01-07T07:17:02.120Z</updated>
     
@@ -317,17 +317,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="跨进程通信" scheme="https://891904833.gitee.io/FuckCode/tags/%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/"/>
+      <category term="跨进程通信" scheme="https://891904833.gitee.io/fuckingcode/tags/%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之进程</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/05/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E8%BF%9B%E7%A8%8B/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/05/Linux系统编程之进程/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E8%BF%9B%E7%A8%8B/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/</id>
     <published>2019-01-05T01:33:30.000Z</published>
     <updated>2019-01-07T03:39:14.422Z</updated>
     
@@ -339,17 +339,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="进程" scheme="https://891904833.gitee.io/FuckCode/tags/%E8%BF%9B%E7%A8%8B/"/>
+      <category term="进程" scheme="https://891904833.gitee.io/fuckingcode/tags/%E8%BF%9B%E7%A8%8B/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之文件IO进阶</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/04/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%96%87%E4%BB%B6IO%E8%BF%9B%E9%98%B6/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/04/Linux系统编程之文件IO进阶/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/04/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%96%87%E4%BB%B6IO%E8%BF%9B%E9%98%B6/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/04/Linux系统编程之文件IO进阶/</id>
     <published>2019-01-04T02:00:42.000Z</published>
     <updated>2019-01-04T06:51:37.462Z</updated>
     
@@ -361,17 +361,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="阻塞 非阻塞" scheme="https://891904833.gitee.io/FuckCode/tags/%E9%98%BB%E5%A1%9E-%E9%9D%9E%E9%98%BB%E5%A1%9E/"/>
+      <category term="阻塞 非阻塞" scheme="https://891904833.gitee.io/fuckingcode/tags/%E9%98%BB%E5%A1%9E-%E9%9D%9E%E9%98%BB%E5%A1%9E/"/>
     
   </entry>
   
   <entry>
     <title>Linux系统编程之文件IO</title>
-    <link href="https://891904833.gitee.io/FuckCode/2019/01/03/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%96%87%E4%BB%B6IO/"/>
-    <id>https://891904833.gitee.io/FuckCode/2019/01/03/Linux系统编程之文件IO/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2019/01/03/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%96%87%E4%BB%B6IO/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2019/01/03/Linux系统编程之文件IO/</id>
     <published>2019-01-03T04:04:14.000Z</published>
     <updated>2019-01-03T08:47:11.213Z</updated>
     
@@ -383,17 +383,17 @@
     
     </summary>
     
-      <category term="Linux" scheme="https://891904833.gitee.io/FuckCode/categories/Linux/"/>
+      <category term="Linux" scheme="https://891904833.gitee.io/fuckingcode/categories/Linux/"/>
     
     
-      <category term="文件IO" scheme="https://891904833.gitee.io/FuckCode/tags/%E6%96%87%E4%BB%B6IO/"/>
+      <category term="文件IO" scheme="https://891904833.gitee.io/fuckingcode/tags/%E6%96%87%E4%BB%B6IO/"/>
     
   </entry>
   
   <entry>
     <title>源码分析之存储系统启动流程MountService模块</title>
-    <link href="https://891904833.gitee.io/FuckCode/2018/09/28/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8BMountService%E6%A8%A1%E5%9D%97/"/>
-    <id>https://891904833.gitee.io/FuckCode/2018/09/28/源码分析之存储系统启动流程MountService模块/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2018/09/28/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8BMountService%E6%A8%A1%E5%9D%97/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/</id>
     <published>2018-09-28T07:42:18.000Z</published>
     <updated>2019-04-10T07:31:13.464Z</updated>
     
@@ -405,17 +405,17 @@
     
     </summary>
     
-      <category term="源码分析" scheme="https://891904833.gitee.io/FuckCode/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+      <category term="源码分析" scheme="https://891904833.gitee.io/fuckingcode/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
     
     
-      <category term="系统存储" scheme="https://891904833.gitee.io/FuckCode/tags/%E7%B3%BB%E7%BB%9F%E5%AD%98%E5%82%A8/"/>
+      <category term="系统存储" scheme="https://891904833.gitee.io/fuckingcode/tags/%E7%B3%BB%E7%BB%9F%E5%AD%98%E5%82%A8/"/>
     
   </entry>
   
   <entry>
     <title>源码分析之存储系统启动流程Vold</title>
-    <link href="https://891904833.gitee.io/FuckCode/2018/09/28/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8BVold%E6%A8%A1%E5%9D%97/"/>
-    <id>https://891904833.gitee.io/FuckCode/2018/09/28/源码分析之存储系统启动流程Vold模块/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2018/09/28/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8BVold%E6%A8%A1%E5%9D%97/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/</id>
     <published>2018-09-28T02:05:52.000Z</published>
     <updated>2019-04-10T07:22:17.209Z</updated>
     
@@ -427,17 +427,17 @@
     
     </summary>
     
-      <category term="源码分析" scheme="https://891904833.gitee.io/FuckCode/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+      <category term="源码分析" scheme="https://891904833.gitee.io/fuckingcode/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
     
     
-      <category term="存储系统" scheme="https://891904833.gitee.io/FuckCode/tags/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/"/>
+      <category term="存储系统" scheme="https://891904833.gitee.io/fuckingcode/tags/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/"/>
     
   </entry>
   
   <entry>
     <title>Android系统HAL层驱动开发实战</title>
-    <link href="https://891904833.gitee.io/FuckCode/2018/08/22/Android%E7%B3%BB%E7%BB%9FHAL%E5%B1%82%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%AE%9E%E6%88%98/"/>
-    <id>https://891904833.gitee.io/FuckCode/2018/08/22/Android系统HAL层驱动开发实战/</id>
+    <link href="https://891904833.gitee.io/fuckingcode/2018/08/22/Android%E7%B3%BB%E7%BB%9FHAL%E5%B1%82%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91%E5%AE%9E%E6%88%98/"/>
+    <id>https://891904833.gitee.io/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/</id>
     <published>2018-08-22T01:09:21.000Z</published>
     <updated>2018-09-28T09:24:30.478Z</updated>
     
@@ -449,10 +449,10 @@
     
     </summary>
     
-      <category term="驱动" scheme="https://891904833.gitee.io/FuckCode/categories/%E9%A9%B1%E5%8A%A8/"/>
+      <category term="驱动" scheme="https://891904833.gitee.io/fuckingcode/categories/%E9%A9%B1%E5%8A%A8/"/>
     
     
-      <category term="Hal" scheme="https://891904833.gitee.io/FuckCode/tags/Hal/"/>
+      <category term="Hal" scheme="https://891904833.gitee.io/fuckingcode/tags/Hal/"/>
     
   </entry>
   

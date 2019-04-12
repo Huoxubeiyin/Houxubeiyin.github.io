@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/FuckCode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/FuckCode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/FuckCode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/FuckCode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/FuckCode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/FuckCode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/FuckCode/',
+    root: '/fuckingcode/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,7 +100,7 @@
 <meta name="keywords" content="源码编译,Makefile">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android源码编译之lunch流程分析">
-<meta property="og:url" content="https://891904833.gitee.io/FuckCode/2018/06/27/Android源码编译之lunch流程分析/index.html">
+<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="通过之前介绍的source导入编译源码的相关配置，下面就进入了lunch操作。用户通过source build/envsetup.sh命令后，系统初始化相关变量环境工作，脚本提供一个lunch函数，让用户选择自己想要编译的版本分支，下面我们就来具体分析一下。">
 <meta property="og:locale" content="zh-CN">
@@ -111,13 +111,13 @@
 
 
 
-  <link rel="alternate" href="/FuckCode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/FuckCode/2018/06/27/Android源码编译之lunch流程分析/">
+  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/">
 
 
 
@@ -184,7 +184,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/FuckCode/" class="brand" rel="start">
+      <a href="/fuckingcode/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -227,7 +227,7 @@
 
     
 
-    <a href="/FuckCode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -244,7 +244,7 @@
 
     
 
-    <a href="/FuckCode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -261,7 +261,7 @@
 
     
 
-    <a href="/FuckCode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -278,7 +278,7 @@
 
     
 
-    <a href="/FuckCode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -295,7 +295,7 @@
 
     
 
-    <a href="/FuckCode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -383,12 +383,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/FuckCode/FuckCode/2018/06/27/Android源码编译之lunch流程分析/">
+    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/FuckCode/images/avatar.png">
+      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -460,14 +460,14 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/FuckCode/categories/Makefile/" itemprop="url" rel="index"><span itemprop="name">Makefile</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/Makefile/" itemprop="url" rel="index"><span itemprop="name">Makefile</span></a></span>
 
                 
                 
                   ，
                 
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/FuckCode/categories/Makefile/源码编译/" itemprop="url" rel="index"><span itemprop="name">源码编译</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/Makefile/源码编译/" itemprop="url" rel="index"><span itemprop="name">源码编译</span></a></span>
 
                 
                 
@@ -1064,7 +1064,7 @@ function set_stuff_for_environment()
         
       
       <div style="display: inline-block">
-        <img src="/FuckCode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -1073,7 +1073,7 @@ function set_stuff_for_environment()
         
       
       <div style="display: inline-block">
-        <img src="/FuckCode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -1101,7 +1101,7 @@ function set_stuff_for_environment()
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/FuckCode/2018/06/27/Android源码编译之lunch流程分析/" title="Android源码编译之lunch流程分析">https://891904833.gitee.io/FuckCode/2018/06/27/Android源码编译之lunch流程分析/</a>
+    <a href="https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/" title="Android源码编译之lunch流程分析">https://891904833.gitee.io/fuckingcode/2018/06/27/Android源码编译之lunch流程分析/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -1114,9 +1114,9 @@ function set_stuff_for_environment()
       
         <div class="post-tags">
           
-            <a href="/FuckCode/tags/源码编译/" rel="tag"># 源码编译</a>
+            <a href="/fuckingcode/tags/源码编译/" rel="tag"># 源码编译</a>
           
-            <a href="/FuckCode/tags/Makefile/" rel="tag"># Makefile</a>
+            <a href="/fuckingcode/tags/Makefile/" rel="tag"># Makefile</a>
           
         </div>
       
@@ -1129,7 +1129,7 @@ function set_stuff_for_environment()
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/FuckCode/2018/06/25/Android源码编译之source初始化环境/" rel="next" title="Android源码编译之source初始化环境分析">
+              <a href="/fuckingcode/2018/06/25/Android源码编译之source初始化环境/" rel="next" title="Android源码编译之source初始化环境分析">
                 <i class="fa fa-chevron-left"></i> Android源码编译之source初始化环境分析
               </a>
             
@@ -1139,7 +1139,7 @@ function set_stuff_for_environment()
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/FuckCode/2018/06/27/Android源码编译之make流程分析/" rel="prev" title="Android源码编译之make流程分析">
+              <a href="/fuckingcode/2018/06/27/Android源码编译之make流程分析/" rel="prev" title="Android源码编译之make流程分析">
                 Android源码编译之make流程分析 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1199,7 +1199,7 @@ function set_stuff_for_environment()
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/FuckCode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -1210,7 +1210,7 @@ function set_stuff_for_environment()
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/FuckCode/archives/">
+                  <a href="/fuckingcode/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -1400,7 +1400,7 @@ function set_stuff_for_environment()
 
           
             <div class="feed-link motion-element">
-              <a href="/FuckCode/atom.xml" rel="alternate">
+              <a href="/fuckingcode/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1442,7 +1442,7 @@ function set_stuff_for_environment()
                   
                     
                   
-                  <a href="/FuckCode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -1467,7 +1467,7 @@ function set_stuff_for_environment()
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/FuckCode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -1614,44 +1614,44 @@ function set_stuff_for_environment()
 
 
   
-  <script src="/FuckCode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/FuckCode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/FuckCode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/FuckCode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/FuckCode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/FuckCode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/FuckCode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/FuckCode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/FuckCode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/FuckCode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
+
+  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
+
+  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
+<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -1678,7 +1678,7 @@ function set_stuff_for_environment()
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/FuckCode/" + search_path;
+    var path = "/fuckingcode/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {
