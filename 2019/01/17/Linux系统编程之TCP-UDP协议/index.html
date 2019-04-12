@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/fuckingcode/',
+    root: '/Houxubeiyin.github.io/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,30 +100,30 @@
 <meta name="keywords" content="TCP UDP 滑动窗口">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux系统编程之TCP&#x2F;UDP协议">
-<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/index.html">
+<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="本章节集中分析网络编程必备知识TCP，UDP数据报格式，熟悉其原理，优缺点以及通信细节，尤其是对于TCP下的三次握手，状态转换，滑动窗口等复杂机制的理解，为后续Socket编程打下牢牢的基础。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/UDP数据段.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP数据段.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP时序图.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP状态转换图.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP滑动窗口.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/UDP数据段.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP数据段.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP时序图.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP状态转换图.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP滑动窗口.png">
 <meta property="og:updated_time" content="2019-01-19T06:59:49.982Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux系统编程之TCP&#x2F;UDP协议">
 <meta name="twitter:description" content="本章节集中分析网络编程必备知识TCP，UDP数据报格式，熟悉其原理，优缺点以及通信细节，尤其是对于TCP下的三次握手，状态转换，滑动窗口等复杂机制的理解，为后续Socket编程打下牢牢的基础。">
-<meta name="twitter:image" content="https://891904833.gitee.io/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/UDP数据段.png">
+<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/UDP数据段.png">
 
 
 
-  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/">
+  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/">
 
 
 
@@ -190,7 +190,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/fuckingcode/" class="brand" rel="start">
+      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -233,7 +233,7 @@
 
     
 
-    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/Houxubeiyin.github.io/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -250,7 +250,7 @@
 
     
 
-    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/Houxubeiyin.github.io/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -267,7 +267,7 @@
 
     
 
-    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/Houxubeiyin.github.io/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -284,7 +284,7 @@
 
     
 
-    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/Houxubeiyin.github.io/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -301,7 +301,7 @@
 
     
 
-    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/Houxubeiyin.github.io/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -389,12 +389,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/">
+    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -466,7 +466,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Houxubeiyin.github.io/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
 
                 
                 
@@ -533,7 +533,7 @@
 <h1 id="TCP-UDP"><a href="#TCP-UDP" class="headerlink" title="TCP/UDP"></a>TCP/UDP</h1><h2 id="UDP"><a href="#UDP" class="headerlink" title="UDP"></a>UDP</h2><p>从之前网络基础中，我们了解到，UDP协议不面向连接，也不保证可靠性，有点像寄信，写好信放到邮筒里，既不能保证信件在邮递过程中不会丢失，也不能保证信件是按顺序寄到目的地的。 使用UDP协议的应用程序需要自己完成丢包重发、消息排序等工作。</p>
 <p>其协议相对简单，并且更加灵活，对服务器和网络资源的负载也相对小一些。底层协议提供的数据不保障可靠性，那么就需要在上层应用中自己试试对应的政策来保证数据传输的有效性了。</p>
 <h3 id="UDP数据报格式"><a href="#UDP数据报格式" class="headerlink" title="UDP数据报格式"></a>UDP数据报格式</h3><p>UDP数据段如下图所示：</p>
-<img src="/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/UDP数据段.png" class="UDP数据段">
+<img src="/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/UDP数据段.png" class="UDP数据段">
 <p>图示很简单，UDP格式中8字节64bit的数据是必须的，只包含了源端口号，目的端口号，UDP长度以及校验位，结合之前网络基础的各层协议数据报格式，这里具体分析一下。</p>
 <h3 id="UDP通信分析"><a href="#UDP通信分析" class="headerlink" title="UDP通信分析"></a>UDP通信分析</h3><p>下面分析一帧基于UDP的TFTP协议帧</p>
 <pre><code>以太网首部
@@ -569,10 +569,10 @@ tsize 0
 <p>因此，使用UDP协议的应用程序必须考虑到这些可能的问题并实现适当的解决方案，例如等待应答、超时重发、为数据包编号、流量控制等。一般使用UDP协议的应用程序实现都比较简单，只是发送一些对可靠性要求不高的消息，而不发送大量的数据。例如，基于UDP的TFTP协议一般只用于传送小文件(所以才叫trivial的ftp)，而基于TCP的FTP协议适用于各种文件的传输。</p>
 <h2 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h2><p>TCP是一种面向连接的、可靠的协议。TCP传输的双方需要首先建立连接，之后由TCP协议保证数据收发的可靠性，丢失的数据包自动重发，上层应用程序收到的总是可靠的数据流，通讯之后关闭连接。</p>
 <h3 id="TCP数据报格式"><a href="#TCP数据报格式" class="headerlink" title="TCP数据报格式"></a>TCP数据报格式</h3><p>作为一种可靠的协议，其格式相比UDP来说自然更加复杂些，具体如下图所示：</p>
-<img src="/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP数据段.png" class="TCP数据段">
+<img src="/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP数据段.png" class="TCP数据段">
 <p>和UDP协议一样也有源端口号和目的端口号，通讯的双方由IP地址和端口号标识。32位序号、32位确认序号、窗口大小稍后详细解释。4位首部长度和IP协议头类似，表示TCP协议头的长度，以4字节为单位，因此TCP协议头最长可以是4x15=60字节，如果没有选项字段，TCP协议头最短20字节。URG、ACK、PSH、RST、SYN、FIN是六个控制位，本节稍后将解释SYN、ACK、FIN、RST四个位，其它位的解释从略。16位检验和将TCP协议头和数据都计算在内。紧急指针和各种选项的解释从略。</p>
 <h3 id="TCP通信时序"><a href="#TCP通信时序" class="headerlink" title="TCP通信时序"></a>TCP通信时序</h3><p>下图是一次TCP通讯的时序图：</p>
-<img src="/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP时序图.png" class="TCP时序图">
+<img src="/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP时序图.png" class="TCP时序图">
 <p>首先客户端主动发起连接、发送请求，然后服务器端响应请求，然后客户端主动关闭连接。两条竖线表示通讯的两端，从上到下表示时间的先后顺序，注意，数据从一端传到网络的另一端也需要时间，所以图中的箭头都是斜的。双方发送的段按时间顺序编号为1-10，各段中的主要信息在箭头上标出，例如段2的箭头上标着 SYN, 8000(0), ACK 1001,表示该段中的 SYN 位置1，32位序号是 8000，该段不携带有效载荷(数据字节数为0)，ACK 位置1，32位确认序号是 1001，带有一个 mss 选项值为1024。</p>
 <h4 id="建立连接"><a href="#建立连接" class="headerlink" title="建立连接"></a>建立连接</h4><p>TCP建立连接的过程，或者称为三次握手，如下：</p>
 <ol>
@@ -610,7 +610,7 @@ tsize 0
 <li>客户段发回 ACK 报文确认，并将确认序号设置为收到序号加1(报文段7)。</li>
 </ol>
 <h4 id="状态转换图"><a href="#状态转换图" class="headerlink" title="状态转换图"></a>状态转换图</h4><p>TCP通信过程中，各个阶段涉及的具体的状态如下图所示：</p>
-<img src="/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP状态转换图.png" class="TCP状态转换图">
+<img src="/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP状态转换图.png" class="TCP状态转换图">
 <p>其图示中涉及的具体状态点如下解释：</p>
 <ol>
 <li>CLOSED: 这个没什么好说的了,表示初始状态。</li>
@@ -627,7 +627,7 @@ tsize 0
 </ol>
 <p>以上分析需要结合上面两张图一起观察，此种涉及到了通信过程中的种种细节，尤其是客户端和服务端发送相应数据后的状态变化，其中还有一些对未知情况的响应处理策略，需要认真回味。</p>
 <h3 id="TCP流量控制（滑动窗口）"><a href="#TCP流量控制（滑动窗口）" class="headerlink" title="TCP流量控制（滑动窗口）"></a>TCP流量控制（滑动窗口）</h3><p>在介绍UDP时，我们描述了这样的问题:如果发送端发送的速度较快，接收端接收到数据后 处理的速度较慢，而接收缓冲区的大小是固定的，就会丢失数据。TCP协议可以通过’滑动窗口 (Sliding Window)’机制解决这一问题。看下图的通讯过程。</p>
-<img src="/FuckCode/2019/01/17/Linux系统编程之TCP-UDP协议/TCP滑动窗口.png" class="TCP滑动窗口">
+<img src="/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/TCP滑动窗口.png" class="TCP滑动窗口">
 <p>提下对图示进行解释：</p>
 <ol>
 <li>发送端发起连接，声明最大段尺寸mss是1460，初始序号是0，窗口大小是4K，表示“我的接收缓冲区还有4K字节空闲，你发的数据不要超过4K”。接收端应答连接请求，声明最大段尺寸是1024，初始序号是8000，窗口大小是6K。发送端应答，三方握手结束。</li>
@@ -705,7 +705,7 @@ how: 允许为shutdown操作选择以下几种方式:
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/Houxubeiyin.github.io/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -714,7 +714,7 @@ how: 允许为shutdown操作选择以下几种方式:
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/Houxubeiyin.github.io/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -742,7 +742,7 @@ how: 允许为shutdown操作选择以下几种方式:
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/" title="Linux系统编程之TCP/UDP协议">https://891904833.gitee.io/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/</a>
+    <a href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/" title="Linux系统编程之TCP/UDP协议">https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -755,7 +755,7 @@ how: 允许为shutdown操作选择以下几种方式:
       
         <div class="post-tags">
           
-            <a href="/fuckingcode/tags/网络-TCP-UDP/" rel="tag"># 网络 TCP UDP</a>
+            <a href="/Houxubeiyin.github.io/tags/网络-TCP-UDP/" rel="tag"># 网络 TCP UDP</a>
           
         </div>
       
@@ -768,7 +768,7 @@ how: 允许为shutdown操作选择以下几种方式:
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/fuckingcode/2019/01/16/Linux系统编程之网络基础/" rel="next" title="Linux系统编程之网络基础">
+              <a href="/Houxubeiyin.github.io/2019/01/16/Linux系统编程之网络基础/" rel="next" title="Linux系统编程之网络基础">
                 <i class="fa fa-chevron-left"></i> Linux系统编程之网络基础
               </a>
             
@@ -778,7 +778,7 @@ how: 允许为shutdown操作选择以下几种方式:
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/fuckingcode/2019/01/18/Linux系统编程之Socket编程/" rel="prev" title="Linux系统编程之Socket编程">
+              <a href="/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/" rel="prev" title="Linux系统编程之Socket编程">
                 Linux系统编程之Socket编程 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -838,7 +838,7 @@ how: 允许为shutdown操作选择以下几种方式:
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -849,7 +849,7 @@ how: 允许为shutdown操作选择以下几种方式:
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/fuckingcode/archives/">
+                  <a href="/Houxubeiyin.github.io/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -1039,7 +1039,7 @@ how: 允许为shutdown操作选择以下几种方式:
 
           
             <div class="feed-link motion-element">
-              <a href="/fuckingcode/atom.xml" rel="alternate">
+              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1081,7 +1081,7 @@ how: 允许为shutdown操作选择以下几种方式:
                   
                     
                   
-                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/Houxubeiyin.github.io/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -1106,7 +1106,7 @@ how: 允许为shutdown操作选择以下几种方式:
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/Houxubeiyin.github.io/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -1253,44 +1253,44 @@ how: 允许为shutdown操作选择以下几种方式:
 
 
   
-  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/Houxubeiyin.github.io/js/utils.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/affix.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/Houxubeiyin.github.io/js/scrollspy.js?v=7.1.0"></script>
+<script src="/Houxubeiyin.github.io/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -1317,7 +1317,7 @@ how: 允许为shutdown操作选择以下几种方式:
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/fuckingcode/" + search_path;
+    var path = "/Houxubeiyin.github.io/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

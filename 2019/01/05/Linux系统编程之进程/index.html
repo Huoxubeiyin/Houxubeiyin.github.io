@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/fuckingcode/',
+    root: '/Houxubeiyin.github.io/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,27 +100,27 @@
 <meta name="keywords" content="fork exec wait">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux系统编程之进程">
-<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/index.html">
+<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="学习Linux中的进程，主要设计了三个重要的函数：fork（创建子进程），exec（执行命令），wait（回收进程资源）。进程的管理由内核中的task_struct结构体(PCB进程控制块)负责，下面我们来具体了解一下。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/05/Linux系统编程之进程/fork.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/05/Linux系统编程之进程/exec.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/fork.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/exec.png">
 <meta property="og:updated_time" content="2019-01-07T03:39:14.422Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux系统编程之进程">
 <meta name="twitter:description" content="学习Linux中的进程，主要设计了三个重要的函数：fork（创建子进程），exec（执行命令），wait（回收进程资源）。进程的管理由内核中的task_struct结构体(PCB进程控制块)负责，下面我们来具体了解一下。">
-<meta name="twitter:image" content="https://891904833.gitee.io/FuckCode/2019/01/05/Linux系统编程之进程/fork.png">
+<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/fork.png">
 
 
 
-  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/">
+  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/">
 
 
 
@@ -187,7 +187,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/fuckingcode/" class="brand" rel="start">
+      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -230,7 +230,7 @@
 
     
 
-    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/Houxubeiyin.github.io/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -247,7 +247,7 @@
 
     
 
-    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/Houxubeiyin.github.io/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -264,7 +264,7 @@
 
     
 
-    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/Houxubeiyin.github.io/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -281,7 +281,7 @@
 
     
 
-    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/Houxubeiyin.github.io/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -298,7 +298,7 @@
 
     
 
-    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/Houxubeiyin.github.io/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -386,12 +386,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/05/Linux系统编程之进程/">
+    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -463,7 +463,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Houxubeiyin.github.io/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
 
                 
                 
@@ -647,7 +647,7 @@ int main(void) {
     return 0; 
 }
 </code></pre><p>fork调用完成后，此时父子进程都从if判断开始，由于父子进程执行顺序不确定，在各自逻辑处理完成后，睡眠等待 1s 后，在结束父进程，后续可以通过wait函数进行回收进程资源。其代码执行流程见下图：</p>
-<img src="/FuckCode/2019/01/05/Linux系统编程之进程/fork.png" class="fork执行流程">
+<img src="/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/fork.png" class="fork执行流程">
 <h4 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h4><p>用fork创建子进程后执行的是和父进程相同的程序(但有可能执行不同的代码分支)，子进程往往要调用一种exec函数以执行另一个程序。当进程调用一种exec函数时，该进程的用户空间代码和数据完全被新程序替换，从新程序的启动例程开始执行。调用exec并不创建新进程，所以调用exec前后该进程的id并未改变。其实有六种以exec开头的函数，统称exec函数:</p>
 <pre><code>#include &lt;unistd.h&gt;
 int execl(const char *path, const char *arg, ...);
@@ -675,7 +675,7 @@ execve(&quot;/bin/ps&quot;, ps_argv, ps_envp);
 execlp(&quot;ps&quot;, &quot;ps&quot;, &quot;-o&quot;, &quot;pid,ppid,pgrp,session,tpgid,comm&quot;, NULL);
 execvp(&quot;ps&quot;, ps_argv);
 </code></pre><p>事实上，只有execve是真正的系统调用，其它五个函数最终都调用execve，所以execve 在man手册第2节，其它函数在man手册第3节。这些函数之间的关系如下图所示:</p>
-<img src="/FuckCode/2019/01/05/Linux系统编程之进程/exec.png" class="fork执行流程">
+<img src="/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/exec.png" class="fork执行流程">
 <h5 id="示例代码-1"><a href="#示例代码-1" class="headerlink" title="示例代码"></a>示例代码</h5><pre><code>#include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
 #include &lt;unistd.h&gt;
@@ -873,7 +873,7 @@ ls -la /usr/bin/passwd
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/Houxubeiyin.github.io/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -882,7 +882,7 @@ ls -la /usr/bin/passwd
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/Houxubeiyin.github.io/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -910,7 +910,7 @@ ls -la /usr/bin/passwd
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/" title="Linux系统编程之进程">https://891904833.gitee.io/fuckingcode/2019/01/05/Linux系统编程之进程/</a>
+    <a href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/" title="Linux系统编程之进程">https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/05/Linux系统编程之进程/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -923,7 +923,7 @@ ls -la /usr/bin/passwd
       
         <div class="post-tags">
           
-            <a href="/fuckingcode/tags/进程/" rel="tag"># 进程</a>
+            <a href="/Houxubeiyin.github.io/tags/进程/" rel="tag"># 进程</a>
           
         </div>
       
@@ -936,7 +936,7 @@ ls -la /usr/bin/passwd
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/fuckingcode/2019/01/04/Linux系统编程之文件IO进阶/" rel="next" title="Linux系统编程之文件IO进阶">
+              <a href="/Houxubeiyin.github.io/2019/01/04/Linux系统编程之文件IO进阶/" rel="next" title="Linux系统编程之文件IO进阶">
                 <i class="fa fa-chevron-left"></i> Linux系统编程之文件IO进阶
               </a>
             
@@ -946,7 +946,7 @@ ls -la /usr/bin/passwd
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/fuckingcode/2019/01/07/Linux系统编程之进程间通信/" rel="prev" title="Linux系统编程之进程间通信">
+              <a href="/Houxubeiyin.github.io/2019/01/07/Linux系统编程之进程间通信/" rel="prev" title="Linux系统编程之进程间通信">
                 Linux系统编程之进程间通信 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1006,7 +1006,7 @@ ls -la /usr/bin/passwd
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -1017,7 +1017,7 @@ ls -la /usr/bin/passwd
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/fuckingcode/archives/">
+                  <a href="/Houxubeiyin.github.io/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -1207,7 +1207,7 @@ ls -la /usr/bin/passwd
 
           
             <div class="feed-link motion-element">
-              <a href="/fuckingcode/atom.xml" rel="alternate">
+              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1249,7 +1249,7 @@ ls -la /usr/bin/passwd
                   
                     
                   
-                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/Houxubeiyin.github.io/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -1274,7 +1274,7 @@ ls -la /usr/bin/passwd
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/Houxubeiyin.github.io/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -1421,44 +1421,44 @@ ls -la /usr/bin/passwd
 
 
   
-  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/Houxubeiyin.github.io/js/utils.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/affix.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/Houxubeiyin.github.io/js/scrollspy.js?v=7.1.0"></script>
+<script src="/Houxubeiyin.github.io/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -1485,7 +1485,7 @@ ls -la /usr/bin/passwd
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/fuckingcode/" + search_path;
+    var path = "/Houxubeiyin.github.io/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

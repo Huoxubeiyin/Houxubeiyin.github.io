@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/fuckingcode/',
+    root: '/Houxubeiyin.github.io/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,7 +100,7 @@
 <meta name="keywords" content="线程同步 锁机制">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux系统编程之线程同步">
-<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/15/Linux系统编程之线程同步/index.html">
+<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/15/Linux系统编程之线程同步/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="本章节着重介绍多线程下资源同步的问题，之前章节介绍了Linux多线程编程的有关知识，由于多线程下容易产生资源互抢情况，所以必须对共享资源进行统一规划，其涉及到的概念有互斥量，条件变量，信号量，文件锁以及进程间锁。">
 <meta property="og:locale" content="zh-CN">
@@ -111,13 +111,13 @@
 
 
 
-  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/15/Linux系统编程之线程同步/">
+  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/15/Linux系统编程之线程同步/">
 
 
 
@@ -184,7 +184,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/fuckingcode/" class="brand" rel="start">
+      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -227,7 +227,7 @@
 
     
 
-    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/Houxubeiyin.github.io/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -244,7 +244,7 @@
 
     
 
-    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/Houxubeiyin.github.io/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -261,7 +261,7 @@
 
     
 
-    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/Houxubeiyin.github.io/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -278,7 +278,7 @@
 
     
 
-    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/Houxubeiyin.github.io/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -295,7 +295,7 @@
 
     
 
-    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/Houxubeiyin.github.io/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -383,12 +383,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/15/Linux系统编程之线程同步/">
+    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2019/01/15/Linux系统编程之线程同步/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -448,7 +448,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Houxubeiyin.github.io/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
 
                 
                 
@@ -1150,7 +1150,7 @@ int main(int argc, char *argv[]){
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/Houxubeiyin.github.io/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -1159,7 +1159,7 @@ int main(int argc, char *argv[]){
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/Houxubeiyin.github.io/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -1187,7 +1187,7 @@ int main(int argc, char *argv[]){
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/fuckingcode/2019/01/15/Linux系统编程之线程同步/" title="Linux系统编程之线程同步">https://891904833.gitee.io/fuckingcode/2019/01/15/Linux系统编程之线程同步/</a>
+    <a href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/15/Linux系统编程之线程同步/" title="Linux系统编程之线程同步">https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/15/Linux系统编程之线程同步/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -1200,7 +1200,7 @@ int main(int argc, char *argv[]){
       
         <div class="post-tags">
           
-            <a href="/fuckingcode/tags/线程同步-锁机制/" rel="tag"># 线程同步 锁机制</a>
+            <a href="/Houxubeiyin.github.io/tags/线程同步-锁机制/" rel="tag"># 线程同步 锁机制</a>
           
         </div>
       
@@ -1213,7 +1213,7 @@ int main(int argc, char *argv[]){
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/fuckingcode/2019/01/14/Linux系统编程之线程/" rel="next" title="Linux系统编程之线程">
+              <a href="/Houxubeiyin.github.io/2019/01/14/Linux系统编程之线程/" rel="next" title="Linux系统编程之线程">
                 <i class="fa fa-chevron-left"></i> Linux系统编程之线程
               </a>
             
@@ -1223,7 +1223,7 @@ int main(int argc, char *argv[]){
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/fuckingcode/2019/01/16/Linux系统编程之网络基础/" rel="prev" title="Linux系统编程之网络基础">
+              <a href="/Houxubeiyin.github.io/2019/01/16/Linux系统编程之网络基础/" rel="prev" title="Linux系统编程之网络基础">
                 Linux系统编程之网络基础 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1283,7 +1283,7 @@ int main(int argc, char *argv[]){
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -1294,7 +1294,7 @@ int main(int argc, char *argv[]){
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/fuckingcode/archives/">
+                  <a href="/Houxubeiyin.github.io/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -1484,7 +1484,7 @@ int main(int argc, char *argv[]){
 
           
             <div class="feed-link motion-element">
-              <a href="/fuckingcode/atom.xml" rel="alternate">
+              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1526,7 +1526,7 @@ int main(int argc, char *argv[]){
                   
                     
                   
-                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/Houxubeiyin.github.io/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -1551,7 +1551,7 @@ int main(int argc, char *argv[]){
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/Houxubeiyin.github.io/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -1698,44 +1698,44 @@ int main(int argc, char *argv[]){
 
 
   
-  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/Houxubeiyin.github.io/js/utils.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/affix.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/Houxubeiyin.github.io/js/scrollspy.js?v=7.1.0"></script>
+<script src="/Houxubeiyin.github.io/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -1762,7 +1762,7 @@ int main(int argc, char *argv[]){
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/fuckingcode/" + search_path;
+    var path = "/Houxubeiyin.github.io/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/fuckingcode/',
+    root: '/Houxubeiyin.github.io/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,27 +100,27 @@
 <meta name="keywords" content="Handler Looper MessageQueue">
 <meta property="og:type" content="article">
 <meta property="og:title" content="源码分析之Handler、Looper及MessageQueue之间关系">
-<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/index.html">
+<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="在 Android 的应用开发中，线程之间的通信机制主要是以 Handler 机制为主。我们都知道 Android 中的 UI 更新只能在主线程中执行，通常的做法是，我们在 Activity 中直接 new Handler，通过 handler 发送消息，在 handlerMessage 处理即可。本篇博文就根据源码来具体分析其中工作机制以及源码架构。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/MessageQueue.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/MessageQueue.png">
 <meta property="og:updated_time" content="2019-04-10T07:49:48.337Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="源码分析之Handler、Looper及MessageQueue之间关系">
 <meta name="twitter:description" content="在 Android 的应用开发中，线程之间的通信机制主要是以 Handler 机制为主。我们都知道 Android 中的 UI 更新只能在主线程中执行，通常的做法是，我们在 Activity 中直接 new Handler，通过 handler 发送消息，在 handlerMessage 处理即可。本篇博文就根据源码来具体分析其中工作机制以及源码架构。">
-<meta name="twitter:image" content="https://891904833.gitee.io/FuckCode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png">
+<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png">
 
 
 
-  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/">
+  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/">
 
 
 
@@ -187,7 +187,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/fuckingcode/" class="brand" rel="start">
+      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -230,7 +230,7 @@
 
     
 
-    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/Houxubeiyin.github.io/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -247,7 +247,7 @@
 
     
 
-    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/Houxubeiyin.github.io/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -264,7 +264,7 @@
 
     
 
-    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/Houxubeiyin.github.io/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -281,7 +281,7 @@
 
     
 
-    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/Houxubeiyin.github.io/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -298,7 +298,7 @@
 
     
 
-    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/Houxubeiyin.github.io/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -386,12 +386,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/">
+    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -463,7 +463,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index"><span itemprop="name">源码分析</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Houxubeiyin.github.io/categories/源码分析/" itemprop="url" rel="index"><span itemprop="name">源码分析</span></a></span>
 
                 
                 
@@ -1935,11 +1935,11 @@ WeakMessageHandler::~WeakMessageHandler() {
 }
 </code></pre><p>代码中并未直接处理 handleMessage，因为弱饮用的关系，可能饮用对象不存在，需要尝试升级到强引用 mHandler.promote，然后再处理 handleMessage。关于智能指针的引用计数，有需要请参考之前的博文。</p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>通过以上内容的介绍，相信读者对安卓中的 Handler 通信机制有更深的了解。本文通过源码分析的方式，从 Java 到 JNI 到 Native，分别分析了 Handler、Looper、MessageQueue三者的关系，网上很多博主对其进行了总结，感觉也十分出众，这里本人也画了一幅小图来总结一下其之间的关系，如下：</p>
-<img src="/FuckCode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png" class="Handler模型">
+<img src="/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/Handler.png" class="Handler模型">
 <p>在分析 MessageQueue 的过程中，本人使用 Xmind 思维导图将函数之间的调用关系进行了相关的汇总，图片如下：</p>
-<img src="/FuckCode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/MessageQueue.png" class="MessageQueue关系思维导图">
+<img src="/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/MessageQueue.png" class="MessageQueue关系思维导图">
 <p>文章内容涉及 epoll 模型，强烈推荐读者了解一下 select，poll，epoll等高并发模型，在后续代码分析中将会如鱼得水。</p>
-<p><a href="https://891904833.gitee.io/fuckingcode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/#more">高并发模型推荐</a></p>
+<p><a href="https://891904833.gitee.io/fuckingcode/2019/01/23/Linux%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B%E4%B9%8B%E5%A4%9A%E8%B7%AFIO%E8%BD%AC%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8/#more" target="_blank" rel="noopener">高并发模型推荐</a></p>
 <p>文件从邓凡平前辈的相关博文中汲取灵感，推荐博文如下：</p>
 <p><a href="https://blog.csdn.net/Innost/article/details/47252865" target="_blank" rel="noopener">参考链接</a></p>
 
@@ -1972,7 +1972,7 @@ WeakMessageHandler::~WeakMessageHandler() {
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/Houxubeiyin.github.io/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -1981,7 +1981,7 @@ WeakMessageHandler::~WeakMessageHandler() {
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/Houxubeiyin.github.io/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -2009,7 +2009,7 @@ WeakMessageHandler::~WeakMessageHandler() {
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/" title="源码分析之Handler、Looper及MessageQueue之间关系">https://891904833.gitee.io/fuckingcode/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/</a>
+    <a href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/" title="源码分析之Handler、Looper及MessageQueue之间关系">https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/04/09/源码分析之Handler、Looper及MessageQueue之间关系/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -2022,7 +2022,7 @@ WeakMessageHandler::~WeakMessageHandler() {
       
         <div class="post-tags">
           
-            <a href="/fuckingcode/tags/Handler/" rel="tag"># Handler</a>
+            <a href="/Houxubeiyin.github.io/tags/Handler/" rel="tag"># Handler</a>
           
         </div>
       
@@ -2035,7 +2035,7 @@ WeakMessageHandler::~WeakMessageHandler() {
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/fuckingcode/2019/01/23/Linux系统编程之多路IO转接服务器/" rel="next" title="Linux系统编程之多路IO转接服务器">
+              <a href="/Houxubeiyin.github.io/2019/01/23/Linux系统编程之多路IO转接服务器/" rel="next" title="Linux系统编程之多路IO转接服务器">
                 <i class="fa fa-chevron-left"></i> Linux系统编程之多路IO转接服务器
               </a>
             
@@ -2101,7 +2101,7 @@ WeakMessageHandler::~WeakMessageHandler() {
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -2112,7 +2112,7 @@ WeakMessageHandler::~WeakMessageHandler() {
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/fuckingcode/archives/">
+                  <a href="/Houxubeiyin.github.io/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -2302,7 +2302,7 @@ WeakMessageHandler::~WeakMessageHandler() {
 
           
             <div class="feed-link motion-element">
-              <a href="/fuckingcode/atom.xml" rel="alternate">
+              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -2344,7 +2344,7 @@ WeakMessageHandler::~WeakMessageHandler() {
                   
                     
                   
-                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/Houxubeiyin.github.io/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -2369,7 +2369,7 @@ WeakMessageHandler::~WeakMessageHandler() {
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/Houxubeiyin.github.io/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -2516,44 +2516,44 @@ WeakMessageHandler::~WeakMessageHandler() {
 
 
   
-  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/Houxubeiyin.github.io/js/utils.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/affix.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/Houxubeiyin.github.io/js/scrollspy.js?v=7.1.0"></script>
+<script src="/Houxubeiyin.github.io/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -2580,7 +2580,7 @@ WeakMessageHandler::~WeakMessageHandler() {
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/fuckingcode/" + search_path;
+    var path = "/Houxubeiyin.github.io/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

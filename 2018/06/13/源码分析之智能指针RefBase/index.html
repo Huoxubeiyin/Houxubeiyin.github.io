@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/fuckingcode/',
+    root: '/Houxubeiyin.github.io/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,26 +100,26 @@
 <meta name="keywords" content="智能指针,RefBase">
 <meta property="og:type" content="article">
 <meta property="og:title" content="源码分析之智能指针RefBase">
-<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/06/13/源码分析之智能指针RefBase/index.html">
+<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="智能指针，是安卓为了照顾Java层代码，为C层适配的一种自动管理内存对象的方案。由于C层对象不能够像Java层代码一样由虚拟机自动释放，很容易造成内存泄漏等问题，其生命周期要求开发者自行管理，为了解决这个问题，安卓系统便引入了智能指针的概念。在我们了解它之后，对于源码的阅读，无疑将会变得更加轻松！">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2018/06/13/源码分析之智能指针RefBase/RefBase_class.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/RefBase_class.png">
 <meta property="og:updated_time" content="2019-02-21T06:37:43.297Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="源码分析之智能指针RefBase">
 <meta name="twitter:description" content="智能指针，是安卓为了照顾Java层代码，为C层适配的一种自动管理内存对象的方案。由于C层对象不能够像Java层代码一样由虚拟机自动释放，很容易造成内存泄漏等问题，其生命周期要求开发者自行管理，为了解决这个问题，安卓系统便引入了智能指针的概念。在我们了解它之后，对于源码的阅读，无疑将会变得更加轻松！">
-<meta name="twitter:image" content="https://891904833.gitee.io/FuckCode/2018/06/13/源码分析之智能指针RefBase/RefBase_class.png">
+<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/RefBase_class.png">
 
 
 
-  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/06/13/源码分析之智能指针RefBase/">
+  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/">
 
 
 
@@ -186,7 +186,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/fuckingcode/" class="brand" rel="start">
+      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -229,7 +229,7 @@
 
     
 
-    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/Houxubeiyin.github.io/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -246,7 +246,7 @@
 
     
 
-    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/Houxubeiyin.github.io/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -263,7 +263,7 @@
 
     
 
-    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/Houxubeiyin.github.io/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -280,7 +280,7 @@
 
     
 
-    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/Houxubeiyin.github.io/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -297,7 +297,7 @@
 
     
 
-    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/Houxubeiyin.github.io/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -385,12 +385,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/06/13/源码分析之智能指针RefBase/">
+    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -462,7 +462,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index"><span itemprop="name">源码分析</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Houxubeiyin.github.io/categories/源码分析/" itemprop="url" rel="index"><span itemprop="name">源码分析</span></a></span>
 
                 
                 
@@ -986,7 +986,7 @@ private:
 <li>生命周期的控制方式<br> OBJECT_LIFETIME_STRONG  强引用计数控制<br> OBJECT_LIFETIME_WEAK    强弱引用计数控制<br> OBJECT_LIFETIME_FOREVER 完全无视（4.4后弃用）    </li>
 </ol>
 <p>这里引用Gityuan博客内的UML类图来说明一下</p>
-<img src="/FuckCode/2018/06/13/源码分析之智能指针RefBase/RefBase_class.png" title="RefBase_class.png">
+<img src="/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/RefBase_class.png" title="RefBase_class.png">
 <h3 id="weakref-imp的实现"><a href="#weakref-imp的实现" class="headerlink" title="weakref_imp的实现"></a>weakref_imp的实现</h3><p>weakref_imp继承于weakref_type，是其具体逻辑的实现类</p>
 <pre><code>class RefBase::weakref_impl : public RefBase::weakref_type
 {
@@ -1488,7 +1488,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/Houxubeiyin.github.io/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -1497,7 +1497,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/Houxubeiyin.github.io/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -1525,7 +1525,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/fuckingcode/2018/06/13/源码分析之智能指针RefBase/" title="源码分析之智能指针RefBase">https://891904833.gitee.io/fuckingcode/2018/06/13/源码分析之智能指针RefBase/</a>
+    <a href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/" title="源码分析之智能指针RefBase">https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/06/13/源码分析之智能指针RefBase/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -1538,9 +1538,9 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
       
         <div class="post-tags">
           
-            <a href="/fuckingcode/tags/智能指针/" rel="tag"># 智能指针</a>
+            <a href="/Houxubeiyin.github.io/tags/智能指针/" rel="tag"># 智能指针</a>
           
-            <a href="/fuckingcode/tags/RefBase/" rel="tag"># RefBase</a>
+            <a href="/Houxubeiyin.github.io/tags/RefBase/" rel="tag"># RefBase</a>
           
         </div>
       
@@ -1553,7 +1553,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/fuckingcode/2018/06/09/bootanim-zip文件分析/" rel="next" title="bootanim压缩包源码分析">
+              <a href="/Houxubeiyin.github.io/2018/06/09/bootanim-zip文件分析/" rel="next" title="bootanim压缩包源码分析">
                 <i class="fa fa-chevron-left"></i> bootanim压缩包源码分析
               </a>
             
@@ -1563,7 +1563,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/fuckingcode/2018/06/14/开机Launcher启动流程/" rel="prev" title="源码分析之Launcher启动流程">
+              <a href="/Houxubeiyin.github.io/2018/06/14/开机Launcher启动流程/" rel="prev" title="源码分析之Launcher启动流程">
                 源码分析之Launcher启动流程 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1623,7 +1623,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -1634,7 +1634,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/fuckingcode/archives/">
+                  <a href="/Houxubeiyin.github.io/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -1824,7 +1824,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
 
           
             <div class="feed-link motion-element">
-              <a href="/fuckingcode/atom.xml" rel="alternate">
+              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1866,7 +1866,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
                   
                     
                   
-                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/Houxubeiyin.github.io/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -1891,7 +1891,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/Houxubeiyin.github.io/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -2038,44 +2038,44 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
 
 
   
-  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/Houxubeiyin.github.io/js/utils.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/affix.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/Houxubeiyin.github.io/js/scrollspy.js?v=7.1.0"></script>
+<script src="/Houxubeiyin.github.io/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -2102,7 +2102,7 @@ sp&lt;T&gt; wp&lt;T&gt;::promote() const
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/fuckingcode/" + search_path;
+    var path = "/Houxubeiyin.github.io/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

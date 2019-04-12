@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/fuckingcode/',
+    root: '/Houxubeiyin.github.io/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,28 +100,28 @@
 <meta name="keywords" content="Socket TCP UDP">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux系统编程之Socket编程">
-<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/index.html">
+<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="本章节主要介绍Linux下如何通过系统提供的API接口实现Socket编程。通过结合之前几篇博文中的内容，包括网络基础，TCP/IP模型以及其之间建议通信的链接细节，从理论到代码完整的贯通，毕竟Socket编程的重要性，对于程序员来说不言而喻了。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/18/Linux系统编程之Socket编程/TCP协议通讯流程.png">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2019/01/18/Linux系统编程之Socket编程/UDP协议通讯流程.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/TCP协议通讯流程.png">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/UDP协议通讯流程.png">
 <meta property="og:updated_time" content="2019-01-19T07:00:37.985Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux系统编程之Socket编程">
 <meta name="twitter:description" content="本章节主要介绍Linux下如何通过系统提供的API接口实现Socket编程。通过结合之前几篇博文中的内容，包括网络基础，TCP/IP模型以及其之间建议通信的链接细节，从理论到代码完整的贯通，毕竟Socket编程的重要性，对于程序员来说不言而喻了。">
-<meta name="twitter:image" content="https://891904833.gitee.io/FuckCode/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png">
+<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png">
 
 
 
-  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/">
+  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/">
 
 
 
@@ -188,7 +188,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/fuckingcode/" class="brand" rel="start">
+      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -231,7 +231,7 @@
 
     
 
-    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/Houxubeiyin.github.io/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -248,7 +248,7 @@
 
     
 
-    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/Houxubeiyin.github.io/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -265,7 +265,7 @@
 
     
 
-    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/Houxubeiyin.github.io/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -282,7 +282,7 @@
 
     
 
-    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/Houxubeiyin.github.io/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -299,7 +299,7 @@
 
     
 
-    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/Houxubeiyin.github.io/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -387,12 +387,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2019/01/18/Linux系统编程之Socket编程/">
+    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -464,7 +464,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Houxubeiyin.github.io/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
 
                 
                 
@@ -563,7 +563,7 @@ const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
 </code></pre><p>其中inet_pton和inet_ntop不仅可以转换IPv4的in_addr，还可以转换IPv6的in6_addr，因此函数接口是void *addrptr。</p>
 <p>这里就不先贴代码了，总体先有个印象，后续代码中会有详细注释。</p>
 <h3 id="结构体sockaddr"><a href="#结构体sockaddr" class="headerlink" title="结构体sockaddr"></a>结构体sockaddr</h3><p>strcut sockaddr 很多网络编程函数诞生早于IPv4协议，那时候都使用的是sockaddr结构体,为了向前兼容，现在sockaddr退化成了(void *)的作用，传递一个地址给函数，至于这个函数是sockaddr_in还是sockaddr_in6，由地址族确定，然后函数内部再强制类型转化为所需的地址类型。</p>
-<img src="/FuckCode/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png" class="sockaddr数据结构">
+<img src="/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/sockaddr数据结构.png" class="sockaddr数据结构">
 <pre><code>struct sockaddr {
 sa_family_t sa_family;
 char  sa_data[14];
@@ -721,7 +721,7 @@ addrlen:
 </code></pre><p>客户端需要调用 connect() 连接服务器,connect 和 bind 的参数形式一致,区别在于 bind 的参数是自己的地址,而 connect 的参数是对方的地址。服务器可以通过 connect 中的具体参数获取到当前已连接的客户端的 ip 地址和端口号。connect() 成功返回 0,出错返回 -1。</p>
 <h2 id="美食1-TCP"><a href="#美食1-TCP" class="headerlink" title="美食1-TCP"></a>美食1-TCP</h2><p>上面具体介绍了Socket编程中用的几个重要函数，下面就来实战Socket编程中TCP的代码实现。</p>
 <p>TCP协议的通信流程在之前TCP、UDP章节中具体分析过了，包括其三次握手建立连接，四次握手断开链接，连接中状态装换以及滑动窗口等概念和原理。下图具体展示了TCP协议的通信模型，包括客户端和服务器连接过程中具体函数接口的调用时机，两端设备端口的状态，数据导向等，再此基础上加深理解具体代码的实现过程。</p>
-<img src="/FuckCode/2019/01/18/Linux系统编程之Socket编程/TCP协议通讯流程.png" class="TCP协议通讯流程">
+<img src="/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/TCP协议通讯流程.png" class="TCP协议通讯流程">
 <h3 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h3><p>服务器的工作任务很简单，根据连接上的客户端传来的数据，进行转大写回传。</p>
 <pre><code>#include &quot;wrap.h&quot;
 #include &lt;stdlib.h&gt;
@@ -838,7 +838,7 @@ int main(int argc, char * argv[]){
 </ol>
 <h2 id="美食2-UDP"><a href="#美食2-UDP" class="headerlink" title="美食2-UDP"></a>美食2-UDP</h2><p>这里我们来看一下 UDP 的实战编程。由于 UDP 不需要维护连接,程序逻辑简单了很多,但是 UDP 协议是不可靠的,实际上有很多保证通讯可靠性的机制需要在应用层实现。</p>
 <p>UDP 通信模型如下图：</p>
-<img src="/FuckCode/2019/01/18/Linux系统编程之Socket编程/UDP协议通讯流程.png" class="TDP协议通讯流程">
+<img src="/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/UDP协议通讯流程.png" class="TDP协议通讯流程">
 <p>UDP 的通信模型和 TCP 在建立链接之前的配置基本相似，但是对于后面建立连接后的数据通信过程就简单多了。sendto 负责发送数据，recvfrom 负责接受数据，其每次数据传输过程中（不论是发送还是接受数据），都需要传入地址参数，而这一切在 TCP 模型中，都被 connect 取代了。</p>
 <h3 id="Server-1"><a href="#Server-1" class="headerlink" title="Server"></a>Server</h3><pre><code>#include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -1173,7 +1173,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/Houxubeiyin.github.io/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -1182,7 +1182,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/Houxubeiyin.github.io/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -1210,7 +1210,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/" title="Linux系统编程之Socket编程">https://891904833.gitee.io/fuckingcode/2019/01/18/Linux系统编程之Socket编程/</a>
+    <a href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/" title="Linux系统编程之Socket编程">https://huoxubeiyin.github.io/Houxubeiyin.github.io/2019/01/18/Linux系统编程之Socket编程/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -1223,7 +1223,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
       
         <div class="post-tags">
           
-            <a href="/fuckingcode/tags/Socket/" rel="tag"># Socket</a>
+            <a href="/Houxubeiyin.github.io/tags/Socket/" rel="tag"># Socket</a>
           
         </div>
       
@@ -1236,7 +1236,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/fuckingcode/2019/01/17/Linux系统编程之TCP-UDP协议/" rel="next" title="Linux系统编程之TCP/UDP协议">
+              <a href="/Houxubeiyin.github.io/2019/01/17/Linux系统编程之TCP-UDP协议/" rel="next" title="Linux系统编程之TCP/UDP协议">
                 <i class="fa fa-chevron-left"></i> Linux系统编程之TCP/UDP协议
               </a>
             
@@ -1246,7 +1246,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/fuckingcode/2019/01/21/Linux系统编程之多进程、多线程并发服务器/" rel="prev" title="Linux系统编程之多进程、多线程并发服务器">
+              <a href="/Houxubeiyin.github.io/2019/01/21/Linux系统编程之多进程、多线程并发服务器/" rel="prev" title="Linux系统编程之多进程、多线程并发服务器">
                 Linux系统编程之多进程、多线程并发服务器 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1306,7 +1306,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -1317,7 +1317,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/fuckingcode/archives/">
+                  <a href="/Houxubeiyin.github.io/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -1507,7 +1507,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
 
           
             <div class="feed-link motion-element">
-              <a href="/fuckingcode/atom.xml" rel="alternate">
+              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1549,7 +1549,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
                   
                     
                   
-                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/Houxubeiyin.github.io/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -1574,7 +1574,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/Houxubeiyin.github.io/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -1721,44 +1721,44 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
 
 
   
-  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/Houxubeiyin.github.io/js/utils.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/affix.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/Houxubeiyin.github.io/js/scrollspy.js?v=7.1.0"></script>
+<script src="/Houxubeiyin.github.io/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -1785,7 +1785,7 @@ ssize_t Readline(int fd, void *vptr, size_t maxlen)
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/fuckingcode/" + search_path;
+    var path = "/Houxubeiyin.github.io/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {

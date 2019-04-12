@@ -44,21 +44,21 @@
 
 
 
-<link rel="stylesheet" href="/fuckingcode/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
 
-<link rel="stylesheet" href="/fuckingcode/css/main.css?v=7.1.0">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/fuckingcode/images/apple-touch-icon-next.png?v=7.1.0">
+<link rel="stylesheet" href="/Houxubeiyin.github.io/css/main.css?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/fuckingcode/images/favicon-32x32-next.png?v=7.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/Houxubeiyin.github.io/images/apple-touch-icon-next.png?v=7.1.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/fuckingcode/images/favicon-16x16-next.png?v=7.1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/Houxubeiyin.github.io/images/favicon-32x32-next.png?v=7.1.0">
 
 
-  <link rel="mask-icon" href="/fuckingcode/images/logo.svg?v=7.1.0" color="#222">
+  <link rel="icon" type="image/png" sizes="16x16" href="/Houxubeiyin.github.io/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/Houxubeiyin.github.io/images/logo.svg?v=7.1.0" color="#222">
 
 
 
@@ -69,7 +69,7 @@
 <script id="hexo.configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    root: '/fuckingcode/',
+    root: '/Houxubeiyin.github.io/',
     scheme: 'Pisces',
     version: '7.1.0',
     sidebar: {"position":"left","Pisces | Gemini":300,"display":"post","offset":12,"onmobile":false,"dimmer":false},
@@ -100,27 +100,27 @@
 <meta name="keywords" content="Vold">
 <meta property="og:type" content="article">
 <meta property="og:title" content="源码分析之存储系统启动流程Vold">
-<meta property="og:url" content="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/index.html">
+<meta property="og:url" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/index.html">
 <meta property="og:site_name" content="FuckingCode">
 <meta property="og:description" content="Android的存储系统相对来讲还是比较复杂，其中主要包括了native层的Vold以及Java层的MountService。其中Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的。它们之间的通信采用的Socket进行，而不是Binder机制，其主要的原因就是架构上比较简单，代码量也少。本文就从启动流程上分析安">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg">
-<meta property="og:image" content="https://891904833.gitee.io/FuckCode/2018/09/28/源码分析之存储系统启动流程Vold模块/NM.jpg">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg">
+<meta property="og:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/NM.jpg">
 <meta property="og:updated_time" content="2019-04-10T07:22:17.209Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="源码分析之存储系统启动流程Vold">
 <meta name="twitter:description" content="Android的存储系统相对来讲还是比较复杂，其中主要包括了native层的Vold以及Java层的MountService。其中Vold在init进程中通过init脚本进行启动，而MountService则是在Java的服务总站SystemServer中配置启动的。它们之间的通信采用的Socket进行，而不是Binder机制，其主要的原因就是架构上比较简单，代码量也少。本文就从启动流程上分析安">
-<meta name="twitter:image" content="https://891904833.gitee.io/FuckCode/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg">
+<meta name="twitter:image" content="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg">
 
 
 
-  <link rel="alternate" href="/fuckingcode/atom.xml" title="FuckingCode" type="application/atom+xml">
+  <link rel="alternate" href="/Houxubeiyin.github.io/atom.xml" title="FuckingCode" type="application/atom+xml">
 
 
 
   
   
-  <link rel="canonical" href="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/">
+  <link rel="canonical" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/">
 
 
 
@@ -187,7 +187,7 @@
     
 
     <div class="custom-logo-site-title">
-      <a href="/fuckingcode/" class="brand" rel="start">
+      <a href="/Houxubeiyin.github.io/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">FuckingCode</span>
         <span class="logo-line-after"><i></i></span>
@@ -230,7 +230,7 @@
 
     
 
-    <a href="/fuckingcode/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+    <a href="/Houxubeiyin.github.io/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
         
@@ -247,7 +247,7 @@
 
     
 
-    <a href="/fuckingcode/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+    <a href="/Houxubeiyin.github.io/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
         
@@ -264,7 +264,7 @@
 
     
 
-    <a href="/fuckingcode/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+    <a href="/Houxubeiyin.github.io/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
         
@@ -281,7 +281,7 @@
 
     
 
-    <a href="/fuckingcode/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+    <a href="/Houxubeiyin.github.io/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
         
@@ -298,7 +298,7 @@
 
     
 
-    <a href="/fuckingcode/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+    <a href="/Houxubeiyin.github.io/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
 
@@ -386,12 +386,12 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://891904833.gitee.io/fuckingcode/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/">
+    <link itemprop="mainEntityOfPage" href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allies">
       <meta itemprop="description" content="一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!">
-      <meta itemprop="image" content="/fuckingcode/images/avatar.png">
+      <meta itemprop="image" content="/Houxubeiyin.github.io/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -463,7 +463,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/fuckingcode/categories/源码分析/" itemprop="url" rel="index"><span itemprop="name">源码分析</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/Houxubeiyin.github.io/categories/源码分析/" itemprop="url" rel="index"><span itemprop="name">源码分析</span></a></span>
 
                 
                 
@@ -1307,9 +1307,9 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
 </code></pre><p>通过额外的registerCmd注册CryptfsCmd命令，其具体的runCommand实现对应的操作，这里就不贴代码了。</p>
 <h4 id="CLL-gt-startListener"><a href="#CLL-gt-startListener" class="headerlink" title="CLL-&gt;startListener"></a>CLL-&gt;startListener</h4><p>当然CryptCommandListener也没有实现方法startListener，其最终还是通过SocketListener来实现的。具体参考上述流程。</p>
 <h2 id="相关类图"><a href="#相关类图" class="headerlink" title="相关类图"></a>相关类图</h2><p>相信到此，如果你认真的看完第一遍并且是第一次看完的话，肯定是一头雾水，什么跟什么啊，这么多类，各种跳真的是烦。不急不急，这里我们引用一张类图还是有必要的，根据这张类图，在回过去看代码流程，你就能轻松的知道各个类之间的关系是如何的。</p>
-<h3 id="VM相关类图"><a href="#VM相关类图" class="headerlink" title="VM相关类图"></a>VM相关类图</h3><img src="/FuckCode/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg" class="VolumeManger相关类图">
+<h3 id="VM相关类图"><a href="#VM相关类图" class="headerlink" title="VM相关类图"></a>VM相关类图</h3><img src="/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/VM.jpg" class="VolumeManger相关类图">
 <p>VolumeManager作为Vold模块最重要的一个类，其承载了很多重要的工作流程，其中涉及到很多类，类中各种继承关系也很复杂，对着上述的类图就很容易理清各个类之间的关系了。</p>
-<h3 id="NM相关类图"><a href="#NM相关类图" class="headerlink" title="NM相关类图"></a>NM相关类图</h3><img src="/FuckCode/2018/09/28/源码分析之存储系统启动流程Vold模块/NM.jpg" class="VolumeManger相关类图">
+<h3 id="NM相关类图"><a href="#NM相关类图" class="headerlink" title="NM相关类图"></a>NM相关类图</h3><img src="/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/NM.jpg" class="VolumeManger相关类图">
 <p>NetLinkManager负责直接接收Kernel发来的uevent事件，其类之间的关系更是复杂，相信有这张类图后，在回溯到代码流程中就很清晰了。SocketListener为最重要的父类，其直接和Socket打交道，之后在分发到子类中处理，其大概可以分为两个部分，如下：</p>
 <h4 id="命令流程如下："><a href="#命令流程如下：" class="headerlink" title="命令流程如下："></a>命令流程如下：</h4><p>SocketListener发现Socket中有数据后，对数据进行封装（NetlinkEvent），通过dispatchCommand方法，将命令分别分发到指定的Cmd进行处理，各种Cmd的声明和处理流程在CommandListener中都有声明。其中各种Cmd相似的方法处理都由父类FrameworkCommand进行统一的抽象管理。</p>
 <h4 id="命令分发如下："><a href="#命令分发如下：" class="headerlink" title="命令分发如下："></a>命令分发如下：</h4><p>当然SocketListener得到数据后，还会通过onDataAvaiable进行回传，到Netlinkhandler中通过onEventh回传到VolumeManager进行处理。</p>
@@ -1346,7 +1346,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/wechatpay.png" alt="Allies 微信支付">
+        <img src="/Houxubeiyin.github.io/images/wechatpay.png" alt="Allies 微信支付">
         <p>微信支付</p>
       </div>
     
@@ -1355,7 +1355,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
         
       
       <div style="display: inline-block">
-        <img src="/fuckingcode/images/alipay.png" alt="Allies 支付宝">
+        <img src="/Houxubeiyin.github.io/images/alipay.png" alt="Allies 支付宝">
         <p>支付宝</p>
       </div>
     
@@ -1383,7 +1383,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
     
-    <a href="https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/" title="源码分析之存储系统启动流程Vold">https://891904833.gitee.io/fuckingcode/2018/09/28/源码分析之存储系统启动流程Vold模块/</a>
+    <a href="https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/" title="源码分析之存储系统启动流程Vold">https://huoxubeiyin.github.io/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程Vold模块/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！</li>
@@ -1396,7 +1396,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
       
         <div class="post-tags">
           
-            <a href="/fuckingcode/tags/存储系统/" rel="tag"># 存储系统</a>
+            <a href="/Houxubeiyin.github.io/tags/存储系统/" rel="tag"># 存储系统</a>
           
         </div>
       
@@ -1409,7 +1409,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/fuckingcode/2018/08/22/Android系统HAL层驱动开发实战/" rel="next" title="Android系统HAL层驱动开发实战">
+              <a href="/Houxubeiyin.github.io/2018/08/22/Android系统HAL层驱动开发实战/" rel="next" title="Android系统HAL层驱动开发实战">
                 <i class="fa fa-chevron-left"></i> Android系统HAL层驱动开发实战
               </a>
             
@@ -1419,7 +1419,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/fuckingcode/2018/09/28/源码分析之存储系统启动流程MountService模块/" rel="prev" title="源码分析之存储系统启动流程MountService模块">
+              <a href="/Houxubeiyin.github.io/2018/09/28/源码分析之存储系统启动流程MountService模块/" rel="prev" title="源码分析之存储系统启动流程MountService模块">
                 源码分析之存储系统启动流程MountService模块 <i class="fa fa-chevron-right"></i>
               </a>
             
@@ -1479,7 +1479,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="/fuckingcode/images/avatar.png" alt="Allies">
+              <img class="site-author-image" itemprop="image" src="/Houxubeiyin.github.io/images/avatar.png" alt="Allies">
             
               <p class="site-author-name" itemprop="name">Allies</p>
               <div class="site-description motion-element" itemprop="description">一位由安卓应用向系统底层进阶的开发者。在这里，开始自己的打怪升级之路。Just do it!</div>
@@ -1490,7 +1490,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
               
                 <div class="site-state-item site-state-posts">
                 
-                  <a href="/fuckingcode/archives/">
+                  <a href="/Houxubeiyin.github.io/archives/">
                 
                     <span class="site-state-item-count">75</span>
                     <span class="site-state-item-name">日志</span>
@@ -1680,7 +1680,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
 
           
             <div class="feed-link motion-element">
-              <a href="/fuckingcode/atom.xml" rel="alternate">
+              <a href="/Houxubeiyin.github.io/atom.xml" rel="alternate">
                 <i class="fa fa-rss"></i>
                 RSS
               </a>
@@ -1722,7 +1722,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
                   
                     
                   
-                  <a href="/fuckingcode/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
+                  <a href="/Houxubeiyin.github.io/891904833@qq.com" title="邮箱 &rarr; 891904833@qq.com"><i class="fa fa-fw fa-envelope"></i>邮箱</a>
                 </span>
               
                 <span class="links-of-author-item">
@@ -1747,7 +1747,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
               
               
               
-              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/fuckingcode/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+              <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/Houxubeiyin.github.io/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
              </div>
           
 
@@ -1894,44 +1894,44 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
 
 
   
-  <script src="/fuckingcode/lib/jquery/index.js?v=2.1.3"></script>
+  <script src="/Houxubeiyin.github.io/lib/jquery/index.js?v=2.1.3"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.min.js?v=1.2.1"></script>
 
   
-  <script src="/fuckingcode/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/fuckingcode/js/utils.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/motion.js?v=7.1.0"></script>
-
-
-
-  
-  
-
-
-  <script src="/fuckingcode/js/affix.js?v=7.1.0"></script>
-
-  <script src="/fuckingcode/js/schemes/pisces.js?v=7.1.0"></script>
-
-
-
-  
-  <script src="/fuckingcode/js/scrollspy.js?v=7.1.0"></script>
-<script src="/fuckingcode/js/post-details.js?v=7.1.0"></script>
-
+  <script src="/Houxubeiyin.github.io/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
 
 
   
 
 
-  <script src="/fuckingcode/js/next-boot.js?v=7.1.0"></script>
+  <script src="/Houxubeiyin.github.io/js/utils.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/affix.js?v=7.1.0"></script>
+
+  <script src="/Houxubeiyin.github.io/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+  
+  <script src="/Houxubeiyin.github.io/js/scrollspy.js?v=7.1.0"></script>
+<script src="/Houxubeiyin.github.io/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/Houxubeiyin.github.io/js/next-boot.js?v=7.1.0"></script>
 
 
   
@@ -1958,7 +1958,7 @@ CryptCommandListener::CryptfsCmd::CryptfsCmd() :
     } else if (/json$/i.test(search_path)) {
       isXml = false;
     }
-    var path = "/fuckingcode/" + search_path;
+    var path = "/Houxubeiyin.github.io/" + search_path;
     // monitor main search box;
 
     var onPopupClose = function (e) {
